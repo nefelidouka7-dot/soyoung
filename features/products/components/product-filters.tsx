@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/use-translation";
 import { productTypeLabel } from "@/lib/i18n/nav";
 import { ListingNavigationContext } from "@/features/products/components/listing-navigation";
+import type { Dictionary } from "@/lib/i18n/types";
 
 type Facets = {
   brands: Array<{ id: string; name: string; slug: string }>;
@@ -28,6 +29,62 @@ type Facets = {
   minPrice: number;
   maxPrice: number;
 };
+
+type FilterDraft = {
+  brand: string[];
+  skinType: string[];
+  type: string[];
+  available: boolean;
+  offers: boolean;
+};
+
+function splitParam(value: string | null) {
+  return (value ?? "").split(",").filter(Boolean);
+}
+
+function toggleValue(list: string[], value: string) {
+  return list.includes(value)
+    ? list.filter((v) => v !== value)
+    : [...list, value];
+}
+
+function draftFromSearchParams(searchParams: URLSearchParams): FilterDraft {
+  return {
+    brand: splitParam(searchParams.get("brand")),
+    skinType: splitParam(searchParams.get("skinType")),
+    type: splitParam(searchParams.get("type")),
+    available: searchParams.get("available") === "1",
+    offers: searchParams.get("offers") === "1",
+  };
+}
+
+function draftCount(draft: FilterDraft, includeOffers: boolean) {
+  return (
+    draft.brand.length +
+    draft.skinType.length +
+    draft.type.length +
+    (draft.available ? 1 : 0) +
+    (includeOffers && draft.offers ? 1 : 0)
+  );
+}
+
+function urlFromDraft(
+  pathname: string,
+  searchParams: URLSearchParams,
+  draft: FilterDraft
+) {
+  const params = new URLSearchParams(searchParams.toString());
+  for (const key of ["brand", "skinType", "type", "available", "offers", "page"]) {
+    params.delete(key);
+  }
+  if (draft.brand.length) params.set("brand", draft.brand.join(","));
+  if (draft.skinType.length) params.set("skinType", draft.skinType.join(","));
+  if (draft.type.length) params.set("type", draft.type.join(","));
+  if (draft.available) params.set("available", "1");
+  if (draft.offers) params.set("offers", "1");
+  const qs = params.toString();
+  return qs ? `${pathname}?${qs}` : pathname;
+}
 
 function useFilterParams() {
   const router = useRouter();
@@ -73,12 +130,10 @@ function useFilterParams() {
     return () => window.clearTimeout(timeout);
   }, [pending]);
 
-  function toggle(key: string, value: string) {
+  function toggle(key: "brand" | "skinType" | "type", value: string) {
     const params = new URLSearchParams(searchParams.toString());
-    const current = (params.get(key) ?? "").split(",").filter(Boolean);
-    const next = current.includes(value)
-      ? current.filter((v) => v !== value)
-      : [...current, value];
+    const current = splitParam(params.get(key));
+    const next = toggleValue(current, value);
     if (next.length) params.set(key, next.join(","));
     else params.delete(key);
     params.delete("page");
@@ -86,7 +141,7 @@ function useFilterParams() {
     push(qs ? `${pathname}?${qs}` : pathname);
   }
 
-  function setFlag(key: string, on: boolean) {
+  function setFlag(key: "available" | "offers", on: boolean) {
     const params = new URLSearchParams(searchParams.toString());
     if (on) params.set(key, "1");
     else params.delete(key);
@@ -95,8 +150,8 @@ function useFilterParams() {
     push(qs ? `${pathname}?${qs}` : pathname);
   }
 
-  function selected(key: string) {
-    return (searchParams.get(key) ?? "").split(",").filter(Boolean);
+  function selected(key: "brand" | "skinType" | "type") {
+    return splitParam(searchParams.get(key));
   }
 
   function clear() {
@@ -143,6 +198,9 @@ export function ProductFilters({
   );
   const [open, setOpen] = useState(false);
   const [entered, setEntered] = useState(false);
+  const [draft, setDraft] = useState<FilterDraft>(() =>
+    draftFromSearchParams(new URLSearchParams())
+  );
   const filterListRef = useRef<HTMLDivElement>(null);
   const filterListScrollRef = useRef(0);
   const showOffersFilter = pathname !== "/offers";
@@ -153,20 +211,19 @@ export function ProductFilters({
   const inStock = searchParams.get("available") === "1";
   const onSale = searchParams.get("offers") === "1";
 
-  const activeCount = useMemo(() => {
-    let n =
-      brandSelected.length + skinSelected.length + typeSelected.length;
-    if (inStock) n += 1;
-    if (showOffersFilter && onSale) n += 1;
-    return n;
-  }, [
-    brandSelected.length,
-    skinSelected.length,
-    typeSelected.length,
-    inStock,
-    onSale,
-    showOffersFilter,
-  ]);
+  const liveDraft: FilterDraft = useMemo(
+    () => ({
+      brand: brandSelected,
+      skinType: skinSelected,
+      type: typeSelected,
+      available: inStock,
+      offers: onSale,
+    }),
+    [brandSelected, skinSelected, typeSelected, inStock, onSale]
+  );
+
+  const activeCount = draftCount(liveDraft, showOffersFilter);
+  const sheetCount = draftCount(draft, showOffersFilter);
 
   const activeChips = useMemo(() => {
     const chips: Array<{ key: string; value: string; label: string }> = [];
@@ -240,6 +297,7 @@ export function ProductFilters({
   }, [open]);
 
   function openSheet() {
+    setDraft(draftFromSearchParams(new URLSearchParams(searchParams.toString())));
     setOpen(true);
   }
 
@@ -249,6 +307,11 @@ export function ProductFilters({
 
   function closeSheet() {
     setEntered(false);
+  }
+
+  function applyDraftAndClose() {
+    push(urlFromDraft(pathname, searchParams, draft));
+    closeSheet();
   }
 
   function handleSheetTransitionEnd(
@@ -264,64 +327,41 @@ export function ProductFilters({
       setFlag(key, false);
       return;
     }
-    toggle(key, value);
+    toggle(key as "brand" | "skinType" | "type", value);
   }
 
-  const content = (
-    <div className="space-y-7">
-      <FilterGroup title={dict.filters.brand}>
-        {facets.brands.map((b) => (
-          <CheckRow
-            key={b.id}
-            label={b.name}
-            checked={brandSelected.includes(b.slug)}
-            onChange={() => toggle("brand", b.slug)}
-          />
-        ))}
-      </FilterGroup>
+  const desktopContent = (
+    <FilterFields
+      facets={facets}
+      dict={dict}
+      locale={locale}
+      showOffersFilter={showOffersFilter}
+      draft={liveDraft}
+      onToggle={(key, value) => toggle(key, value)}
+      onFlag={(key, on) => setFlag(key, on)}
+    />
+  );
 
-      <FilterGroup title={dict.filters.skinType}>
-        {facets.skinTypes.map((s) => (
-          <CheckRow
-            key={s.id}
-            label={locale === "el" ? s.nameEl : s.name}
-            checked={skinSelected.includes(s.slug)}
-            onChange={() => toggle("skinType", s.slug)}
-          />
-        ))}
-      </FilterGroup>
-
-      {facets.productTypes.length > 0 ? (
-        <FilterGroup title={dict.filters.productType}>
-          {facets.productTypes.map((t) => (
-            <CheckRow
-              key={t}
-              label={productTypeLabel(dict, t)}
-              checked={typeSelected.includes(t)}
-              onChange={() => toggle("type", t)}
-            />
-          ))}
-        </FilterGroup>
-      ) : null}
-
-      <FilterGroup title={dict.filters.availability}>
-        <CheckRow
-          label={dict.filters.inStock}
-          checked={inStock}
-          onChange={() => setFlag("available", !inStock)}
-        />
-      </FilterGroup>
-
-      {showOffersFilter ? (
-        <FilterGroup title={dict.filters.offers}>
-          <CheckRow
-            label={dict.filters.onSale}
-            checked={onSale}
-            onChange={() => setFlag("offers", !onSale)}
-          />
-        </FilterGroup>
-      ) : null}
-    </div>
+  const sheetContent = (
+    <FilterFields
+      facets={facets}
+      dict={dict}
+      locale={locale}
+      showOffersFilter={showOffersFilter}
+      draft={draft}
+      onToggle={(key, value) =>
+        setDraft((prev) => ({
+          ...prev,
+          [key]: toggleValue(prev[key], value),
+        }))
+      }
+      onFlag={(key, on) =>
+        setDraft((prev) => ({
+          ...prev,
+          [key]: on,
+        }))
+      }
+    />
   );
 
   return (
@@ -399,7 +439,7 @@ export function ProductFilters({
                 filterListScrollRef.current = e.currentTarget.scrollTop;
               }}
             >
-              <div onClickCapture={rememberFilterScroll}>{content}</div>
+              <div onClickCapture={rememberFilterScroll}>{desktopContent}</div>
             </div>
           </div>
         </aside>
@@ -449,9 +489,9 @@ export function ProductFilters({
                 <h2 className="font-serif text-2xl text-ink">
                   {dict.filters.title}
                 </h2>
-                {activeCount > 0 ? (
+                {sheetCount > 0 ? (
                   <span className="inline-flex h-5 min-w-5 items-center justify-center bg-oak-soft px-1.5 text-[10px] tabular-nums text-ink">
-                    {activeCount}
+                    {sheetCount}
                   </span>
                 ) : null}
               </div>
@@ -464,22 +504,27 @@ export function ProductFilters({
                 <X className="h-5 w-5" strokeWidth={1.75} />
               </button>
             </div>
-            <div className="overflow-y-auto px-5 py-5">{content}</div>
+            <div className="overflow-y-auto px-5 py-5">{sheetContent}</div>
             <div className="shrink-0 border-t border-oak/30 bg-bg px-5 py-4">
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
-                  onClick={() => {
-                    clear();
-                    closeSheet();
-                  }}
+                  onClick={() =>
+                    setDraft({
+                      brand: [],
+                      skinType: [],
+                      type: [],
+                      available: false,
+                      offers: false,
+                    })
+                  }
                   className="border border-oak/40 py-3 text-[11px] uppercase tracking-[0.14em] text-ink transition-colors hover:border-ink/40 hover:bg-bg-muted"
                 >
                   {dict.filters.clearAll}
                 </button>
                 <button
                   type="button"
-                  onClick={closeSheet}
+                  onClick={applyDraftAndClose}
                   className="bg-sage py-3 text-[11px] uppercase tracking-[0.14em] text-bg transition-colors hover:bg-sage-dark"
                 >
                   {dict.filters.done}
@@ -490,6 +535,81 @@ export function ProductFilters({
         </div>
       ) : null}
     </ListingNavigationContext.Provider>
+  );
+}
+
+function FilterFields({
+  facets,
+  dict,
+  locale,
+  showOffersFilter,
+  draft,
+  onToggle,
+  onFlag,
+}: {
+  facets: Facets;
+  dict: Dictionary;
+  locale: string;
+  showOffersFilter: boolean;
+  draft: FilterDraft;
+  onToggle: (key: "brand" | "skinType" | "type", value: string) => void;
+  onFlag: (key: "available" | "offers", on: boolean) => void;
+}) {
+  return (
+    <div className="space-y-7">
+      <FilterGroup title={dict.filters.brand}>
+        {facets.brands.map((b) => (
+          <CheckRow
+            key={b.id}
+            label={b.name}
+            checked={draft.brand.includes(b.slug)}
+            onChange={() => onToggle("brand", b.slug)}
+          />
+        ))}
+      </FilterGroup>
+
+      <FilterGroup title={dict.filters.skinType}>
+        {facets.skinTypes.map((s) => (
+          <CheckRow
+            key={s.id}
+            label={locale === "el" ? s.nameEl : s.name}
+            checked={draft.skinType.includes(s.slug)}
+            onChange={() => onToggle("skinType", s.slug)}
+          />
+        ))}
+      </FilterGroup>
+
+      {facets.productTypes.length > 0 ? (
+        <FilterGroup title={dict.filters.productType}>
+          {facets.productTypes.map((t) => (
+            <CheckRow
+              key={t}
+              label={productTypeLabel(dict, t)}
+              checked={draft.type.includes(t)}
+              onChange={() => onToggle("type", t)}
+            />
+          ))}
+        </FilterGroup>
+      ) : null}
+
+      <FilterGroup title={dict.filters.availability}>
+        <CheckRow
+          label={dict.filters.inStock}
+          checked={draft.available}
+          onChange={() => onFlag("available", !draft.available)}
+        />
+      </FilterGroup>
+
+      {showOffersFilter ? (
+        <FilterGroup title={dict.filters.offers}>
+          <CheckRow
+            label={dict.filters.onSale}
+            checked={draft.offers}
+            onChange={() => onFlag("offers", !draft.offers)}
+          />
+        </FilterGroup>
+      ) : null}
+    </div>
   );
 }
 

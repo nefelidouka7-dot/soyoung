@@ -3,12 +3,14 @@
 import { useEffect, useState, Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/use-translation";
 
 /**
- * Top progress bar + light content dim while App Router navigations resolve.
+ * Top progress bar + visible page loader while App Router navigations resolve.
  * Click on internal <a> starts it; pathname/search change finishes it.
  */
 function NavigationProgressInner() {
+  const { dict } = useTranslation();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [active, setActive] = useState(false);
@@ -38,6 +40,7 @@ function NavigationProgressInner() {
     }, 10000);
     return () => window.clearTimeout(failsafe);
   }, [active]);
+
   // Start on internal link clicks
   useEffect(() => {
     function onClick(event: MouseEvent) {
@@ -106,18 +109,24 @@ function NavigationProgressInner() {
 
       <div
         className={cn(
-          "pointer-events-none fixed inset-0 z-[90] bg-bg/25 transition-opacity duration-300",
-          active ? "opacity-100" : "opacity-0"
+          "fixed inset-0 z-[90] flex flex-col items-center justify-center gap-4 bg-bg/55 backdrop-blur-[2px] transition-opacity duration-200",
+          active
+            ? "pointer-events-auto opacity-100"
+            : "pointer-events-none opacity-0"
         )}
-        aria-hidden
-      />
-
-      <div
-        role="status"
-        aria-live="polite"
-        className="sr-only"
+        aria-hidden={!active}
       >
-        {active ? "Loading page…" : ""}
+        <span
+          className="h-8 w-8 rounded-full border-2 border-oak/40 border-t-sage animate-loader-spin"
+          aria-hidden
+        />
+        <p className="text-[11px] uppercase tracking-[0.18em] text-ink-muted">
+          {dict.common.loading}
+        </p>
+      </div>
+
+      <div role="status" aria-live="polite" className="sr-only">
+        {active ? dict.common.loading : ""}
       </div>
     </>
   );
