@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Manrope } from "next/font/google";
 import { Providers } from "@/components/providers";
-import { STORE_NAME, absoluteUrl } from "@/lib/utils";
+import { STORE_NAME, absoluteUrl, metadataBaseUrl } from "@/lib/utils";
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -19,7 +19,7 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(absoluteUrl()),
+  metadataBase: metadataBaseUrl(),
   title: {
     default: `${STORE_NAME} — Beauty, chosen with intention`,
     template: `%s · ${STORE_NAME}`,

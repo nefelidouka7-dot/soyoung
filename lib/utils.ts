@@ -24,12 +24,14 @@ export function slugify(text: string) {
 }
 
 function appBaseUrl() {
-  const explicit = process.env.NEXT_PUBLIC_APP_URL?.trim();
-  if (explicit) return explicit.replace(/\/$/, "");
+  const explicit = process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/$/, "") ?? "";
+  // Must be an absolute http(s) origin — values like "" or "/" break metadataBase.
+  if (/^https?:\/\//i.test(explicit)) return explicit;
 
-  // Vercel sets this automatically during build/runtime (no protocol).
-  const vercel = process.env.VERCEL_URL?.trim();
-  if (vercel) return `https://${vercel.replace(/\/$/, "")}`;
+  // Vercel sets this automatically during build/runtime (host only, no protocol).
+  const vercel = process.env.VERCEL_URL?.trim().replace(/\/$/, "") ?? "";
+  if (vercel && !/^https?:\/\//i.test(vercel)) return `https://${vercel}`;
+  if (/^https?:\/\//i.test(vercel)) return vercel;
 
   return "http://localhost:3000";
 }
@@ -38,6 +40,15 @@ export function absoluteUrl(path = "") {
   const base = appBaseUrl();
   if (!path || path === "/") return base;
   return `${base}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
+/** Safe origin for Next.js metadataBase — never throws on bad env. */
+export function metadataBaseUrl(): URL {
+  try {
+    return new URL(appBaseUrl());
+  } catch {
+    return new URL("http://localhost:3000");
+  }
 }
 
 export const FREE_SHIPPING_THRESHOLD = Number(
