@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { ProductCard } from "@/features/products/components/product-card";
+import { ProductGrid } from "@/features/products/components/product-grid";
 import {
   findSkinTypes,
   findSkinTypeBySlug,
@@ -88,16 +89,18 @@ export default async function SkinTypePage({
         >
           {dict.skinType.chooseAnother}
         </Link>
-        <div className="mt-10 grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-6">
-          {products.products.map((p) => (
-            <ProductCard
-              key={p.id}
-              product={{
-                ...p,
-                suitableFor: typeName,
-              }}
-            />
-          ))}
+        <div className="mt-8 sm:mt-10">
+          <ProductGrid>
+            {products.products.map((p) => (
+              <ProductCard
+                key={p.id}
+                product={{
+                  ...p,
+                  suitableFor: typeName,
+                }}
+              />
+            ))}
+          </ProductGrid>
         </div>
         {products.products.length === 0 ? (
           <p className="mt-10 text-center text-sm text-ink-muted">

@@ -95,7 +95,7 @@ export function ProductPurchasePanel({ product }: Props) {
   }
 
   return (
-    <div className="grid items-start gap-8 lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-12 xl:gap-14">
+    <div className="grid items-start gap-6 sm:gap-8 lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-12 xl:gap-14">
       <div className="flex justify-center gap-2.5 lg:justify-start">
         {images.length > 1 ? (
           <div className="hidden shrink-0 flex-col gap-2 sm:flex">
@@ -123,39 +123,39 @@ export function ProductPurchasePanel({ product }: Props) {
           </div>
         ) : null}
 
-        <div>
+        <div className="w-full max-w-[380px]">
           <button
             type="button"
-            className="relative block h-[300px] w-[300px] overflow-hidden border border-oak/35 bg-white sm:h-[340px] sm:w-[340px] lg:h-[380px] lg:w-[380px]"
+            className="relative block aspect-square w-full overflow-hidden border border-oak/35 bg-white"
             onClick={() => setLightbox(true)}
             aria-label={dict.product.openGallery}
           >
-            <span className="absolute inset-4 sm:inset-5">
+            <span className="absolute inset-3 sm:inset-5">
               <Image
                 src={images[activeImage]?.url ?? "/images/placeholder-product.svg"}
                 alt={images[activeImage]?.alt ?? product.name}
                 fill
                 className="object-contain"
-                sizes="380px"
+                sizes="(max-width:640px) 90vw, 380px"
                 priority
               />
             </span>
             {onSale ? (
-              <span className="absolute left-3 top-3 z-10">
+              <span className="absolute left-2.5 top-2.5 z-10 sm:left-3 sm:top-3">
                 <Badge variant="sale">{dict.product.sale}</Badge>
               </span>
             ) : null}
           </button>
 
           {images.length > 1 ? (
-            <div className="mt-3 flex gap-2 overflow-x-auto sm:hidden">
+            <div className="mt-3 flex gap-2 overflow-x-auto pb-0.5 sm:hidden">
               {images.map((img, i) => (
                 <button
                   key={img.id}
                   type="button"
                   onClick={() => setActiveImage(i)}
                   className={cn(
-                    "relative block h-12 w-12 shrink-0 overflow-hidden border bg-white",
+                    "relative block h-14 w-14 shrink-0 overflow-hidden border bg-white",
                     i === activeImage ? "border-ink" : "border-oak/40"
                   )}
                 >
@@ -164,7 +164,7 @@ export function ProductPurchasePanel({ product }: Props) {
                     alt=""
                     fill
                     className="object-contain p-0.5"
-                    sizes="48px"
+                    sizes="56px"
                   />
                 </button>
               ))}
@@ -181,7 +181,7 @@ export function ProductPurchasePanel({ product }: Props) {
           {product.brand}
         </Link>
 
-        <h1 className="mt-3 font-serif text-[2rem] leading-[1.15] text-ink sm:text-[2.35rem]">
+        <h1 className="mt-2.5 font-serif text-[1.75rem] leading-[1.15] text-ink sm:mt-3 sm:text-[2.35rem]">
           {product.name}
         </h1>
 
@@ -281,50 +281,52 @@ export function ProductPurchasePanel({ product }: Props) {
           </div>
         </div>
 
-        <div className="mt-6 flex gap-2">
+        <div className="mt-6 flex flex-col gap-2 sm:flex-row">
           <Button
-            className="min-w-0 flex-[1.4]"
+            className="w-full min-w-0 sm:flex-[1.4]"
             size="lg"
             disabled={stock < 1}
             onClick={() => addToCart(false)}
           >
             {dict.product.addToCart}
           </Button>
-          <Button
-            className="min-w-0 flex-1"
-            size="lg"
-            variant="secondary"
-            disabled={stock < 1}
-            onClick={() => addToCart(true)}
-          >
-            {dict.product.buyNow}
-          </Button>
-          <Button
-            size="lg"
-            variant="ghost"
-            className="shrink-0 px-3"
-            aria-label={
-              showWishlisted
-                ? dict.product.removeFromWishlist
-                : dict.product.addToWishlist
-            }
-            onClick={() => {
-              toggleWish(product.id);
-              toast.success(
+          <div className="flex gap-2">
+            <Button
+              className="min-w-0 flex-1"
+              size="lg"
+              variant="secondary"
+              disabled={stock < 1}
+              onClick={() => addToCart(true)}
+            >
+              {dict.product.buyNow}
+            </Button>
+            <Button
+              size="lg"
+              variant="ghost"
+              className="shrink-0 px-3"
+              aria-label={
                 showWishlisted
-                  ? dict.product.removedFromWishlist
-                  : dict.product.addedToWishlist
-              );
-            }}
-          >
-            <Heart
-              className={cn(
-                "h-5 w-5",
-                showWishlisted && "fill-coral text-coral"
-              )}
-              strokeWidth={1.5}
-            />
-          </Button>
+                  ? dict.product.removeFromWishlist
+                  : dict.product.addToWishlist
+              }
+              onClick={() => {
+                toggleWish(product.id);
+                toast.success(
+                  showWishlisted
+                    ? dict.product.removedFromWishlist
+                    : dict.product.addedToWishlist
+                );
+              }}
+            >
+              <Heart
+                className={cn(
+                  "h-5 w-5",
+                  showWishlisted && "fill-coral text-coral"
+                )}
+                strokeWidth={1.5}
+              />
+            </Button>
+          </div>
         </div>
       </div>
 

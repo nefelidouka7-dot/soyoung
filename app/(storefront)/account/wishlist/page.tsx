@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ProductCard, type ProductCardData } from "@/features/products/components/product-card";
+import { ProductGrid } from "@/features/products/components/product-grid";
 import { useWishlistStore } from "@/features/wishlist/store";
 import { EmptyState } from "@/components/ui/empty-state";
 import { getWishlistProducts } from "@/features/wishlist/actions";
@@ -35,10 +36,12 @@ export default function AccountWishlistPage() {
           action={{ label: dict.home.exploreSkincare, href: "/skincare" }}
         />
       ) : (
-        <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-3 lg:grid-cols-4">
-          {products.map((p) => (
-            <ProductCard key={p.id} product={p} />
-          ))}
+        <div className="mt-6 sm:mt-8">
+          <ProductGrid>
+            {products.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </ProductGrid>
         </div>
       )}
     </div>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ProductCard } from "@/features/products/components/product-card";
+import { ProductGrid } from "@/features/products/components/product-grid";
 import { ProductFilters } from "@/features/products/components/product-filters";
 import { ProductSort } from "@/features/products/components/product-sort";
 import {
@@ -113,8 +114,8 @@ export default async function CategoryListingPage({
         : dict.listing.shop);
 
   return (
-    <div className="container-page py-10 lg:py-14">
-      <nav className="text-xs text-ink-muted" aria-label="Breadcrumb">
+    <div className="container-page py-8 sm:py-10 lg:py-14">
+      <nav className="text-[11px] uppercase tracking-[0.1em] text-ink-muted sm:text-xs sm:normal-case sm:tracking-normal" aria-label="Breadcrumb">
         <ol className="flex flex-wrap gap-2">
           <li>
             <Link href="/" className="hover:text-ink">
@@ -126,22 +127,22 @@ export default async function CategoryListingPage({
         </ol>
       </nav>
 
-      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+      <div className="mt-4 flex flex-col gap-3 sm:mt-4 sm:flex-row sm:items-end sm:justify-between sm:gap-2">
         <div>
-          <h1 className="font-serif text-3xl text-ink sm:text-4xl">{title}</h1>
+          <h1 className="font-serif text-[1.75rem] leading-tight text-ink sm:text-3xl md:text-4xl">{title}</h1>
           {category?.description ? (
-            <p className="mt-2 max-w-2xl text-sm text-ink-muted">
+            <p className="mt-2 hidden max-w-2xl text-sm text-ink-muted sm:block">
               {category.description}
             </p>
           ) : null}
-          <p className="mt-2 text-sm text-ink-muted">
+          <p className="mt-1.5 text-xs text-ink-muted sm:mt-2 sm:text-sm">
             {t((d) => d.listing.productsCount, { count: result.total })}
           </p>
         </div>
         <ProductSort current={sort} />
       </div>
 
-      <div className="mt-8 grid gap-10 lg:grid-cols-[240px_1fr]">
+      <div className="mt-6 grid gap-8 sm:mt-8 lg:grid-cols-[240px_1fr] lg:gap-10">
         <ProductFilters facets={facets} />
         <div>
           {result.products.length === 0 ? (
@@ -154,11 +155,11 @@ export default async function CategoryListingPage({
               }}
             />
           ) : (
-            <div className="grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-3 lg:gap-x-6">
+            <ProductGrid variant="listing">
               {result.products.map((p) => (
                 <ProductCard key={p.id} product={p} />
               ))}
-            </div>
+            </ProductGrid>
           )}
 
           {result.totalPages > 1 ? (

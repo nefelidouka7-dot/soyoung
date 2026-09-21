@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { ProductCard } from "@/features/products/components/product-card";
+import { ProductGrid } from "@/features/products/components/product-grid";
 import {
   findProducts,
   findFeaturedBrands,
@@ -209,10 +210,12 @@ export default async function HomePage() {
               {dict.home.viewAll}
             </Link>
           </div>
-          <div className="mt-12 grid grid-cols-2 gap-x-4 gap-y-12 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-7">
-            {bestSellers.products.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
+          <div className="mt-10 sm:mt-12">
+            <ProductGrid>
+              {bestSellers.products.map((p) => (
+                <ProductCard key={p.id} product={p} />
+              ))}
+            </ProductGrid>
           </div>
         </div>
       </section>
@@ -234,10 +237,12 @@ export default async function HomePage() {
             {dict.home.viewAll}
           </Link>
         </div>
-        <div className="mt-12 grid grid-cols-2 gap-x-4 gap-y-12 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-7">
-          {newIn.products.map((p) => (
-            <ProductCard key={p.id} product={p} />
-          ))}
+        <div className="mt-10 sm:mt-12">
+          <ProductGrid>
+            {newIn.products.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </ProductGrid>
         </div>
       </section>
 

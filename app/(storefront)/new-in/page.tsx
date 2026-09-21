@@ -1,4 +1,5 @@
 import { ProductCard } from "@/features/products/components/product-card";
+import { ProductGrid } from "@/features/products/components/product-grid";
 import { ProductSort } from "@/features/products/components/product-sort";
 import { findProducts } from "@/server/repositories/product.repository";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -24,11 +25,11 @@ export default async function NewInPage({
   const result = await findProducts({ sort: "newest", pageSize: 24, newIn: true });
 
   return (
-    <div className="container-page py-10 lg:py-14">
-      <div className="flex items-end justify-between gap-4">
+    <div className="container-page py-8 sm:py-10 lg:py-14">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
         <div>
-          <h1 className="font-serif text-3xl sm:text-4xl">New In</h1>
-          <p className="mt-2 text-sm text-ink-muted">
+          <h1 className="font-serif text-[1.75rem] sm:text-3xl md:text-4xl">New In</h1>
+          <p className="mt-1.5 text-xs text-ink-muted sm:mt-2 sm:text-sm">
             {result.total} recently added products
           </p>
         </div>
@@ -37,10 +38,12 @@ export default async function NewInPage({
       {result.products.length === 0 ? (
         <EmptyState title="No new products yet" description="Check back soon for new arrivals." />
       ) : (
-        <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-6">
-          {result.products.map((p) => (
-            <ProductCard key={p.id} product={p} />
-          ))}
+        <div className="mt-6 sm:mt-8">
+          <ProductGrid>
+            {result.products.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </ProductGrid>
         </div>
       )}
     </div>

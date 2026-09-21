@@ -7,6 +7,7 @@ import {
   findProducts,
 } from "@/server/repositories/product.repository";
 import { ProductCard } from "@/features/products/components/product-card";
+import { ProductGrid } from "@/features/products/components/product-grid";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -83,10 +84,12 @@ export default async function BrandPage({ params }: Props) {
         {featured.length > 0 ? (
           <section className="mt-12">
             <h2 className="font-serif text-2xl">Featured from {brand.name}</h2>
-            <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-4 lg:gap-x-6">
-              {featured.map((p) => (
-                <ProductCard key={p.id} product={p} />
-              ))}
+            <div className="mt-6">
+              <ProductGrid variant="featured">
+                {featured.map((p) => (
+                  <ProductCard key={p.id} product={p} />
+                ))}
+              </ProductGrid>
             </div>
           </section>
         ) : null}
@@ -96,10 +99,12 @@ export default async function BrandPage({ params }: Props) {
           {products.products.length === 0 ? (
             <p className="mt-6 text-sm text-ink-muted">No products yet.</p>
           ) : (
-            <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-6">
-              {products.products.map((p) => (
-                <ProductCard key={p.id} product={p} />
-              ))}
+            <div className="mt-6">
+              <ProductGrid>
+                {products.products.map((p) => (
+                  <ProductCard key={p.id} product={p} />
+                ))}
+              </ProductGrid>
             </div>
           )}
         </section>
