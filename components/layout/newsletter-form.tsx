@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useTranslation } from "@/lib/i18n/use-translation";
+import { subscribeNewsletterAction } from "@/features/newsletter/actions";
 
 export function NewsletterForm() {
   const { dict } = useTranslation();
@@ -18,8 +19,26 @@ export function NewsletterForm() {
       return;
     }
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 400));
+    const res = await subscribeNewsletterAction(email);
     setLoading(false);
+
+    if (!res.ok) {
+      if (res.error === "alreadySubscribed") {
+        toast.message(dict.newsletter.alreadySubscribed);
+        return;
+      }
+      if (res.error === "invalidEmail") {
+        toast.error(dict.newsletter.invalidEmail);
+        return;
+      }
+      if (res.error === "rateLimited") {
+        toast.error(dict.newsletter.rateLimited);
+        return;
+      }
+      toast.error(dict.newsletter.failed);
+      return;
+    }
+
     setEmail("");
     toast.success(dict.newsletter.success);
   }

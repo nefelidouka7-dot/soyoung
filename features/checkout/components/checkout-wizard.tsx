@@ -3,12 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { useCartStore } from "@/features/cart/store";
 import {
   placeOrderAction,
   validateCheckoutTotals,
 } from "@/features/checkout/actions";
-import { StripePaymentPanel } from "@/features/checkout/components/stripe-payment-panel";
 import { loginAction, registerAction } from "@/features/auth/actions";
 import {
   COD_FEE,
@@ -100,10 +100,6 @@ export function CheckoutWizard({
     useState<ShippingMethod>("delivery");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
   const [accountMode, setAccountMode] = useState<AccountMode>("guest");
-  const [stripeCheckout, setStripeCheckout] = useState<{
-    clientSecret: string;
-    orderNumber: string;
-  } | null>(null);
   const [authPending, setAuthPending] = useState(false);
   const [authError, setAuthError] = useState<
     | "invalidCredentials"
@@ -222,9 +218,17 @@ export function CheckoutWizard({
 
   async function goToPayment() {
     setError(null);
-    const detailsError = validateDetails();
-    if (detailsError) {
-      setError(detailsError);
+    // Contact only on step 0 — address is asked with delivery on step 1.
+    if (!form.email.includes("@")) {
+      setError(dict.checkout.invalidEmail);
+      return;
+    }
+    if (!form.firstName || !form.lastName) {
+      setError(dict.checkout.completeContact);
+      return;
+    }
+    if (!form.phone.trim()) {
+      setError(dict.checkout.phoneNeeded);
       return;
     }
     const ok = await refreshTotals();
@@ -238,7 +242,15 @@ export function CheckoutWizard({
     if (detailsError) {
       setError(detailsError);
       setPending(false);
-      setStep(0);
+      // Address is collected on this step when delivery is selected.
+      if (
+        detailsError === dict.checkout.completeAddress ||
+        detailsError === dict.checkout.phoneNeeded
+      ) {
+        setStep(1);
+      } else {
+        setStep(0);
+      }
       return;
     }
 
@@ -259,11 +271,9 @@ export function CheckoutWizard({
       return;
     }
 
-    if (paymentMethod === "card" && !res.mock && res.clientSecret) {
-      setStripeCheckout({
-        clientSecret: res.clientSecret,
-        orderNumber: res.orderNumber,
-      });
+    if (paymentMethod === "card" && !res.mock && res.checkoutUrl) {
+      clear();
+      window.location.assign(res.checkoutUrl);
       return;
     }
 
@@ -333,8 +343,6 @@ export function CheckoutWizard({
       : dict.checkout.payByCard;
 
   const showAddressForm = isAuthenticated || accountMode === "guest";
-  const storeHours =
-    locale === "el" ? STORE_PICKUP.hours : STORE_PICKUP.hoursEn;
 
   return (
     <div className="mx-auto w-full max-w-5xl">
@@ -366,50 +374,9 @@ export function CheckoutWizard({
       </header>
 
       <div className="mt-8 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-10 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="min-w-0 space-y-6">
+        <div className="order-2 min-w-0 space-y-6 lg:order-1">
           {step === 0 ? (
             <>
-              <section className={panelClass}>
-                <h2 className={sectionTitleClass}>
-                  {dict.checkout.shippingMethod}
-                </h2>
-                <div className="mt-5 space-y-2">
-                  <MethodRow
-                    selected={shippingMethod === "pickup"}
-                    title={dict.checkout.pickup}
-                    description={`${dict.checkout.pickupDesc} · ${dict.checkout.pickupReady}`}
-                    priceLabel={dict.checkout.free}
-                    onSelect={() => selectShipping("pickup")}
-                  />
-                  <MethodRow
-                    selected={shippingMethod === "delivery"}
-                    title={dict.checkout.delivery}
-                    description={`${dict.checkout.deliveryDesc} · ${dict.checkout.deliveryEta}`}
-                    priceLabel={courierPriceLabel}
-                    onSelect={() => selectShipping("delivery")}
-                  />
-                </div>
-                {shippingMethod === "delivery" && remainingForFree > 0 ? (
-                  <p className="mt-4 text-sm text-ink-muted">
-                    {t((d) => d.checkout.addMoreToUnlock, {
-                      amount: formatPrice(remainingForFree),
-                    })}
-                  </p>
-                ) : null}
-                {shippingMethod === "delivery" && remainingForFree === 0 ? (
-                  <p className="mt-4 text-sm text-sage">
-                    {dict.checkout.freeOnOrder}
-                  </p>
-                ) : null}
-                {shippingMethod === "pickup" ? (
-                  <p className="mt-4 text-sm text-ink-muted">
-                    {STORE_PICKUP.line1}, {STORE_PICKUP.postalCode}{" "}
-                    {STORE_PICKUP.city} · {dict.checkout.pickupHours}:{" "}
-                    {storeHours}
-                  </p>
-                ) : null}
-              </section>
-
               {isAuthenticated ? (
                 <div className={`${panelClass} text-sm leading-relaxed`}>
                   {dict.checkout.signedInAs}{" "}
@@ -597,31 +564,12 @@ export function CheckoutWizard({
               {showAddressForm ? (
                 <section className={panelClass}>
                   <h2 className={sectionTitleClass}>
-                    {needsAddress
-                      ? dict.checkout.contactShipping
-                      : dict.checkout.contactDetails}
+                    {dict.checkout.contactDetails}
                   </h2>
                   {!isAuthenticated && accountMode === "guest" ? (
                     <p className="mt-2 text-sm text-ink-muted">
                       {dict.checkout.guestHint}
                     </p>
-                  ) : null}
-
-                  {!needsAddress ? (
-                    <div className="mt-5 border border-oak/30 bg-bg px-4 py-4 text-sm">
-                      <p className="text-xs uppercase tracking-wider text-ink-muted">
-                        {dict.checkout.storeAddress}
-                      </p>
-                      <p className="mt-2 text-ink">{STORE_PICKUP.name}</p>
-                      <p className="text-ink-muted">
-                        {STORE_PICKUP.line1}, {STORE_PICKUP.postalCode}{" "}
-                        {STORE_PICKUP.city}
-                      </p>
-                      <p className="mt-1 text-ink-muted">
-                        {dict.checkout.pickupHours}: {storeHours}
-                      </p>
-                      <p className="text-ink-muted">{STORE_PICKUP.phone}</p>
-                    </div>
                   ) : null}
 
                   <div className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -667,64 +615,6 @@ export function CheckoutWizard({
                         autoComplete="family-name"
                       />
                     </div>
-                    {needsAddress ? (
-                      <>
-                        <div className="sm:col-span-2">
-                          <Label htmlFor="line1">{dict.checkout.address}</Label>
-                          <Input
-                            id="line1"
-                            value={form.line1}
-                            onChange={(e) => update("line1", e.target.value)}
-                            className={fieldClass}
-                            autoComplete="address-line1"
-                          />
-                        </div>
-                        <div className="sm:col-span-2">
-                          <Label htmlFor="line2">{dict.checkout.apartment}</Label>
-                          <Input
-                            id="line2"
-                            value={form.line2}
-                            onChange={(e) => update("line2", e.target.value)}
-                            className={fieldClass}
-                            autoComplete="address-line2"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="city">{dict.checkout.city}</Label>
-                          <Input
-                            id="city"
-                            value={form.city}
-                            onChange={(e) => update("city", e.target.value)}
-                            className={fieldClass}
-                            autoComplete="address-level2"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="postalCode">
-                            {dict.checkout.postalCode}
-                          </Label>
-                          <Input
-                            id="postalCode"
-                            value={form.postalCode}
-                            onChange={(e) =>
-                              update("postalCode", e.target.value)
-                            }
-                            className={fieldClass}
-                            autoComplete="postal-code"
-                          />
-                        </div>
-                        <div className="sm:col-span-2">
-                          <Label htmlFor="country">{dict.checkout.country}</Label>
-                          <Input
-                            id="country"
-                            value={form.country}
-                            onChange={(e) => update("country", e.target.value)}
-                            className={fieldClass}
-                            autoComplete="country"
-                          />
-                        </div>
-                      </>
-                    ) : null}
                   </div>
                 </section>
               ) : null}
@@ -763,107 +653,235 @@ export function CheckoutWizard({
           ) : null}
 
           {step === 1 ? (
+            <>
+              <section className={panelClass}>
+                <h2 className={sectionTitleClass}>
+                  {dict.checkout.shippingMethod}
+                </h2>
+                <div className="mt-5 space-y-2">
+                  <MethodRow
+                    selected={shippingMethod === "pickup"}
+                    title={dict.checkout.pickup}
+                    description={`${dict.checkout.pickupDesc} · ${dict.checkout.pickupReady}`}
+                    priceLabel={dict.checkout.free}
+                    onSelect={() => selectShipping("pickup")}
+                  />
+                  <MethodRow
+                    selected={shippingMethod === "delivery"}
+                    title={dict.checkout.delivery}
+                    description={`${dict.checkout.deliveryDesc} · ${dict.checkout.deliveryEta}`}
+                    priceLabel={courierPriceLabel}
+                    onSelect={() => selectShipping("delivery")}
+                  />
+                </div>
+                {shippingMethod === "delivery" && remainingForFree > 0 ? (
+                  <p className="mt-4 text-sm text-ink-muted">
+                    {t((d) => d.checkout.addMoreToUnlock, {
+                      amount: formatPrice(remainingForFree),
+                    })}
+                  </p>
+                ) : null}
+                {shippingMethod === "delivery" && remainingForFree === 0 ? (
+                  <p className="mt-4 text-sm text-sage">
+                    {dict.checkout.freeOnOrder}
+                  </p>
+                ) : null}
+                {shippingMethod === "pickup" ? (
+                  <div className="mt-4 space-y-3 text-sm text-ink-muted">
+                    <p>
+                      {STORE_PICKUP.line1}, {STORE_PICKUP.postalCode}{" "}
+                      {STORE_PICKUP.city}
+                      {" · "}
+                      <a
+                        href={`tel:${STORE_PICKUP.phone.replace(/\s/g, "")}`}
+                        className="text-ink underline-offset-2 hover:underline"
+                      >
+                        {STORE_PICKUP.phone}
+                      </a>
+                    </p>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-[0.14em] text-ink-muted">
+                        {dict.checkout.pickupHours}
+                      </p>
+                      <dl className="mt-2 space-y-1">
+                        {STORE_PICKUP.schedule.map((row) => (
+                          <div
+                            key={row.dayEn}
+                            className="grid grid-cols-[6.5rem_1fr] gap-3 sm:grid-cols-[7.5rem_1fr]"
+                          >
+                            <dt className="text-ink">
+                              {locale === "el" ? row.dayEl : row.dayEn}
+                            </dt>
+                            <dd>
+                              {locale === "el" ? row.hoursEl : row.hoursEn}
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </div>
+                  </div>
+                ) : null}
+              </section>
+
+
+              {needsAddress ? (
+                <section className={panelClass}>
+                  <h2 className={sectionTitleClass}>
+                    {dict.checkout.contactShipping}
+                  </h2>
+                  <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                    <div className="sm:col-span-2">
+                      <Label htmlFor="line1">{dict.checkout.address}</Label>
+                      <Input
+                        id="line1"
+                        value={form.line1}
+                        onChange={(e) => update("line1", e.target.value)}
+                        className={fieldClass}
+                        autoComplete="address-line1"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <Label htmlFor="line2">{dict.checkout.apartment}</Label>
+                      <Input
+                        id="line2"
+                        value={form.line2}
+                        onChange={(e) => update("line2", e.target.value)}
+                        className={fieldClass}
+                        autoComplete="address-line2"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="city">{dict.checkout.city}</Label>
+                      <Input
+                        id="city"
+                        value={form.city}
+                        onChange={(e) => update("city", e.target.value)}
+                        className={fieldClass}
+                        autoComplete="address-level2"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="postalCode">
+                        {dict.checkout.postalCode}
+                      </Label>
+                      <Input
+                        id="postalCode"
+                        value={form.postalCode}
+                        onChange={(e) =>
+                          update("postalCode", e.target.value)
+                        }
+                        className={fieldClass}
+                        autoComplete="postal-code"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <Label htmlFor="country">{dict.checkout.country}</Label>
+                      <Input
+                        id="country"
+                        value={form.country}
+                        onChange={(e) => update("country", e.target.value)}
+                        className={fieldClass}
+                        autoComplete="country"
+                      />
+                    </div>
+                  </div>
+                </section>
+              ) : null}
+
             <section className={panelClass}>
               <h2 className={sectionTitleClass}>
                 {dict.checkout.paymentMethod}
               </h2>
-              {!stripeCheckout ? (
-                <div className="mt-5 space-y-2">
-                  {availablePayments.includes("cod") ? (
-                    <MethodRow
-                      selected={paymentMethod === "cod"}
-                      title={dict.checkout.cashOnDelivery}
-                      description={dict.checkout.cashOnDeliveryDesc}
-                      priceLabel={`+${formatPrice(COD_FEE)}`}
-                      onSelect={() => setPaymentMethod("cod")}
-                    />
-                  ) : null}
-                  {availablePayments.includes("card") ? (
-                    <MethodRow
-                      selected={paymentMethod === "card"}
-                      title={dict.checkout.payByCard}
-                      description={dict.checkout.payByCardDesc}
-                      onSelect={() => setPaymentMethod("card")}
-                    />
-                  ) : null}
-                </div>
-              ) : null}
+              <div className="mt-5 space-y-2">
+                {availablePayments.includes("cod") ? (
+                  <MethodRow
+                    selected={paymentMethod === "cod"}
+                    title={dict.checkout.cashOnDelivery}
+                    description={dict.checkout.cashOnDeliveryDesc}
+                    priceLabel={`+${formatPrice(COD_FEE)}`}
+                    onSelect={() => setPaymentMethod("cod")}
+                  />
+                ) : null}
+                {availablePayments.includes("card") ? (
+                  <MethodRow
+                    selected={paymentMethod === "card"}
+                    title={dict.checkout.payByCard}
+                    description={dict.checkout.payByCardDesc}
+                    onSelect={() => setPaymentMethod("card")}
+                  />
+                ) : null}
+              </div>
 
-              {paymentMethod === "card" && !stripeCheckout ? (
+              {paymentMethod === "card" ? (
                 <p className="mt-4 text-sm leading-relaxed text-ink-muted">
                   {dict.checkout.paymentSecure}
                 </p>
-              ) : null}
-
-              {stripeCheckout ? (
-                <div className="mt-5">
-                  <p className="mb-4 text-sm text-ink-muted">
-                    {dict.checkout.order}{" "}
-                    <span className="font-medium text-ink">
-                      {stripeCheckout.orderNumber}
-                    </span>
-                  </p>
-                  <p className="mb-4 text-sm text-ink-muted">
-                    {dict.checkout.paymentNextStep}
-                  </p>
-                  <StripePaymentPanel
-                    clientSecret={stripeCheckout.clientSecret}
-                    orderNumber={stripeCheckout.orderNumber}
-                    onSuccess={() => {
-                      clear();
-                      router.push(
-                        `/checkout/success?order=${stripeCheckout.orderNumber}`
-                      );
-                    }}
-                  />
-                </div>
               ) : null}
 
               <p className="mt-5 border-t border-oak/30 pt-4 text-xs leading-relaxed text-ink-muted">
                 {dict.checkout.agreeTerms}
               </p>
             </section>
+            </>
           ) : null}
 
           {error ? <p className="text-sm text-coral">{error}</p> : null}
 
-          <div className="flex flex-wrap items-center gap-3 border-t border-oak/30 pt-6">
-            {step === 1 && !stripeCheckout ? (
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => setStep(0)}
-              >
-                {dict.checkout.back}
-              </Button>
-            ) : null}
+          <div
+            className={
+              "border-t border-oak/30 pt-6"
+            }
+          >
             {step === 0 && showAddressForm ? (
-              <Button
-                type="button"
-                className="min-w-[11rem]"
-                onClick={goToPayment}
-              >
-                {dict.checkout.continuePayment}
-              </Button>
+              <div className="flex justify-end lg:hidden">
+                <button
+                  type="button"
+                  onClick={goToPayment}
+                  className="group inline-flex h-12 w-full items-center justify-center gap-2.5 bg-sage px-7 text-[11px] uppercase tracking-[0.16em] text-white shadow-[0_14px_34px_-16px_rgba(43,41,39,0.45)] transition-colors hover:bg-sage-dark sm:w-auto sm:min-w-[15rem]"
+                >
+                  {dict.checkout.continuePayment}
+                  <ArrowRight
+                    className="h-3.5 w-3.5 transition-transform duration-300 ease-out group-hover:translate-x-1"
+                    strokeWidth={1.75}
+                  />
+                </button>
+              </div>
             ) : null}
-            {step === 1 && !stripeCheckout ? (
-              <Button
-                type="button"
-                className="min-w-[11rem]"
-                onClick={placeOrder}
-                disabled={pending}
-              >
-                {pending
-                  ? dict.checkout.placingOrder
-                  : paymentMethod === "card"
-                    ? dict.checkout.payNow
-                    : dict.checkout.placeOrder}
-              </Button>
+
+            {step === 1 ? (
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="h-12 w-full sm:w-auto"
+                  onClick={() => setStep(0)}
+                >
+                  {dict.checkout.back}
+                </Button>
+                <button
+                  type="button"
+                  onClick={placeOrder}
+                  disabled={pending}
+                  className="group inline-flex h-12 w-full items-center justify-center gap-2.5 bg-sage px-7 text-[11px] uppercase tracking-[0.16em] text-bg shadow-[0_14px_34px_-16px_rgba(43,41,39,0.45)] transition-colors hover:bg-sage-dark disabled:pointer-events-none disabled:opacity-50 sm:min-w-[14rem] sm:w-auto"
+                >
+                  {pending
+                    ? dict.checkout.placingOrder
+                    : paymentMethod === "card"
+                      ? dict.checkout.payWithViva
+                      : dict.checkout.placeOrder}
+                  {!pending ? (
+                    <ArrowRight
+                      className="h-3.5 w-3.5 transition-transform duration-300 ease-out group-hover:translate-x-1"
+                      strokeWidth={1.75}
+                    />
+                  ) : null}
+                </button>
+              </div>
             ) : null}
           </div>
         </div>
 
-        <aside className="lg:sticky lg:top-24">
+        <aside className="order-1 lg:sticky lg:top-24 lg:order-2">
           <div className={panelClass}>
             <h2 className={sectionTitleClass}>{dict.checkout.orderSummary}</h2>
             <ul className="mt-5 space-y-3">
@@ -930,6 +948,20 @@ export function CheckoutWizard({
               </div>
             </dl>
           </div>
+
+          {step === 0 && showAddressForm ? (
+            <button
+              type="button"
+              onClick={goToPayment}
+              className="group mt-4 hidden h-12 w-full items-center justify-center gap-2.5 bg-sage px-7 text-[11px] uppercase tracking-[0.16em] text-white shadow-[0_14px_34px_-16px_rgba(43,41,39,0.45)] transition-colors hover:bg-sage-dark lg:inline-flex"
+            >
+              {dict.checkout.continuePayment}
+              <ArrowRight
+                className="h-3.5 w-3.5 transition-transform duration-300 ease-out group-hover:translate-x-1"
+                strokeWidth={1.75}
+              />
+            </button>
+          ) : null}
         </aside>
       </div>
     </div>

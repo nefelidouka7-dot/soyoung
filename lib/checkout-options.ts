@@ -9,15 +9,57 @@ export const COD_FEE = 2;
 
 /** Physical store used for pickup orders. */
 export const STORE_PICKUP = {
-  name: "SoYoung Kolonaki",
-  line1: "12 Kolonaki Square",
+  name: "SoYoung Κοζάνη",
+  line1: "Μακεδονομάχων 21",
   line2: undefined as string | undefined,
-  city: "Athens",
-  postalCode: "10673",
+  city: "Κοζάνη",
+  postalCode: "50100",
   country: "GR",
-  phone: "+30 210 000 0000",
-  hours: "Δευ–Σαβ 10:00–20:00",
-  hoursEn: "Mon–Sat 10:00–20:00",
+  phone: "+30 2461 025391",
+  schedule: [
+    {
+      dayEl: "Δευτέρα",
+      dayEn: "Monday",
+      hoursEl: "10:00–14:30",
+      hoursEn: "10:00 a.m.–2:30 p.m.",
+    },
+    {
+      dayEl: "Τρίτη",
+      dayEn: "Tuesday",
+      hoursEl: "10:00–14:00, 17:30–21:00",
+      hoursEn: "10:00 a.m.–2:00 p.m., 5:30–9:00 p.m.",
+    },
+    {
+      dayEl: "Τετάρτη",
+      dayEn: "Wednesday",
+      hoursEl: "10:00–14:30",
+      hoursEn: "10:00 a.m.–2:30 p.m.",
+    },
+    {
+      dayEl: "Πέμπτη",
+      dayEn: "Thursday",
+      hoursEl: "10:00–14:00, 17:30–21:00",
+      hoursEn: "10:00 a.m.–2:00 p.m., 5:30–9:00 p.m.",
+    },
+    {
+      dayEl: "Παρασκευή",
+      dayEn: "Friday",
+      hoursEl: "10:00–14:00, 17:30–21:00",
+      hoursEn: "10:00 a.m.–2:00 p.m., 5:30–9:00 p.m.",
+    },
+    {
+      dayEl: "Σάββατο",
+      dayEn: "Saturday",
+      hoursEl: "10:00–15:00",
+      hoursEn: "10:00 a.m.–3:00 p.m.",
+    },
+    {
+      dayEl: "Κυριακή",
+      dayEn: "Sunday",
+      hoursEl: "Κλειστά",
+      hoursEn: "Closed",
+    },
+  ],
 } as const;
 
 /** @deprecated use STORE_PICKUP */
@@ -62,6 +104,6 @@ export function shippingFeeFor(
   freeThreshold: number
 ): number {
   if (shippingMethod === "pickup") return 0;
-  if (afterDiscount >= freeThreshold || afterDiscount === 0) return 0;
+  if (afterDiscount >= freeThreshold) return 0;
   return STANDARD_SHIPPING_FEE;
 }

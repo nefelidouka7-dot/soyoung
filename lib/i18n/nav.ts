@@ -19,3 +19,31 @@ export function navLabel(dict: Dictionary, href: string, fallback: string) {
 export function productTypeLabel(dict: Dictionary, productType: string) {
   return dict.productTypes[productType] ?? productType;
 }
+
+const CATEGORY_SLUGS = ["makeup", "skincare", "haircare", "body"] as const;
+type CategorySlug = (typeof CATEGORY_SLUGS)[number];
+
+function isCategorySlug(slug: string): slug is CategorySlug {
+  return (CATEGORY_SLUGS as readonly string[]).includes(slug);
+}
+
+/** Top-level category titles live in nav; DB stores English only. */
+export function categoryLabel(
+  dict: Dictionary,
+  slug: string | undefined,
+  fallback: string
+) {
+  if (slug && isCategorySlug(slug)) return dict.nav[slug];
+  return fallback;
+}
+
+export function categoryDescription(
+  dict: Dictionary,
+  slug: string | undefined,
+  fallback?: string | null
+) {
+  if (slug && isCategorySlug(slug)) {
+    return dict.listing.categoryDescriptions[slug];
+  }
+  return fallback ?? undefined;
+}

@@ -113,9 +113,11 @@ export type Dictionary = {
     paymentSecure: string;
     paymentDemo: string;
     paymentNextStep: string;
+    orPayWithCard: string;
     paymentFailed: string;
     paymentUnavailable: string;
     payNow: string;
+    payWithViva: string;
     order: string;
     orderSummary: string;
     subtotal: string;
@@ -229,6 +231,12 @@ export type Dictionary = {
     noProductsTitle: string;
     noProductsDescription: string;
     clearFilters: string;
+    categoryDescriptions: {
+      makeup: string;
+      skincare: string;
+      haircare: string;
+      body: string;
+    };
   };
   filters: {
     title: string;
@@ -356,6 +364,9 @@ export type Dictionary = {
     join: string;
     invalidEmail: string;
     success: string;
+    alreadySubscribed: string;
+    rateLimited: string;
+    failed: string;
   };
   wishlist: {
     title: string;

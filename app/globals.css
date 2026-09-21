@@ -127,6 +127,29 @@
     animation: hero-cue 2.6s cubic-bezier(0.45, 0, 0.55, 1) 1.2s infinite;
   }
 
+  .sheet-backdrop {
+    opacity: 0;
+    transition: opacity 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .sheet-backdrop[data-open="true"] {
+    opacity: 1;
+  }
+
+  .sheet-panel {
+    opacity: 0.96;
+    transform: translate3d(0, 100%, 0);
+    transition:
+      transform 0.48s cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform, opacity;
+  }
+
+  .sheet-panel[data-open="true"] {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+
   .hero-veil {
     background:
       linear-gradient(
@@ -228,6 +251,11 @@
     .transition-opacity {
       animation: none !important;
       transition: none !important;
+    }
+
+    .sheet-backdrop,
+    .sheet-panel {
+      transition-duration: 0.01ms !important;
     }
   }
 }

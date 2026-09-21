@@ -34,12 +34,6 @@ export default async function ProductPage({ params }: Props) {
   ]);
   if (!product) notFound();
 
-  const ratings = product.reviews.map((r) => r.rating);
-  const avg =
-    ratings.length > 0
-      ? ratings.reduce((a, b) => a + b, 0) / ratings.length
-      : null;
-
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -58,15 +52,6 @@ export default async function ProductPage({ params }: Props) {
           : "https://schema.org/OutOfStock",
       url: absoluteUrl(`/product/${product.slug}`),
     },
-    ...(avg
-      ? {
-          aggregateRating: {
-            "@type": "AggregateRating",
-            ratingValue: avg.toFixed(1),
-            reviewCount: ratings.length,
-          },
-        }
-      : {}),
   };
 
   const sections = [
@@ -148,8 +133,6 @@ export default async function ProductPage({ params }: Props) {
                 stock: v.stock,
                 image: v.image,
               })),
-              rating: avg,
-              reviewCount: ratings.length,
               skinTypes: product.skinTypes.map((s) =>
                 locale === "el" ? s.skinType.nameEl : s.skinType.name
               ),
@@ -161,80 +144,18 @@ export default async function ProductPage({ params }: Props) {
       <div className="container-page mt-12 grid gap-10 lg:mt-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] lg:gap-16">
         <div>
           <ProductAccordion
-            items={[
-              ...sections
-                .filter((s) => Boolean(s.content))
-                .map((s) => ({
-                  id: s.title,
-                  title: s.title,
-                  defaultOpen: s.title === dict.product.description,
-                  content: (
-                    <div className="mt-3 max-w-2xl whitespace-pre-line pb-1 text-sm leading-[1.7] text-ink-muted">
-                      {s.content}
-                    </div>
-                  ),
-                })),
-              {
-                id: "reviews",
-                title: (
-                  <>
-                    {dict.product.reviewsTitle}
-                    {product.reviews.length > 0 ? (
-                      <span className="ml-2 font-sans text-sm text-ink-muted">
-                        ({product.reviews.length})
-                      </span>
-                    ) : null}
-                  </>
-                ),
+            items={sections
+              .filter((s) => Boolean(s.content))
+              .map((s) => ({
+                id: s.title,
+                title: s.title,
+                defaultOpen: s.title === dict.product.description,
                 content: (
-                  <div className="mt-5 space-y-5 pb-1">
-                    {product.reviews.length === 0 ? (
-                      <p className="text-sm text-ink-muted">
-                        {dict.product.noReviews}
-                      </p>
-                    ) : (
-                      product.reviews.map((r) => (
-                        <article
-                          key={r.id}
-                          className="border-t border-oak/25 pt-5 first:border-t-0 first:pt-0"
-                        >
-                          <div className="flex flex-wrap items-center gap-2 text-sm">
-                            <span className="tracking-wide text-ink">
-                              {"★".repeat(r.rating)}
-                              <span className="text-oak">
-                                {"★".repeat(5 - r.rating)}
-                              </span>
-                            </span>
-                            {r.verifiedPurchase ? (
-                              <span className="text-[11px] uppercase tracking-wider text-sage-dark">
-                                {dict.product.verifiedPurchase}
-                              </span>
-                            ) : null}
-                          </div>
-                          {r.title ? (
-                            <h3 className="mt-2 text-sm font-medium text-ink">
-                              {r.title}
-                            </h3>
-                          ) : null}
-                          <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">
-                            {r.comment}
-                          </p>
-                          <p className="mt-2.5 text-xs text-ink-muted/80">
-                            {r.user.name ??
-                              r.user.firstName ??
-                              dict.product.customer}{" "}
-                            ·{" "}
-                            {r.createdAt.toLocaleDateString(
-                              locale === "el" ? "el-GR" : "en-GB"
-                            )}
-                          </p>
-                        </article>
-                      ))
-                    )}
+                  <div className="mt-3 max-w-2xl whitespace-pre-line pb-1 text-sm leading-[1.7] text-ink-muted">
+                    {s.content}
                   </div>
                 ),
-              },
-            ]}
+              }))}
           />
         </div>
 

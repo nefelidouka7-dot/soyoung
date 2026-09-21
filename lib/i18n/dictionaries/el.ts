@@ -110,7 +110,7 @@ export const el: Dictionary = {
     deliveryDesc: "Παράδοση στη διεύθυνσή σου",
     deliveryEta: "2–5 εργάσιμες",
     pickup: "Παραλαβή από το κατάστημα",
-    pickupDesc: "SoYoung Κολωνάκι · χωρίς μεταφορικά",
+    pickupDesc: "SoYoung Κοζάνη · χωρίς μεταφορικά",
     pickupReady: "Έτοιμη σε 1–2 εργάσιμες",
     pickupHours: "Ωράριο",
     freeShipping: "Δωρεάν αποστολή",
@@ -124,19 +124,22 @@ export const el: Dictionary = {
     discountApplied: "Έκπτωση: −{amount}",
     payment: "Πληρωμή",
     paymentMethod: "Τρόπος πληρωμής",
-    payByCard: "Χρεωστική / Πιστωτική κάρτα",
-    payByCardDesc: "Ασφαλής πληρωμή online",
+    payByCard: "Κάρτα / Apple Pay / Google Pay",
+    payByCardDesc: "Ασφαλής πληρωμή μέσω Viva.com",
     cashOnDelivery: "Αντικαταβολή",
     cashOnDeliveryDesc: "Πληρωμή στον courier κατά την παράδοση",
     codFee: "Τέλος αντικαταβολής",
     paymentSecure:
-      "Οι πληρωμές με κάρτα γίνονται με ασφάλεια μέσω Stripe. Τα στοιχεία κάρτας δεν αποθηκεύονται στους διακομιστές μας.",
+      "Θα ολοκληρώσεις την πληρωμή με ασφάλεια στο Viva.com (κάρτα, Apple Pay ή Google Pay). Τα στοιχεία κάρτας δεν αποθηκεύονται στους διακομιστές μας.",
     paymentDemo:
       "Λειτουργία επίδειξης: η πληρωμή προσομοιώνεται όταν ολοκληρώσεις την παραγγελία.",
-    paymentNextStep: "Εισάγετε τα στοιχεία της κάρτας σου με ασφάλεια παρακάτω.",
+    paymentNextStep:
+      "Θα μεταφερθείς στο ασφαλές περιβάλλον πληρωμών της Viva.com.",
+    orPayWithCard: "ή με κάρτα",
     paymentFailed: "Η πληρωμή απέτυχε. Δοκίμασε άλλη κάρτα ή μέθοδο.",
     paymentUnavailable: "Οι πληρωμές με κάρτα δεν είναι διαθέσιμες αυτή τη στιγμή.",
     payNow: "Πληρωμή τώρα",
+    payWithViva: "Πληρωμή με Viva.com",
     order: "Παραγγελία",
     orderSummary: "Η παραγγελία σου",
     subtotal: "Υποσύνολο",
@@ -198,7 +201,7 @@ export const el: Dictionary = {
       codNext:
         "Θα πληρώσεις τον courier κατά την παράδοση (μετρητά ή κάρτα). Θα επικοινωνήσουμε τηλεφωνικά αν χρειαστεί.",
       pickupNext:
-        "Θα σε ενημερώσουμε όταν είναι έτοιμη για παραλαβή από το κατάστημα στο Κολωνάκι.",
+        "Θα σε ενημερώσουμε όταν είναι έτοιμη για παραλαβή από το κατάστημα στην Κοζάνη.",
       deliveryNext: "Θα λάβεις ενημέρωση όταν η παραγγελία φύγει με courier.",
     },
   },
@@ -219,8 +222,7 @@ export const el: Dictionary = {
     headline: "Η κορεάτικη ρουτίνα σου, ξεκινά εδώ.",
     headlineLead: "Η κορεάτικη ρουτίνα σου,",
     headlineTrail: "ξεκινά εδώ.",
-    subhead:
-      "Ανακάλυψε K-beauty προϊόντα περιποίησης και μακιγιάζ, επιλεγμένα με φροντίδα.",
+    subhead: "Ανακάλυψε τη ρουτίνα που σου μοιάζει.",
     heroCta: "Δες την περιποίηση",
     exploreSkincare: "Εξερεύνησε περιποίηση",
     shopByCategory: "Ψώνισε ανά κατηγορία",
@@ -259,6 +261,12 @@ export const el: Dictionary = {
     noProductsDescription:
       "Δοκίμασε να προσαρμόσεις τα φίλτρα ή δες άλλη κατηγορία.",
     clearFilters: "Καθαρισμός φίλτρων",
+    categoryDescriptions: {
+      makeup: "Χρώμα με πρόθεση για καθημερινή λάμψη.",
+      skincare: "Τελετουργίες για ήρεμη, ανθεκτική επιδερμίδα.",
+      haircare: "Θρεπτική φροντίδα για υγιή μαλλιά.",
+      body: "Βασικά προϊόντα περιποίησης σώματος.",
+    },
   },
   filters: {
     title: "Φίλτρα",
@@ -391,6 +399,9 @@ export const el: Dictionary = {
     join: "Εγγραφή",
     invalidEmail: "Εισάγετε έγκυρο email.",
     success: "Είσαι στη λίστα. Καλώς ήρθες.",
+    alreadySubscribed: "Αυτό το email είναι ήδη στη λίστα.",
+    rateLimited: "Πολλές προσπάθειες. Δοκίμασε σε λίγο.",
+    failed: "Κάτι πήγε στραβά. Δοκίμασε ξανά.",
   },
   wishlist: {
     title: "Αγαπημένα",

@@ -24,7 +24,7 @@ const el: Record<LegalSlug, LegalDoc> = {
       },
       {
         heading: "2. Τι δεδομένα συλλέγουμε",
-        body: "Συλλέγουμε στοιχεία λογαριασμού και επικοινωνίας (όνομα, email, τηλέφωνο), διευθύνσεις αποστολής, ιστορικό παραγγελιών, δεδομένα πληρωμής μέσω του παρόχου Stripe (χωρίς αποθήκευση πλήρων στοιχείων κάρτας στους διακομιστές μας), καθώς και τεχνικά δεδομένα (cookies, διεύθυνση IP, τύπος συσκευής) για ασφάλεια και λειτουργία της ιστοσελίδας.",
+        body: "Συλλέγουμε στοιχεία λογαριασμού και επικοινωνίας (όνομα, email, τηλέφωνο), διευθύνσεις αποστολής, ιστορικό παραγγελιών, δεδομένα πληρωμής μέσω του παρόχου Viva.com (χωρίς αποθήκευση πλήρων στοιχείων κάρτας στους διακομιστές μας), καθώς και τεχνικά δεδομένα (cookies, διεύθυνση IP, τύπος συσκευής) για ασφάλεια και λειτουργία της ιστοσελίδας.",
       },
       {
         heading: "3. Γιατί τα επεξεργαζόμαστε",
@@ -36,7 +36,7 @@ const el: Record<LegalSlug, LegalDoc> = {
       },
       {
         heading: "5. Διαβιβάσεις & διατηρητές",
-        body: "Μοιραζόμαστε δεδομένα με παρόχους που μας βοηθούν να λειτουργούμε το κατάστημα (φιλοξενία, πληρωμές Stripe, αποστολές, email). Όπου δεδομένα εξέρχονται του ΕΟΧ, εφαρμόζουμε κατάλληλες εγγυήσεις. Δεν πωλούμε προσωπικά δεδομένα.",
+        body: "Μοιραζόμαστε δεδομένα με παρόχους που μας βοηθούν να λειτουργούμε το κατάστημα (φιλοξενία, πληρωμές Viva.com, αποστολές, email). Όπου δεδομένα εξέρχονται του ΕΟΧ, εφαρμόζουμε κατάλληλες εγγυήσεις. Δεν πωλούμε προσωπικά δεδομένα.",
       },
       {
         heading: "6. Χρόνος διατήρησης",
@@ -70,7 +70,7 @@ const el: Record<LegalSlug, LegalDoc> = {
       },
       {
         heading: "4. Πληρωμές",
-        body: "Οι πληρωμές με κάρτα διεκπεραιώνονται μέσω Stripe. Η ολοκλήρωση πληρωμής αποτελεί προϋπόθεση αποστολής, εκτός αν άλλως δηλώνεται.",
+        body: "Οι πληρωμές με κάρτα διεκπεραιώνονται μέσω Viva.com. Η ολοκλήρωση πληρωμής αποτελεί προϋπόθεση αποστολής, εκτός αν άλλως δηλώνεται.",
       },
       {
         heading: "5. Πνευματική ιδιοκτησία",
@@ -165,7 +165,7 @@ const en: Record<LegalSlug, LegalDoc> = {
       },
       {
         heading: "2. Data we collect",
-        body: "We collect account and contact details (name, email, phone), shipping addresses, order history, payment data processed by Stripe (we do not store full card numbers on our servers), and technical data (cookies, IP address, device type) needed for security and site operation.",
+        body: "We collect account and contact details (name, email, phone), shipping addresses, order history, payment data processed by Viva.com (we do not store full card numbers on our servers), and technical data (cookies, IP address, device type) needed for security and site operation.",
       },
       {
         heading: "3. Why we process it",
@@ -177,7 +177,7 @@ const en: Record<LegalSlug, LegalDoc> = {
       },
       {
         heading: "5. Sharing",
-        body: "We share data with processors who help run the store (hosting, Stripe payments, shipping, email). Where data leaves the EEA we use appropriate safeguards. We do not sell personal data.",
+        body: "We share data with processors who help run the store (hosting, Viva.com payments, shipping, email). Where data leaves the EEA we use appropriate safeguards. We do not sell personal data.",
       },
       {
         heading: "6. Retention",
@@ -211,7 +211,7 @@ const en: Record<LegalSlug, LegalDoc> = {
       },
       {
         heading: "4. Payments",
-        body: "Card payments are processed by Stripe. Payment confirmation is required before shipping unless stated otherwise.",
+        body: "Card payments are processed by Viva.com. Payment confirmation is required before shipping unless stated otherwise.",
       },
       {
         heading: "5. Intellectual property",

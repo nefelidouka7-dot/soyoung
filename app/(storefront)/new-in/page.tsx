@@ -19,7 +19,6 @@ export default async function NewInPage({
   const sort = (typeof sp.sort === "string" ? sp.sort : "newest") as
     | "recommended"
     | "newest"
-    | "best-rated"
     | "price-asc"
     | "price-desc";
   const result = await findProducts({ sort: "newest", pageSize: 24, newIn: true });

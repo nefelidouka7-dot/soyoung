@@ -10,7 +10,6 @@ export async function getWishlistProducts(ids: string[]) {
     include: {
       brand: true,
       images: { orderBy: { sortOrder: "asc" } },
-      reviews: { where: { status: "APPROVED" }, select: { rating: true } },
       skinTypes: { include: { skinType: true } },
     },
   });

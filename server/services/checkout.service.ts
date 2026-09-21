@@ -189,7 +189,7 @@ export async function createOrderFromCheckout(input: {
   };
   paymentProviderId?: string | null;
   markPaid?: boolean;
-  /** When false, order is created without decrementing stock (Stripe pending). */
+  /** When false, order is created without decrementing stock (card pending Viva). */
   commitStock?: boolean;
 }) {
   const totals = await computeCartTotals(input.items, input.couponCode, {
@@ -211,7 +211,7 @@ export async function createOrderFromCheckout(input: {
       : input.shipping;
 
   const paymentProvider =
-    input.paymentMethod === "card" ? "stripe" : "offline";
+    input.paymentMethod === "card" ? "viva" : "offline";
 
     const fulfillmentLabel =
     input.shippingMethod === "pickup" ? "Store pickup" : "Courier delivery";
@@ -349,9 +349,12 @@ export async function createOrderFromCheckout(input: {
   });
 }
 
-export async function markOrderPaidByPaymentIntent(paymentIntentId: string) {
+export async function markOrderPaidByProviderId(
+  providerPaymentId: string,
+  options?: { transactionId?: string; note?: string }
+) {
   const payment = await prisma.payment.findFirst({
-    where: { providerPaymentId: paymentIntentId },
+    where: { providerPaymentId },
     include: { order: { include: { items: true } } },
   });
   if (!payment) return null;
@@ -410,11 +413,22 @@ export async function markOrderPaidByPaymentIntent(paymentIntentId: string) {
       data: {
         orderId: payment.orderId,
         status: "PAID",
-        note: "Payment confirmed via Stripe",
+        note:
+          options?.note ??
+          (options?.transactionId
+            ? `Payment confirmed via Viva.com (${options.transactionId})`
+            : "Payment confirmed via Viva.com"),
       },
     });
     return updated;
   });
 
   return order;
+}
+
+/** @deprecated use markOrderPaidByProviderId */
+export async function markOrderPaidByPaymentIntent(paymentIntentId: string) {
+  return markOrderPaidByProviderId(paymentIntentId, {
+    note: "Payment confirmed via Viva.com",
+  });
 }

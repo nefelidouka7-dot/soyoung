@@ -34,8 +34,6 @@ type Props = {
     stock: number;
     images: Array<{ id: string; url: string; alt: string | null }>;
     variants: Variant[];
-    rating: number | null;
-    reviewCount: number;
     skinTypes: string[];
   };
 };
@@ -184,18 +182,6 @@ export function ProductPurchasePanel({ product }: Props) {
         <h1 className="mt-2.5 font-serif text-[1.75rem] leading-[1.15] text-ink sm:mt-3 sm:text-[2.35rem]">
           {product.name}
         </h1>
-
-        {product.reviewCount > 0 && product.rating != null ? (
-          <p className="mt-3 flex items-center gap-2 text-sm text-ink-muted">
-            <span className="tracking-wide text-ink">
-              ★ {product.rating.toFixed(1)}
-            </span>
-            <span className="h-3 w-px bg-oak/60" aria-hidden />
-            <span>
-              {t((d) => d.product.reviewsCount, { count: product.reviewCount })}
-            </span>
-          </p>
-        ) : null}
 
         <div className="mt-5 flex items-baseline gap-3 border-b border-oak/35 pb-5">
           <span className="font-serif text-2xl text-ink">

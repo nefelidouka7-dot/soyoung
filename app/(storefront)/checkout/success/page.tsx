@@ -4,6 +4,12 @@ import { prisma } from "@/db/prisma";
 import { STORE_PICKUP } from "@/lib/checkout-options";
 import { getServerDictionary } from "@/lib/i18n/server";
 import { formatPrice } from "@/lib/utils";
+import {
+  isVivaConfigured,
+  retrieveVivaTransaction,
+} from "@/lib/payments";
+import { markOrderPaidByProviderId } from "@/server/services/checkout.service";
+import { sendOrderConfirmationEmail } from "@/emails/send";
 
 export async function generateMetadata(): Promise<Metadata> {
   const dict = await getServerDictionary();
@@ -17,17 +23,67 @@ export default async function CheckoutSuccessPage({
 }) {
   const dict = await getServerDictionary();
   const sp = await searchParams;
-  const orderNumber = typeof sp.order === "string" ? sp.order : null;
+  const orderNumberParam = typeof sp.order === "string" ? sp.order : null;
+  // Viva Smart Checkout appends t (transaction id) + s (order code)
+  const transactionId = typeof sp.t === "string" ? sp.t : null;
+  const vivaOrderCode = typeof sp.s === "string" ? sp.s : null;
 
-  const order = orderNumber
-    ? await prisma.order.findUnique({
-        where: { orderNumber },
-        include: { payment: true },
-      })
-    : null;
+  let order =
+    orderNumberParam
+      ? await prisma.order.findUnique({
+          where: { orderNumber: orderNumberParam },
+          include: { payment: true, items: true },
+        })
+      : null;
+
+  if (!order && vivaOrderCode) {
+    const payment = await prisma.payment.findFirst({
+      where: { providerPaymentId: vivaOrderCode },
+      include: { order: { include: { payment: true, items: true } } },
+    });
+    order = payment?.order ?? null;
+  }
+
+  // Confirm payment when returning from Viva (webhook may arrive later).
+  if (
+    order &&
+    order.paymentStatus !== "PAID" &&
+    transactionId &&
+    vivaOrderCode &&
+    isVivaConfigured()
+  ) {
+    try {
+      const tx = await retrieveVivaTransaction(transactionId);
+      if (String(tx.orderCode) === vivaOrderCode && tx.statusId === "F") {
+        const paid = await markOrderPaidByProviderId(vivaOrderCode, {
+          transactionId,
+          note: `Payment confirmed via Viva.com (${transactionId})`,
+        });
+        if (paid) {
+          await sendOrderConfirmationEmail({
+            to: order.email,
+            orderNumber: order.orderNumber,
+            total: Number(order.total),
+            items: order.items.map((item) => ({
+              productName: item.productName,
+              quantity: item.quantity,
+              howToUse: item.howToUse,
+            })),
+          });
+          order = await prisma.order.findUnique({
+            where: { id: order.id },
+            include: { payment: true, items: true },
+          });
+        }
+      }
+    } catch (err) {
+      console.error("[checkout:success] viva verify failed", err);
+    }
+  }
 
   const paymentMethod = order?.payment?.method ?? "card";
   const isPickup = order?.shippingMethod === "pickup";
+  const orderNumber = order?.orderNumber ?? orderNumberParam;
 
   return (
     <div className="container-page py-16 sm:py-20">

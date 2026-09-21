@@ -7,10 +7,7 @@ import {
   computeCartTotals,
   createOrderFromCheckout,
 } from "@/server/services/checkout.service";
-import {
-  attachOrderToPaymentIntent,
-  createPaymentIntent,
-} from "@/lib/payments";
+import { createPaymentOrder } from "@/lib/payments";
 import { sendOrderConfirmationEmail } from "@/emails/send";
 import { clientIpFromHeaders, rateLimit } from "@/lib/rate-limit";
 import {
@@ -19,6 +16,8 @@ import {
   PAYMENT_METHODS,
   SHIPPING_METHODS,
 } from "@/lib/checkout-options";
+import { prisma } from "@/db/prisma";
+import { getLocale } from "@/lib/i18n/server";
 
 const lineSchema = z.object({
   productId: z.string().min(1),
@@ -81,6 +80,7 @@ export async function placeOrderAction(raw: unknown) {
 
   const session = await auth();
   const data = parsed.data;
+  const locale = await getLocale();
 
   if (!isPaymentAllowed(data.shippingMethod, data.paymentMethod)) {
     return {
@@ -98,17 +98,13 @@ export async function placeOrderAction(raw: unknown) {
     }
   }
 
-  if (
-    isOfflinePayment(data.paymentMethod) &&
-    !data.phone?.trim()
-  ) {
+  if (isOfflinePayment(data.paymentMethod) && !data.phone?.trim()) {
     return {
       ok: false as const,
       error: "Phone number is required for this payment method.",
     };
   }
 
-  // Courier / pickup always needs a reachable phone in GR retail.
   if (!data.phone?.trim()) {
     return {
       ok: false as const,
@@ -123,14 +119,8 @@ export async function placeOrderAction(raw: unknown) {
     });
 
     const useCard = data.paymentMethod === "card";
-    const payment = useCard
-      ? await createPaymentIntent(totals.total, { email: data.email })
-      : null;
 
-    const markPaid = Boolean(payment?.mock);
-    // Offline methods reserve stock immediately; Stripe waits for webhook (or mock).
-    const commitStock = !useCard || markPaid;
-
+    // Create the shop order first so we can pass orderNumber to Viva.
     const order = await createOrderFromCheckout({
       userId: session?.user?.id,
       email: data.email,
@@ -150,18 +140,12 @@ export async function placeOrderAction(raw: unknown) {
         country: data.country ?? "GR",
         phone: data.phone,
       },
-      paymentProviderId: payment?.paymentIntentId,
-      markPaid,
-      commitStock,
+      paymentProviderId: null,
+      markPaid: !useCard,
+      commitStock: !useCard,
     });
 
-    if (useCard && payment && !payment.mock) {
-      await attachOrderToPaymentIntent(
-        payment.paymentIntentId,
-        order.id,
-        order.orderNumber
-      );
-    } else {
+    if (!useCard) {
       await sendOrderConfirmationEmail({
         to: data.email,
         orderNumber: order.orderNumber,
@@ -172,14 +156,66 @@ export async function placeOrderAction(raw: unknown) {
           howToUse: item.howToUse,
         })),
       });
+
+      return {
+        ok: true as const,
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        checkoutUrl: null,
+        mock: true,
+        paymentMethod: data.paymentMethod,
+      };
+    }
+
+    const payment = await createPaymentOrder({
+      amountEur: totals.total,
+      orderNumber: order.orderNumber,
+      email: data.email,
+      fullName: `${data.firstName} ${data.lastName}`.trim(),
+      phone: data.phone,
+      requestLang: locale === "en" ? "en-GB" : "el-GR",
+    });
+
+    await prisma.payment.update({
+      where: { orderId: order.id },
+      data: { providerPaymentId: payment.orderCode, provider: "viva" },
+    });
+
+    if (payment.mock) {
+      // Dev without Viva keys: mark paid + commit stock via success path simulation.
+      const { markOrderPaidByProviderId } = await import(
+        "@/server/services/checkout.service"
+      );
+      await markOrderPaidByProviderId(payment.orderCode, {
+        note: "Mock Viva payment (dev)",
+      });
+      await sendOrderConfirmationEmail({
+        to: data.email,
+        orderNumber: order.orderNumber,
+        total: Number(order.total),
+        items: order.items.map((item) => ({
+          productName: item.productName,
+          quantity: item.quantity,
+          howToUse: item.howToUse,
+        })),
+      });
+
+      return {
+        ok: true as const,
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        checkoutUrl: null,
+        mock: true,
+        paymentMethod: data.paymentMethod,
+      };
     }
 
     return {
       ok: true as const,
       orderId: order.id,
       orderNumber: order.orderNumber,
-      clientSecret: payment?.clientSecret ?? null,
-      mock: payment?.mock ?? true,
+      checkoutUrl: payment.checkoutUrl,
+      mock: false,
       paymentMethod: data.paymentMethod,
     };
   } catch (e) {

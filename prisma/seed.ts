@@ -1072,7 +1072,7 @@ async function main() {
       },
       payment: {
         create: {
-          provider: "stripe",
+          provider: "viva",
           providerPaymentId: "mock_pi_seed",
           status: "PAID",
           amount: 47.8,

@@ -10,9 +10,8 @@ export type ProductListParams = {
   maxPrice?: number;
   inStock?: boolean;
   onSale?: boolean;
-  minRating?: number;
   q?: string;
-  sort?: "recommended" | "newest" | "best-rated" | "price-asc" | "price-desc";
+  sort?: "recommended" | "newest" | "price-asc" | "price-desc";
   page?: number;
   pageSize?: number;
   featured?: boolean;
@@ -84,8 +83,6 @@ function buildOrderBy(
       return [{ price: "asc" }];
     case "price-desc":
       return [{ price: "desc" }];
-    case "best-rated":
-      return [{ createdAt: "desc" }];
     default:
       return [{ bestSeller: "desc" }, { featured: "desc" }, { createdAt: "desc" }];
   }
@@ -94,7 +91,6 @@ function buildOrderBy(
 const productCardInclude = {
   brand: true,
   images: { orderBy: { sortOrder: "asc" as const } },
-  reviews: { where: { status: "APPROVED" as const }, select: { rating: true } },
   skinTypes: { include: { skinType: true } },
 } satisfies Prisma.ProductInclude;
 
@@ -125,11 +121,6 @@ export async function findProducts(params: ProductListParams = {}) {
 export function mapProductCard(
   p: Prisma.ProductGetPayload<{ include: typeof productCardInclude }>
 ) {
-  const ratings = p.reviews.map((r) => r.rating);
-  const avg =
-    ratings.length > 0
-      ? ratings.reduce((a, b) => a + b, 0) / ratings.length
-      : null;
   const primary = p.images.find((i) => i.isPrimary) ?? p.images[0];
   const secondary = p.images.find((i) => i.id !== primary?.id);
 
@@ -143,8 +134,6 @@ export function mapProductCard(
     compareAtPrice: p.compareAtPrice ? Number(p.compareAtPrice) : null,
     image: primary?.url ?? "/images/placeholder-product.svg",
     hoverImage: secondary?.url ?? null,
-    rating: avg,
-    reviewCount: ratings.length,
     isNew:
       p.createdAt > new Date(Date.now() - 1000 * 60 * 60 * 24 * 45),
     skinTypes: p.skinTypes.map((s) => s.skinType.nameEl),
@@ -162,11 +151,6 @@ export async function findProductBySlug(slug: string) {
       variants: { where: { active: true }, orderBy: { name: "asc" } },
       skinTypes: { include: { skinType: true } },
       concerns: { include: { concern: true } },
-      reviews: {
-        where: { status: "APPROVED" },
-        include: { user: { select: { name: true, firstName: true } } },
-        orderBy: { createdAt: "desc" },
-      },
     },
   });
 }

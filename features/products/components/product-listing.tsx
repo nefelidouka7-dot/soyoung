@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ProductCard } from "@/features/products/components/product-card";
 import { ProductGrid } from "@/features/products/components/product-grid";
@@ -11,10 +12,21 @@ import {
 import { EmptyState } from "@/components/ui/empty-state";
 import { getServerDictionary } from "@/lib/i18n/server";
 import { interpolate } from "@/lib/i18n";
+import {
+  categoryDescription,
+  categoryLabel,
+} from "@/lib/i18n/nav";
 import type { Dictionary } from "@/lib/i18n/types";
 import type { Metadata } from "next";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+const CATEGORY_FALLBACK_IMAGES: Record<string, string> = {
+  skincare: "/images/category-skincare.jpg",
+  makeup: "/images/category-makeup.jpg",
+  haircare: "/images/category-haircare.jpg",
+  body: "/images/category-body.jpg",
+};
 
 function parseList(v: string | string[] | undefined) {
   if (!v) return [];
@@ -28,10 +40,21 @@ export async function generateMetadata({
   params: Promise<{ category?: string }>;
 }): Promise<Metadata> {
   const { category } = await params;
+  const dict = await getServerDictionary();
   const cat = category ? await findCategoryBySlug(category) : null;
+  const title = categoryLabel(
+    dict,
+    category,
+    cat?.seoTitle ?? cat?.name ?? "Shop"
+  );
+  const description = categoryDescription(
+    dict,
+    category,
+    cat?.seoDescription ?? cat?.description
+  );
   return {
-    title: cat?.seoTitle ?? cat?.name ?? "Shop",
-    description: cat?.seoDescription ?? cat?.description ?? undefined,
+    title,
+    description: description ?? undefined,
   };
 }
 
@@ -50,7 +73,6 @@ export default async function CategoryListingPage({
   const sort = (typeof sp.sort === "string" ? sp.sort : "recommended") as
     | "recommended"
     | "newest"
-    | "best-rated"
     | "price-asc"
     | "price-desc";
   const page = Number(typeof sp.page === "string" ? sp.page : 1) || 1;
@@ -105,46 +127,97 @@ export default async function CategoryListingPage({
     return vars ? interpolate(value, vars) : value;
   }
 
-  const title =
+  const title = categoryLabel(
+    dict,
+    categorySlug,
     category?.name ??
-    (categorySlug === "new-in"
-      ? dict.listing.newIn
-      : onSale || categorySlug === "offers"
-        ? dict.listing.offers
-        : dict.listing.shop);
+      (categorySlug === "new-in"
+        ? dict.listing.newIn
+        : onSale || categorySlug === "offers"
+          ? dict.listing.offers
+          : dict.listing.shop)
+  );
+
+  const description = categoryDescription(
+    dict,
+    categorySlug,
+    category?.description
+  );
+
+  const heroImage =
+    category?.image ??
+    (categorySlug ? CATEGORY_FALLBACK_IMAGES[categorySlug] : undefined);
 
   return (
-    <div className="container-page py-8 sm:py-10 lg:py-14">
-      <nav className="text-[11px] uppercase tracking-[0.1em] text-ink-muted sm:text-xs sm:normal-case sm:tracking-normal" aria-label="Breadcrumb">
-        <ol className="flex flex-wrap gap-2">
-          <li>
-            <Link href="/" className="hover:text-ink">
-              {dict.listing.home}
-            </Link>
-          </li>
-          <li aria-hidden>/</li>
-          <li className="text-ink">{title}</li>
-        </ol>
-      </nav>
+    <div>
+      <header className="relative isolate overflow-hidden border-b border-oak/30">
+        {heroImage ? (
+          <>
+            <Image
+              src={heroImage}
+              alt=""
+              fill
+              priority
+              className="object-cover object-[center_35%]"
+              sizes="100vw"
+            />
+            <div
+              className="absolute inset-0 bg-gradient-to-r from-bg via-bg/88 to-bg/35 sm:via-bg/82 sm:to-bg/20"
+              aria-hidden
+            />
+            <div
+              className="absolute inset-0 bg-gradient-to-t from-bg via-bg/50 to-transparent"
+              aria-hidden
+            />
+            <div className="hero-grain pointer-events-none absolute inset-0 opacity-[0.08]" aria-hidden />
+          </>
+        ) : (
+          <div className="home-wash absolute inset-0 bg-bg-muted" aria-hidden />
+        )}
 
-      <div className="mt-4 flex flex-col gap-3 sm:mt-4 sm:flex-row sm:items-end sm:justify-between sm:gap-2">
-        <div>
-          <h1 className="font-serif text-[1.75rem] leading-tight text-ink sm:text-3xl md:text-4xl">{title}</h1>
-          {category?.description ? (
-            <p className="mt-2 hidden max-w-2xl text-sm text-ink-muted sm:block">
-              {category.description}
-            </p>
-          ) : null}
-          <p className="mt-1.5 text-xs text-ink-muted sm:mt-2 sm:text-sm">
-            {t((d) => d.listing.productsCount, { count: result.total })}
-          </p>
+        <div className="container-page relative py-10 sm:py-14 lg:py-[4.25rem]">
+          <nav
+            className="animate-soft-enter text-[10px] uppercase tracking-[0.18em] text-ink-muted"
+            aria-label="Breadcrumb"
+          >
+            <ol className="flex flex-wrap items-center gap-2.5">
+              <li>
+                <Link
+                  href="/"
+                  className="transition-colors hover:text-ink"
+                >
+                  {dict.listing.home}
+                </Link>
+              </li>
+              <li className="text-oak" aria-hidden>
+                /
+              </li>
+              <li className="text-ink">{title}</li>
+            </ol>
+          </nav>
+
+          <div className="mt-7 max-w-2xl sm:mt-9">
+            <h1 className="animate-rise font-serif text-[clamp(2.35rem,8vw,3.75rem)] leading-[0.98] tracking-[-0.02em] text-ink">
+              {title}
+            </h1>
+
+            {description ? (
+              <p className="animate-rise mt-4 max-w-xl text-[14px] leading-[1.7] text-ink-muted sm:mt-5 sm:text-[15px] sm:leading-[1.75]">
+                {description}
+              </p>
+            ) : null}
+          </div>
         </div>
-        <ProductSort current={sort} />
-      </div>
+      </header>
 
-      <div className="mt-6 grid gap-8 sm:mt-8 lg:grid-cols-[240px_1fr] lg:gap-10">
-        <ProductFilters facets={facets} />
-        <div>
+      <div className="container-page py-8 sm:py-10 lg:py-12">
+        <ProductFilters
+          facets={facets}
+          productCountLabel={t((d) => d.listing.productsCount, {
+            count: result.total,
+          })}
+          sort={<ProductSort current={sort} />}
+        >
           {result.products.length === 0 ? (
             <EmptyState
               title={dict.listing.noProductsTitle}
@@ -188,7 +261,7 @@ export default async function CategoryListingPage({
               )}
             </div>
           ) : null}
-        </div>
+        </ProductFilters>
       </div>
     </div>
   );

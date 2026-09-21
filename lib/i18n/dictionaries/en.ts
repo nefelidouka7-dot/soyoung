@@ -89,7 +89,7 @@ export const en: Dictionary = {
     deliveryDesc: "Delivered to your address",
     deliveryEta: "2–5 business days",
     pickup: "Store pickup",
-    pickupDesc: "SoYoung Kolonaki · no shipping fee",
+    pickupDesc: "SoYoung Kozani · no shipping fee",
     pickupReady: "Ready in 1–2 business days",
     pickupHours: "Hours",
     freeShipping: "Free shipping",
@@ -103,19 +103,21 @@ export const en: Dictionary = {
     discountApplied: "Discount applied: −{amount}",
     payment: "Payment",
     paymentMethod: "Payment method",
-    payByCard: "Debit / Credit card",
-    payByCardDesc: "Secure online payment",
+    payByCard: "Card / Apple Pay / Google Pay",
+    payByCardDesc: "Secure payment via Viva.com",
     cashOnDelivery: "Cash on delivery",
     cashOnDeliveryDesc: "Pay the courier on delivery",
     codFee: "COD fee",
     paymentSecure:
-      "Card payments are processed securely via Stripe. Card details are never stored on our servers.",
+      "You'll complete payment securely on Viva.com (card, Apple Pay, or Google Pay). Card details are never stored on our servers.",
     paymentDemo:
       "Demo mode: payment is simulated when you place the order.",
-    paymentNextStep: "Enter your card details securely below.",
+    paymentNextStep: "You'll be taken to Viva.com's secure payment page.",
+    orPayWithCard: "or pay with card",
     paymentFailed: "Payment failed. Try another card or method.",
     paymentUnavailable: "Card payments are unavailable right now.",
     payNow: "Pay now",
+    payWithViva: "Pay with Viva.com",
     order: "Order",
     orderSummary: "Order summary",
     subtotal: "Subtotal",
@@ -177,7 +179,7 @@ export const en: Dictionary = {
       codNext:
         "Pay the courier on delivery (cash or card). We may call if we need to reach you.",
       pickupNext:
-        "We'll notify you when your order is ready for pickup at our Kolonaki store.",
+        "We'll notify you when your order is ready for pickup at our Kozani store.",
       deliveryNext: "You'll get an update when your order ships with the courier.",
     },
   },
@@ -198,8 +200,7 @@ export const en: Dictionary = {
     headline: "Your Korean routine starts here.",
     headlineLead: "Your Korean routine",
     headlineTrail: "starts here.",
-    subhead:
-      "Discover K-beauty skincare and makeup, chosen with care.",
+    subhead: "Discover the routine that feels like you.",
     heroCta: "Shop skincare",
     exploreSkincare: "Explore skincare",
     shopByCategory: "Shop by category",
@@ -238,6 +239,12 @@ export const en: Dictionary = {
     noProductsDescription:
       "Try adjusting your filters or browse another category.",
     clearFilters: "Clear filters",
+    categoryDescriptions: {
+      makeup: "Thoughtful colour for everyday radiance.",
+      skincare: "Rituals for calm, resilient skin.",
+      haircare: "Nourishing care for healthy hair.",
+      body: "Body care essentials.",
+    },
   },
   filters: {
     title: "Filters",
@@ -369,6 +376,9 @@ export const en: Dictionary = {
     join: "Join",
     invalidEmail: "Please enter a valid email.",
     success: "You're on the list. Welcome.",
+    alreadySubscribed: "This email is already on the list.",
+    rateLimited: "Too many attempts. Please try again shortly.",
+    failed: "Something went wrong. Please try again.",
   },
   wishlist: {
     title: "Wishlist",

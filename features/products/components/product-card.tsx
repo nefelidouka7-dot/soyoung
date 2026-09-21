@@ -19,8 +19,6 @@ export type ProductCardData = {
   compareAtPrice?: number | null;
   image: string;
   hoverImage?: string | null;
-  rating?: number | null;
-  reviewCount?: number;
   isNew?: boolean;
   suitableFor?: string | null;
 };
@@ -151,11 +149,6 @@ export function ProductCard({ product }: { product: ProductCardData }) {
         >
           {product.name}
         </Link>
-        {product.rating != null && product.reviewCount ? (
-          <p className="mt-1 hidden text-xs text-ink-muted sm:mt-1.5 sm:block">
-            ★ {product.rating.toFixed(1)} · {product.reviewCount}
-          </p>
-        ) : null}
         {product.suitableFor ? (
           <p className="mt-1 hidden text-xs text-ink-muted sm:block">
             {t((d) => d.product.suitableFor, { type: product.suitableFor })}
