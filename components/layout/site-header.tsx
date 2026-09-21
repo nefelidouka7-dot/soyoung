@@ -443,7 +443,7 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
               </button>
             </div>
 
-            <nav className="flex flex-1 flex-col overflow-y-auto px-6 pb-4 pt-2">
+            <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 pb-6 pt-2">
               <ul className="flex flex-col gap-1">
                 {brand.nav.map((item) => (
                   <li key={item.href}>
@@ -458,26 +458,26 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
                 ))}
               </ul>
 
-              <Link
-                href="/skin-type"
-                onClick={closeMenu}
-                className="mt-8 inline-flex h-12 min-h-12 w-full shrink-0 items-center justify-center bg-sage px-4 text-[12px] font-medium uppercase tracking-[0.04em] text-bg transition-colors hover:bg-sage-dark"
-              >
-                {dict.nav.findForMySkin}
-              </Link>
+              <div className="mt-auto flex flex-col gap-3 border-t border-oak/25 pt-6">
+                <Link
+                  href="/skin-type"
+                  onClick={closeMenu}
+                  className="inline-flex min-h-14 w-full shrink-0 items-center justify-center bg-sage px-4 py-4 text-center text-[12px] font-medium uppercase leading-snug tracking-[0.04em] text-bg transition-colors hover:bg-sage-dark"
+                >
+                  {dict.nav.findForMySkin}
+                </Link>
 
-              <div className="mt-10 flex flex-col gap-3 border-t border-oak/25 pt-8">
                 <Link
                   href="/login"
                   onClick={closeMenu}
-                  className="text-sm tracking-wide text-ink-muted transition-colors hover:text-ink"
+                  className="py-1 text-sm tracking-wide text-ink-muted transition-colors hover:text-ink"
                 >
                   {dict.nav.account}
                 </Link>
                 <Link
                   href="/wishlist"
                   onClick={closeMenu}
-                  className="text-sm tracking-wide text-ink-muted transition-colors hover:text-ink"
+                  className="py-1 text-sm tracking-wide text-ink-muted transition-colors hover:text-ink"
                 >
                   {dict.nav.wishlist}
                 </Link>
