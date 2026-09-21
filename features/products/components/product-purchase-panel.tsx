@@ -105,10 +105,10 @@ export function ProductPurchasePanel({ product }: Props) {
                 type="button"
                 onClick={() => setActiveImage(i)}
                 className={cn(
-                  "relative block h-14 w-14 overflow-hidden border bg-bg-muted transition-colors",
+                  "relative block h-14 w-14 overflow-hidden border bg-white transition-colors",
                   i === activeImage
                     ? "border-ink"
-                    : "border-transparent hover:border-oak"
+                    : "border-oak/40 hover:border-oak"
                 )}
               >
                 <Image
@@ -126,20 +126,22 @@ export function ProductPurchasePanel({ product }: Props) {
         <div>
           <button
             type="button"
-            className="relative block h-[300px] w-[300px] overflow-hidden bg-bg-muted sm:h-[340px] sm:w-[340px] lg:h-[380px] lg:w-[380px]"
+            className="relative block h-[300px] w-[300px] overflow-hidden border border-oak/35 bg-white sm:h-[340px] sm:w-[340px] lg:h-[380px] lg:w-[380px]"
             onClick={() => setLightbox(true)}
             aria-label={dict.product.openGallery}
           >
-            <Image
-              src={images[activeImage]?.url ?? "/images/placeholder-product.svg"}
-              alt={images[activeImage]?.alt ?? product.name}
-              fill
-              className="object-contain p-5 sm:p-6"
-              sizes="380px"
-              priority
-            />
+            <span className="absolute inset-4 sm:inset-5">
+              <Image
+                src={images[activeImage]?.url ?? "/images/placeholder-product.svg"}
+                alt={images[activeImage]?.alt ?? product.name}
+                fill
+                className="object-contain"
+                sizes="380px"
+                priority
+              />
+            </span>
             {onSale ? (
-              <span className="absolute left-3 top-3">
+              <span className="absolute left-3 top-3 z-10">
                 <Badge variant="sale">{dict.product.sale}</Badge>
               </span>
             ) : null}
@@ -153,8 +155,8 @@ export function ProductPurchasePanel({ product }: Props) {
                   type="button"
                   onClick={() => setActiveImage(i)}
                   className={cn(
-                    "relative block h-12 w-12 shrink-0 overflow-hidden border bg-bg-muted",
-                    i === activeImage ? "border-ink" : "border-transparent"
+                    "relative block h-12 w-12 shrink-0 overflow-hidden border bg-white",
+                    i === activeImage ? "border-ink" : "border-oak/40"
                   )}
                 >
                   <Image
@@ -277,16 +279,6 @@ export function ProductPurchasePanel({ product }: Props) {
               <Plus className="h-3.5 w-3.5" strokeWidth={1.75} />
             </button>
           </div>
-          <p
-            className={cn(
-              "text-xs",
-              stock > 0 ? "text-sage-dark" : "text-coral"
-            )}
-          >
-            {stock > 0
-              ? t((d) => d.product.inStockCount, { count: stock })
-              : dict.product.outOfStockLabel}
-          </p>
         </div>
 
         <div className="mt-6 flex gap-2">
@@ -352,13 +344,16 @@ export function ProductPurchasePanel({ product }: Props) {
           >
             <X className="h-5 w-5" strokeWidth={1.5} />
           </button>
-          <div className="relative h-[min(70vw,24rem)] w-[min(70vw,24rem)] bg-bg-muted">
-            <Image
-              src={images[activeImage]?.url ?? "/images/placeholder-product.svg"}
-              alt=""
-              fill
-              className="object-contain p-8"
-            />
+          <div className="relative h-[min(70vw,24rem)] w-[min(70vw,24rem)] bg-white">
+            <span className="absolute inset-8">
+              <Image
+                src={images[activeImage]?.url ?? "/images/placeholder-product.svg"}
+                alt=""
+                fill
+                className="object-contain"
+                sizes="(max-width:768px) 70vw, 384px"
+              />
+            </span>
           </div>
         </div>
       ) : null}

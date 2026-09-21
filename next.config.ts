@@ -7,7 +7,8 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [],
     dangerouslyAllowSVG: true,
-    contentDispositionType: "attachment",
+    // inline so optimized JPGs render reliably in <img>; CSP still sandboxes SVGs
+    contentDispositionType: "inline",
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   experimental: {

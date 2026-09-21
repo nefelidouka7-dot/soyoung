@@ -58,8 +58,11 @@ function useFilterParams() {
 
 export function ProductFilters({ facets }: { facets: Facets }) {
   const { dict, locale } = useTranslation();
+  const pathname = usePathname();
   const { toggle, setFlag, selected, clear, searchParams } = useFilterParams();
   const [open, setOpen] = useState(false);
+  // Offers page already forces discounted products — no need for the toggle.
+  const showOffersFilter = pathname !== "/offers";
 
   const content = (
     <div className="space-y-8">
@@ -108,13 +111,17 @@ export function ProductFilters({ facets }: { facets: Facets }) {
         />
       </FilterGroup>
 
-      <FilterGroup title={dict.filters.offers}>
-        <CheckRow
-          label={dict.filters.onSale}
-          checked={searchParams.get("offers") === "1"}
-          onChange={() => setFlag("offers", searchParams.get("offers") !== "1")}
-        />
-      </FilterGroup>
+      {showOffersFilter ? (
+        <FilterGroup title={dict.filters.offers}>
+          <CheckRow
+            label={dict.filters.onSale}
+            checked={searchParams.get("offers") === "1"}
+            onChange={() =>
+              setFlag("offers", searchParams.get("offers") !== "1")
+            }
+          />
+        </FilterGroup>
+      ) : null}
 
       <button
         type="button"

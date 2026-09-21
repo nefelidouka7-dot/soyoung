@@ -76,6 +76,7 @@ export function BrandDirectory({ brands }: { brands: Brand[] }) {
                         alt=""
                         fill
                         className="object-contain"
+                        sizes="40px"
                       />
                     </div>
                     <div>

@@ -90,7 +90,7 @@ export default async function CategoryListingPage({
     category?.name ??
     (categorySlug === "new-in"
       ? dict.listing.newIn
-      : categorySlug === "offers"
+      : onSale || categorySlug === "offers"
         ? dict.listing.offers
         : dict.listing.shop);
 

@@ -39,6 +39,7 @@ export default async function BrandPage({ params }: Props) {
           alt=""
           fill
           className="object-cover"
+          sizes="100vw"
           priority
         />
         <div className="absolute inset-0 bg-ink/20" />
@@ -52,6 +53,7 @@ export default async function BrandPage({ params }: Props) {
                 alt=""
                 fill
                 className="object-contain p-2"
+                sizes="64px"
               />
             </div>
             <div>
