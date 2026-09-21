@@ -13,15 +13,30 @@ import { getLocale, getServerDictionary } from "@/lib/i18n/server";
 import { FREE_SHIPPING_THRESHOLD, formatPrice } from "@/lib/utils";
 
 export default async function HomePage() {
-  const [dict, locale, bestSellers, newIn, featuredBrands, skinTypes] =
-    await Promise.all([
-      getServerDictionary(),
-      getLocale(),
+  const dict = await getServerDictionary();
+  const locale = await getLocale();
+
+  let bestSellers: Awaited<ReturnType<typeof findProducts>> = {
+    total: 0,
+    page: 1,
+    pageSize: 8,
+    totalPages: 0,
+    products: [],
+  };
+  let newIn = bestSellers;
+  let featuredBrands: Awaited<ReturnType<typeof findFeaturedBrands>> = [];
+  let skinTypes: Awaited<ReturnType<typeof findSkinTypes>> = [];
+
+  try {
+    [bestSellers, newIn, featuredBrands, skinTypes] = await Promise.all([
       findProducts({ bestSeller: true, pageSize: 8 }),
       findProducts({ sort: "newest", pageSize: 8 }),
       findFeaturedBrands(6),
       findSkinTypes(),
     ]);
+  } catch (error) {
+    console.error("[home] Catalog query failed — check DATABASE_URL / Neon:", error);
+  }
 
   const categories = [
     {

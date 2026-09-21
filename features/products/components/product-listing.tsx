@@ -57,26 +57,44 @@ export default async function CategoryListingPage({
   const inStock = sp.available === "1" || sp.available === "true";
   const q = typeof sp.q === "string" ? sp.q : undefined;
 
-  const category = categorySlug
-    ? await findCategoryBySlug(categorySlug)
-    : null;
+  const dict = await getServerDictionary();
 
-  const [result, facets, dict] = await Promise.all([
-    findProducts({
-      categorySlug,
-      brandSlugs,
-      skinTypeSlugs,
-      productTypes,
-      sort,
-      page,
-      onSale,
-      inStock,
-      q,
-      pageSize: 24,
-    }),
-    getFilterFacets(categorySlug),
-    getServerDictionary(),
-  ]);
+  let category: Awaited<ReturnType<typeof findCategoryBySlug>> = null;
+  let result: Awaited<ReturnType<typeof findProducts>> = {
+    total: 0,
+    page: 1,
+    pageSize: 24,
+    totalPages: 0,
+    products: [],
+  };
+  let facets: Awaited<ReturnType<typeof getFilterFacets>> = {
+    brands: [],
+    skinTypes: [],
+    productTypes: [],
+    minPrice: 0,
+    maxPrice: 100,
+  };
+
+  try {
+    category = categorySlug ? await findCategoryBySlug(categorySlug) : null;
+    [result, facets] = await Promise.all([
+      findProducts({
+        categorySlug,
+        brandSlugs,
+        skinTypeSlugs,
+        productTypes,
+        sort,
+        page,
+        onSale,
+        inStock,
+        q,
+        pageSize: 24,
+      }),
+      getFilterFacets(categorySlug),
+    ]);
+  } catch (error) {
+    console.error("[listing] Catalog query failed — check DATABASE_URL / Neon:", error);
+  }
 
   function t(
     pick: (d: Dictionary) => string,
