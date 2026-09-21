@@ -9,9 +9,9 @@
     "lint": "eslint",
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",
-    "db:push": "prisma db push",
+    "db:push": "tsx prisma/with-db-env.ts db push",
     "db:seed": "tsx prisma/seed.ts",
-    "db:studio": "prisma studio"
+    "db:studio": "tsx prisma/with-db-env.ts studio"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",

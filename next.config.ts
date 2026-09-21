@@ -1,4 +1,8 @@
 import type { NextConfig } from "next";
+import { resolveDatabaseUrl } from "./db/env";
+
+// Map Neon’s db_* integration vars → DATABASE_URL for Prisma during build.
+resolveDatabaseUrl();
 
 const nextConfig: NextConfig = {
   turbopack: {

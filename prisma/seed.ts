@@ -1,5 +1,8 @@
 import { PrismaClient, type Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { resolveDatabaseUrl } from "../db/env";
+
+resolveDatabaseUrl();
 
 const prisma = new PrismaClient();
 
