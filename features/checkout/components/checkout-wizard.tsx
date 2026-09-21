@@ -150,9 +150,32 @@ export function CheckoutWizard({
   function selectShipping(method: ShippingMethod) {
     setShippingMethod(method);
     const allowed = paymentMethodsForShipping(method);
-    if (!allowed.includes(paymentMethod)) {
-      setPaymentMethod(allowed[0] ?? "card");
+    const nextPayment = allowed.includes(paymentMethod)
+      ? paymentMethod
+      : (allowed[0] ?? "card");
+    if (nextPayment !== paymentMethod) {
+      setPaymentMethod(nextPayment);
     }
+
+    // Optimistic fees so pickup→courier doesn't flash “δωρεάν” from stale server totals.
+    setServerTotals((prev) => {
+      const subtotal = prev?.subtotal ?? clientSubtotal;
+      const discountAmount = prev?.discountAmount ?? 0;
+      const afterDiscount = Math.max(0, subtotal - discountAmount);
+      const shippingAmount = shippingFeeFor(
+        method,
+        afterDiscount,
+        FREE_SHIPPING_THRESHOLD
+      );
+      const paymentFee = nextPayment === "cod" ? COD_FEE : 0;
+      return {
+        subtotal,
+        discountAmount,
+        shippingAmount,
+        paymentFee,
+        total: afterDiscount + shippingAmount + paymentFee,
+      };
+    });
   }
 
   async function refreshTotals() {
@@ -273,21 +296,31 @@ export function CheckoutWizard({
     total: clientSubtotal + fallbackShipping + fallbackFee,
   };
 
+  const afterDiscount = Math.max(0, totals.subtotal - totals.discountAmount);
   const remainingForFree = Math.max(
     0,
-    FREE_SHIPPING_THRESHOLD - (totals.subtotal - totals.discountAmount)
+    FREE_SHIPPING_THRESHOLD - afterDiscount
+  );
+  // Always price the courier option for delivery — never reuse pickup's €0 fee.
+  const courierFee = shippingFeeFor(
+    "delivery",
+    afterDiscount,
+    FREE_SHIPPING_THRESHOLD
   );
   const courierPriceLabel =
-    remainingForFree === 0 || totals.shippingAmount === 0
-      ? dict.checkout.free
-      : formatPrice(STANDARD_SHIPPING_FEE);
+    courierFee === 0 ? dict.checkout.free : formatPrice(STANDARD_SHIPPING_FEE);
 
+  const resolvedShipping = shippingFeeFor(
+    shippingMethod,
+    afterDiscount,
+    FREE_SHIPPING_THRESHOLD
+  );
   const shippingLabel =
     shippingMethod === "pickup"
       ? dict.checkout.free
-      : totals.shippingAmount === 0
+      : resolvedShipping === 0
         ? dict.checkout.freeShipping
-        : formatPrice(totals.shippingAmount);
+        : formatPrice(resolvedShipping);
 
   const deliveryTitle =
     shippingMethod === "pickup"
