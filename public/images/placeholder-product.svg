@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000" viewBox="0 0 800 1000" fill="none">
+  <rect width="800" height="1000" fill="#FAF4ED"/>
+  <rect x="280" y="220" width="240" height="480" rx="8" fill="#F5EBE1" stroke="#D0B89A" stroke-width="2"/>
+  <rect x="340" y="180" width="120" height="50" rx="4" fill="#D0B89A"/>
+  <circle cx="400" cy="420" r="48" fill="#8A9A86" opacity="0.35"/>
+  <text x="400" y="780" text-anchor="middle" fill="#2B2927" font-family="Georgia, serif" font-size="28" opacity="0.5">SoYoung</text>
+</svg>

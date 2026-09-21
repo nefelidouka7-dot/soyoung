@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1200" viewBox="0 0 1600 1200" fill="none">
+  <rect width="1600" height="1200" fill="#F5EBE1"/>
+  <ellipse cx="900" cy="600" rx="420" ry="380" fill="#FAF4ED"/>
+  <rect x="520" y="340" width="280" height="520" rx="12" fill="#FAF4ED" stroke="#D0B89A" stroke-width="2"/>
+  <rect x="900" y="420" width="200" height="360" rx="8" fill="#E8D9C8"/>
+  <circle cx="620" cy="520" r="36" fill="#8A9A86" opacity="0.4"/>
+  <text x="200" y="200" fill="#2B2927" font-family="Georgia, serif" font-size="48" opacity="0.35">Beauty, curated</text>
+</svg>
