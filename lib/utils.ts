@@ -51,8 +51,14 @@ export function metadataBaseUrl(): URL {
   }
 }
 
-export const FREE_SHIPPING_THRESHOLD = Number(
-  process.env.FREE_SHIPPING_THRESHOLD ?? 50
+function parsePositiveNumber(value: string | undefined, fallback: number) {
+  const n = Number(value?.trim());
+  return Number.isFinite(n) && n > 0 ? n : fallback;
+}
+
+export const FREE_SHIPPING_THRESHOLD = parsePositiveNumber(
+  process.env.FREE_SHIPPING_THRESHOLD,
+  50
 );
 
 export const STORE_NAME =
