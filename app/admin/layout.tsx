@@ -3,6 +3,8 @@ import { requireAdmin } from "@/lib/admin";
 import { STORE_NAME } from "@/lib/utils";
 import { AdminNav } from "@/features/admin/components/admin-nav";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: {
     default: "Admin",
