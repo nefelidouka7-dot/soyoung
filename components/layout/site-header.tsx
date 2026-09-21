@@ -204,7 +204,7 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
           </Link>
 
           <nav
-            className="hidden min-w-0 flex-1 items-center justify-center gap-5 lg:flex xl:gap-7"
+            className="hidden min-w-0 flex-1 items-center justify-center gap-6 lg:flex xl:gap-8"
             aria-label="Primary"
             onMouseLeave={scheduleClose}
           >
@@ -248,14 +248,20 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
               })}
             </div>
 
-            <div className="ml-1 flex items-center gap-2.5 xl:ml-2 xl:gap-3">
+            <div className="flex items-center gap-3 border-l border-oak/45 pl-6 xl:gap-3.5 xl:pl-8">
               {promoNav.map((item, index) => {
                 const active = isActive(item.href);
                 return (
-                  <div key={item.href} className="flex items-center gap-2.5 xl:gap-3">
+                  <div
+                    key={item.href}
+                    className="flex items-center gap-3 xl:gap-3.5"
+                  >
                     {index > 0 ? (
-                      <span className="text-oak/70" aria-hidden>
-                        ·
+                      <span
+                        className="select-none text-[11px] text-oak"
+                        aria-hidden
+                      >
+                        /
                       </span>
                     ) : null}
                     <Link
@@ -263,8 +269,8 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
                       onClick={closeNow}
                       aria-current={active ? "page" : undefined}
                       className={cn(
-                        "whitespace-nowrap border-b-2 border-transparent py-1 text-[13px] font-medium text-ink-muted transition-colors hover:text-ink xl:text-[14px]",
-                        active && "border-ink/50 text-ink"
+                        "whitespace-nowrap border-b-2 border-transparent py-1 text-[12.5px] font-medium tracking-[0.02em] text-sage-dark transition-colors hover:text-ink xl:text-[13.5px]",
+                        active && "border-sage-dark/60 text-ink"
                       )}
                     >
                       {navLabel(dict, item.href, item.label)}
@@ -273,13 +279,6 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
                 );
               })}
             </div>
-
-            <Link
-              href="/skin-type"
-              className="hidden h-9 min-h-9 shrink-0 items-center whitespace-nowrap bg-sage px-3 text-[11px] font-medium uppercase tracking-[0.04em] text-bg transition-colors hover:bg-sage-dark 2xl:inline-flex 2xl:h-10 2xl:min-h-10 2xl:px-5 2xl:text-[13px]"
-            >
-              {dict.nav.findForMySkin}
-            </Link>
           </nav>
 
           <div className="ml-auto flex shrink-0 items-center gap-0.5 sm:gap-1 lg:ml-0">
@@ -450,7 +449,7 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
           <button
             type="button"
             className={cn(
-              "absolute inset-0 bg-ink/20 backdrop-blur-[2px] transition-opacity duration-300 ease-out",
+              "absolute inset-0 bg-ink/30 backdrop-blur-[2px] transition-opacity duration-300 ease-out",
               menuVisible ? "opacity-100" : "opacity-0"
             )}
             aria-label={dict.nav.closeMenu}
@@ -458,71 +457,113 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
           />
           <div
             className={cn(
-              "absolute inset-y-0 right-0 flex w-full max-w-[20rem] flex-col bg-bg-muted shadow-[-12px_0_40px_rgba(43,41,39,0.08)] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform sm:max-w-sm",
+              "absolute inset-y-0 right-0 flex w-[min(100%,22rem)] flex-col bg-bg shadow-[-20px_0_50px_rgba(43,41,39,0.14)] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform sm:w-[23.5rem]",
               menuVisible ? "translate-x-0" : "translate-x-full"
             )}
           >
-            <div className="flex shrink-0 items-center justify-end px-5 pt-5">
+            <div
+              className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[radial-gradient(90%_80%_at_100%_0%,color-mix(in_srgb,var(--oak-soft)_55%,transparent),transparent_70%)]"
+              aria-hidden
+            />
+
+            <div className="relative flex shrink-0 justify-end px-4 pt-4">
               <button
                 type="button"
                 onClick={closeMenu}
                 aria-label={dict.nav.closeMenu}
-                className="inline-flex h-10 w-10 items-center justify-center text-ink-muted transition-colors hover:text-ink"
+                className="inline-flex h-11 w-11 items-center justify-center text-ink-muted transition-colors hover:text-ink"
               >
                 <X className="h-5 w-5" strokeWidth={1.25} />
               </button>
             </div>
 
-            <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 pb-6 pt-2">
-              <ul className="flex flex-col gap-1">
-                {categoryNav.map((item) => (
-                  <li key={item.href}>
+            <nav className="relative flex min-h-0 flex-1 flex-col px-6 pb-8 pt-2">
+              <ul className="flex flex-col gap-0.5">
+                {categoryNav.map((item, index) => {
+                  const active = isActive(item.href);
+                  return (
+                    <li
+                      key={item.href}
+                      className={cn(menuVisible && "animate-menu-item")}
+                      style={
+                        menuVisible
+                          ? { animationDelay: `${70 + index * 40}ms` }
+                          : undefined
+                      }
+                    >
+                      <Link
+                        href={item.href}
+                        onClick={closeMenu}
+                        aria-current={active ? "page" : undefined}
+                        className={cn(
+                          "block py-2.5 font-serif text-[2rem] leading-[1.05] tracking-tight transition-colors",
+                          active ? "text-ink" : "text-ink/75 hover:text-ink"
+                        )}
+                      >
+                        {navLabel(dict, item.href, item.label)}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+
+              <div
+                className={cn(
+                  "mt-9 space-y-3 border-t border-oak/30 pt-7",
+                  menuVisible && "animate-menu-item"
+                )}
+                style={
+                  menuVisible
+                    ? { animationDelay: `${70 + categoryNav.length * 40}ms` }
+                    : undefined
+                }
+              >
+                {promoNav.map((item) => {
+                  const active = isActive(item.href);
+                  return (
                     <Link
+                      key={item.href}
                       href={item.href}
                       onClick={closeMenu}
-                      className="block py-3 font-serif text-[1.65rem] leading-none tracking-tight text-ink transition-opacity hover:opacity-60"
+                      aria-current={active ? "page" : undefined}
+                      className={cn(
+                        "block font-serif text-[1.45rem] leading-none tracking-tight text-sage-dark transition-colors hover:text-ink",
+                        active && "text-ink"
+                      )}
                     >
                       {navLabel(dict, item.href, item.label)}
                     </Link>
-                  </li>
-                ))}
-              </ul>
+                  );
+                })}
+              </div>
 
-              <ul className="mt-6 flex flex-col gap-1 border-t border-oak/25 pt-5">
-                {promoNav.map((item) => (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      onClick={closeMenu}
-                      className="block py-3 font-serif text-[1.65rem] leading-none tracking-tight text-ink-muted transition-colors hover:text-ink"
-                    >
-                      {navLabel(dict, item.href, item.label)}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-
-              <div className="mt-auto flex flex-col gap-3 border-t border-oak/25 pt-6">
-                <Link
-                  href="/skin-type"
-                  onClick={closeMenu}
-                  className="inline-flex min-h-14 w-full shrink-0 items-center justify-center bg-sage px-4 py-4 text-center text-[12px] font-medium uppercase leading-snug tracking-[0.04em] text-bg transition-colors hover:bg-sage-dark"
-                >
-                  {dict.nav.findForMySkin}
-                </Link>
-
+              <div
+                className={cn(
+                  "mt-auto grid grid-cols-2 gap-4 border-t border-oak/30 pt-5",
+                  menuVisible && "animate-menu-item"
+                )}
+                style={
+                  menuVisible
+                    ? {
+                        animationDelay: `${100 + (categoryNav.length + 1) * 40}ms`,
+                      }
+                    : undefined
+                }
+              >
                 <Link
                   href="/login"
                   onClick={closeMenu}
-                  className="py-1 text-sm tracking-wide text-ink-muted transition-colors hover:text-ink"
+                  className="flex items-center gap-2.5 text-[13px] text-ink-muted transition-colors hover:text-ink"
                 >
+                  <User className="h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden />
                   {dict.nav.account}
                 </Link>
                 <Link
                   href="/wishlist"
                   onClick={closeMenu}
-                  className="py-1 text-sm tracking-wide text-ink-muted transition-colors hover:text-ink"
+                  className="flex items-center justify-end gap-2.5 text-[13px] text-ink-muted transition-colors hover:text-ink"
                 >
+                  <Heart className="h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden />
                   {dict.nav.wishlist}
                 </Link>
               </div>
