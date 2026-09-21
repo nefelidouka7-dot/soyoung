@@ -186,7 +186,7 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
         className={cn(
           "sticky top-0 z-50 border-b border-transparent transition-all duration-300",
           scrolled
-            ? "h-14 border-oak/40 bg-bg/95 backdrop-blur-sm"
+            ? "h-16 border-oak/40 bg-bg/95 backdrop-blur-sm"
             : "h-16 bg-bg/90 backdrop-blur-sm md:h-[4.5rem]"
         )}
       >
@@ -246,7 +246,7 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
             })}
             <Link
               href="/skin-type"
-              className="hidden h-9 items-center whitespace-nowrap bg-sage px-3.5 text-[12px] font-medium uppercase tracking-[0.04em] text-bg transition-colors hover:bg-sage-dark xl:inline-flex 2xl:h-10 2xl:px-4 2xl:text-[13px]"
+              className="hidden h-10 min-h-10 shrink-0 items-center whitespace-nowrap bg-sage px-4 text-[12px] font-medium uppercase tracking-[0.04em] text-bg transition-colors hover:bg-sage-dark xl:inline-flex 2xl:px-5 2xl:text-[13px]"
             >
               {dict.nav.findForMySkin}
             </Link>
@@ -461,7 +461,7 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
               <Link
                 href="/skin-type"
                 onClick={closeMenu}
-                className="mt-8 inline-flex h-11 w-full items-center justify-center bg-sage px-4 text-[12px] font-medium uppercase tracking-[0.04em] text-bg transition-colors hover:bg-sage-dark"
+                className="mt-8 inline-flex h-12 min-h-12 w-full shrink-0 items-center justify-center bg-sage px-4 text-[12px] font-medium uppercase tracking-[0.04em] text-bg transition-colors hover:bg-sage-dark"
               >
                 {dict.nav.findForMySkin}
               </Link>
