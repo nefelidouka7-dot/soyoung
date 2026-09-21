@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Minus, Plus, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { useUIStore } from "@/lib/ui-store";
 import { useCartStore } from "@/features/cart/store";
 import { FREE_SHIPPING_THRESHOLD, formatPrice } from "@/lib/utils";
@@ -48,6 +49,8 @@ export function CartDrawer() {
 
   useEffect(() => {
     if (!open) return;
+    // Keep the open cart above toasts / cookie prompts.
+    toast.dismiss();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") close();
     };
@@ -61,7 +64,7 @@ export function CartDrawer() {
   if (!mounted) return null;
 
   return (
-    <div className="fixed inset-0 z-[100]">
+    <div className="fixed inset-0 z-[120]">
       <button
         type="button"
         className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ease-out ${

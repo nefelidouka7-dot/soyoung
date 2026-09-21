@@ -39,7 +39,7 @@ export function CookieBanner() {
 
   return (
     <div
-      className="fixed inset-x-0 bottom-0 z-[80] border-t border-oak/40 bg-bg/95 p-4 shadow-[0_-8px_30px_rgba(43,41,39,0.08)] backdrop-blur-sm sm:p-5"
+      className="fixed inset-x-0 bottom-0 z-[60] border-t border-oak/40 bg-bg/95 p-4 shadow-[0_-8px_30px_rgba(43,41,39,0.08)] backdrop-blur-sm sm:p-5"
       role="dialog"
       aria-label={dict.cookies.title}
     >

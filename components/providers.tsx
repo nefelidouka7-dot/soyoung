@@ -11,6 +11,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       {children}
       <Toaster
         position="bottom-right"
+        style={{ zIndex: 70 }}
         toastOptions={{
           className: "border border-oak/50 bg-bg-muted text-ink shadow-none",
         }}
