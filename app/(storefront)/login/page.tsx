@@ -3,6 +3,9 @@ import { redirect } from "next/navigation";
 import { LoginPageView } from "@/features/auth/components/login-form";
 import { auth } from "@/lib/auth";
 import { getServerDictionary } from "@/lib/i18n/server";
+import type { Role } from "@prisma/client";
+
+const ADMIN_ROLES: Role[] = ["ADMIN", "SUPER_ADMIN", "MANAGER", "EDITOR"];
 
 export async function generateMetadata(): Promise<Metadata> {
   const dict = await getServerDictionary();
@@ -27,7 +30,16 @@ export default async function LoginPage({
   );
 
   const session = await auth();
-  if (session?.user) redirect(callbackUrl);
+  const userId = session?.user?.id;
+  const role = session?.user?.role;
+
+  if (userId) {
+    if (callbackUrl.startsWith("/admin")) {
+      if (role && ADMIN_ROLES.includes(role)) redirect(callbackUrl);
+      redirect("/account");
+    }
+    redirect(callbackUrl);
+  }
 
   return <LoginPageView callbackUrl={callbackUrl} />;
 }

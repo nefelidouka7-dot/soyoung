@@ -2,7 +2,7 @@ import type { Dictionary } from "../types";
 
 export const en: Dictionary = {
   nav: {
-    newIn: "New In",
+    newIn: "New arrivals",
     makeup: "Makeup",
     skincare: "Skincare",
     haircare: "Haircare",
@@ -207,7 +207,7 @@ export const en: Dictionary = {
     categorySubhead: "Everything you need for a calm, complete ritual.",
     bestSellers: "Best Sellers",
     bestSellersSubhead: "Community favourites — worn into everyday habits.",
-    newIn: "New In",
+    newIn: "New arrivals",
     newInSubhead: "Fresh arrivals to renew your ritual.",
     viewAll: "View all",
     skinHeadline: "Find what works for your skin",
@@ -232,7 +232,7 @@ export const en: Dictionary = {
   listing: {
     home: "Home",
     shop: "Shop",
-    newIn: "New In",
+    newIn: "New arrivals",
     offers: "Offers",
     productsCount: "{count} products",
     noProductsTitle: "No products found",

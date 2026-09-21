@@ -2,7 +2,7 @@ import type { Dictionary } from "../types";
 
 export const el: Dictionary = {
   nav: {
-    newIn: "Νέα",
+    newIn: "Νέες παραλαβές",
     makeup: "Μακιγιάζ",
     skincare: "Περιποίηση",
     haircare: "Μαλλιά",
@@ -229,7 +229,7 @@ export const el: Dictionary = {
     categorySubhead: "Ό,τι χρειάζεσαι για μια ήρεμη, ολοκληρωμένη ρουτίνα.",
     bestSellers: "Τα πιο δημοφιλή",
     bestSellersSubhead: "Τα αγαπημένα της κοινότητας — δοκιμασμένα καθημερινά.",
-    newIn: "Νέα",
+    newIn: "Νέες παραλαβές",
     newInSubhead: "Φρέσκες αφίξεις για να ανανεώσεις την τελετουργία σου.",
     viewAll: "Δες όλα",
     skinHeadline: "Βρες τι ταιριάζει στην επιδερμίδα σου",
@@ -254,7 +254,7 @@ export const el: Dictionary = {
   listing: {
     home: "Αρχική",
     shop: "Κατάστημα",
-    newIn: "Νέα",
+    newIn: "Νέες παραλαβές",
     offers: "Προσφορές",
     productsCount: "{count} προϊόντα",
     noProductsTitle: "Δεν βρέθηκαν προϊόντα",

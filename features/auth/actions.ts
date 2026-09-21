@@ -91,6 +91,7 @@ export async function loginAction(formData: FormData) {
       redirectTo: callbackUrl,
     });
   } catch (e) {
+    // Successful sign-in throws a Next.js redirect — rethrow it.
     if (e instanceof AuthError) {
       return { error: "invalidCredentials" as const };
     }

@@ -8,12 +8,12 @@ export const brand = {
     coral: "#E08A79",
   },
   nav: [
-    { label: "New In", href: "/new-in" },
     { label: "Makeup", href: "/makeup" },
     { label: "Skincare", href: "/skincare" },
     { label: "Haircare", href: "/haircare" },
     { label: "Body", href: "/body" },
     { label: "Brands", href: "/brands" },
+    { label: "New arrivals", href: "/new-in" },
     { label: "Offers", href: "/offers" },
   ],
   skinTypes: [

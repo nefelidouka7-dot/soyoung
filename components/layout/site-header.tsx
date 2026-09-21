@@ -35,6 +35,8 @@ const PANEL_KIND: Record<string, "category" | "brands"> = {
   "/brands": "brands",
 };
 
+const PROMO_HREFS = new Set(["/new-in", "/offers"]);
+
 export function SiteHeader({ navigation }: { navigation: NavigationData }) {
   const { dict, locale } = useTranslation();
   const pathname = usePathname();
@@ -48,6 +50,8 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
     s.items.reduce((n, i) => n + i.quantity, 0)
   );
   const displayCount = cartHydrated ? cartCount : 0;
+  const categoryNav = brand.nav.filter((item) => !PROMO_HREFS.has(item.href));
+  const promoNav = brand.nav.filter((item) => PROMO_HREFS.has(item.href));
   const [cartBump, setCartBump] = useState(false);
   const prevCartCount = useRef<number | null>(null);
   const openTimer = useRef<number | null>(null);
@@ -200,53 +204,79 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
           </Link>
 
           <nav
-            className="hidden flex-1 items-center justify-center gap-3 lg:flex xl:gap-4"
+            className="hidden min-w-0 flex-1 items-center justify-center gap-5 lg:flex xl:gap-7"
             aria-label="Primary"
             onMouseLeave={scheduleClose}
           >
-            {brand.nav.map((item) => {
-              const kind = PANEL_KIND[item.href];
-              const active = isActive(item.href);
-              const expanded = openPanel === item.href;
-              return (
-                <div
-                  key={item.href}
-                  onMouseEnter={() =>
-                    kind ? scheduleOpen(item.href) : scheduleClose()
-                  }
-                  onFocus={() => (kind ? openNow(item.href) : closeNow())}
-                >
-                  <Link
-                    href={item.href}
-                    onClick={closeNow}
-                    aria-current={active ? "page" : undefined}
-                    aria-expanded={kind ? expanded : undefined}
-                    className={cn(
-                      "flex items-center gap-1 whitespace-nowrap border-b-2 border-transparent py-1 text-[14px] font-medium text-ink transition-colors xl:text-[15px]",
-                      item.href === "/offers" && "text-coral",
-                      // Current page is underlined; an open panel is shown by
-                      // the flipped chevron, so the two states stay distinct.
-                      active && "border-ink/70"
-                    )}
+            <div className="flex items-center gap-2.5 xl:gap-3.5">
+              {categoryNav.map((item) => {
+                const kind = PANEL_KIND[item.href];
+                const active = isActive(item.href);
+                const expanded = openPanel === item.href;
+                return (
+                  <div
+                    key={item.href}
+                    onMouseEnter={() =>
+                      kind ? scheduleOpen(item.href) : scheduleClose()
+                    }
+                    onFocus={() => (kind ? openNow(item.href) : closeNow())}
                   >
-                    {navLabel(dict, item.href, item.label)}
-                    {kind ? (
-                      <ChevronDown
-                        className={cn(
-                          "h-3.5 w-3.5 transition-transform duration-200",
-                          expanded && "rotate-180"
-                        )}
-                        strokeWidth={1.5}
-                        aria-hidden
-                      />
+                    <Link
+                      href={item.href}
+                      onClick={closeNow}
+                      aria-current={active ? "page" : undefined}
+                      aria-expanded={kind ? expanded : undefined}
+                      className={cn(
+                        "flex items-center gap-1 whitespace-nowrap border-b-2 border-transparent py-1 text-[13px] font-medium text-ink transition-colors xl:text-[14px]",
+                        active && "border-ink/70"
+                      )}
+                    >
+                      {navLabel(dict, item.href, item.label)}
+                      {kind ? (
+                        <ChevronDown
+                          className={cn(
+                            "h-3.5 w-3.5 shrink-0 transition-transform duration-200",
+                            expanded && "rotate-180"
+                          )}
+                          strokeWidth={1.5}
+                          aria-hidden
+                        />
+                      ) : null}
+                    </Link>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="ml-1 flex items-center gap-2.5 xl:ml-2 xl:gap-3">
+              {promoNav.map((item, index) => {
+                const active = isActive(item.href);
+                return (
+                  <div key={item.href} className="flex items-center gap-2.5 xl:gap-3">
+                    {index > 0 ? (
+                      <span className="text-oak/70" aria-hidden>
+                        ·
+                      </span>
                     ) : null}
-                  </Link>
-                </div>
-              );
-            })}
+                    <Link
+                      href={item.href}
+                      onClick={closeNow}
+                      aria-current={active ? "page" : undefined}
+                      className={cn(
+                        "whitespace-nowrap border-b-2 border-transparent py-1 text-[13px] font-medium text-ink-muted transition-colors hover:text-ink xl:text-[14px]",
+                        active && "border-ink/50 text-ink"
+                      )}
+                    >
+                      {navLabel(dict, item.href, item.label)}
+                    </Link>
+                  </div>
+                );
+              })}
+            </div>
+
             <Link
               href="/skin-type"
-              className="hidden h-10 min-h-10 shrink-0 items-center whitespace-nowrap bg-sage px-4 text-[12px] font-medium uppercase tracking-[0.04em] text-bg transition-colors hover:bg-sage-dark xl:inline-flex 2xl:px-5 2xl:text-[13px]"
+              className="hidden h-9 min-h-9 shrink-0 items-center whitespace-nowrap bg-sage px-3 text-[11px] font-medium uppercase tracking-[0.04em] text-bg transition-colors hover:bg-sage-dark 2xl:inline-flex 2xl:h-10 2xl:min-h-10 2xl:px-5 2xl:text-[13px]"
             >
               {dict.nav.findForMySkin}
             </Link>
@@ -445,12 +475,26 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
 
             <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 pb-6 pt-2">
               <ul className="flex flex-col gap-1">
-                {brand.nav.map((item) => (
+                {categoryNav.map((item) => (
                   <li key={item.href}>
                     <Link
                       href={item.href}
                       onClick={closeMenu}
                       className="block py-3 font-serif text-[1.65rem] leading-none tracking-tight text-ink transition-opacity hover:opacity-60"
+                    >
+                      {navLabel(dict, item.href, item.label)}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+
+              <ul className="mt-6 flex flex-col gap-1 border-t border-oak/25 pt-5">
+                {promoNav.map((item) => (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      onClick={closeMenu}
+                      className="block py-3 font-serif text-[1.65rem] leading-none tracking-tight text-ink-muted transition-colors hover:text-ink"
                     >
                       {navLabel(dict, item.href, item.label)}
                     </Link>
