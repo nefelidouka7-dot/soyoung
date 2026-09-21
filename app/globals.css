@@ -169,13 +169,19 @@
   @media (max-width: 639px) {
     .hero-veil {
       background:
+        /* Keep products readable in the upper half */
         linear-gradient(
           to top,
-          color-mix(in srgb, var(--bg) 96%, transparent) 0%,
-          color-mix(in srgb, var(--bg) 90%, transparent) 34%,
-          color-mix(in srgb, var(--bg) 72%, transparent) 56%,
-          color-mix(in srgb, var(--bg) 26%, transparent) 80%,
-          transparent 100%
+          color-mix(in srgb, var(--bg) 97%, transparent) 0%,
+          color-mix(in srgb, var(--bg) 92%, transparent) 22%,
+          color-mix(in srgb, var(--bg) 78%, transparent) 42%,
+          color-mix(in srgb, var(--bg) 28%, transparent) 62%,
+          transparent 78%
+        ),
+        radial-gradient(
+          90% 55% at 50% 18%,
+          transparent 0%,
+          color-mix(in srgb, var(--bg) 12%, transparent) 100%
         );
     }
   }

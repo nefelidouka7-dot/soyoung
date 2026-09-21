@@ -91,36 +91,36 @@ export default async function HomePage() {
           alt={dict.home.heroAlt}
           fill
           priority
-          className="animate-hero-zoom object-cover object-[72%_28%] sm:object-[70%_48%] lg:object-[62%_46%]"
+          className="animate-hero-zoom object-cover object-[82%_38%] sm:object-[70%_48%] lg:object-[62%_46%]"
           sizes="100vw"
         />
         <div className="hero-veil pointer-events-none absolute inset-0" aria-hidden />
         <div className="hero-grain pointer-events-none absolute inset-0" aria-hidden />
 
-        <div className="container-page relative flex min-h-[80svh] items-end pb-12 pt-28 sm:min-h-[88svh] sm:items-center sm:pb-20 lg:min-h-[min(90svh,46rem)]">
-          <div className="w-full max-w-[30rem] sm:max-w-[34rem]">
-            <div className="animate-home-rise flex items-center gap-3.5">
-              <span className="h-px w-10 bg-oak sm:w-14" aria-hidden />
-              <p className="text-[10px] uppercase tracking-[0.32em] text-ink-muted">
+        <div className="container-page relative flex min-h-[min(86svh,38rem)] flex-col justify-end pb-9 pt-24 sm:min-h-[88svh] sm:justify-center sm:pb-20 sm:pt-28 lg:min-h-[min(90svh,46rem)]">
+          <div className="w-full max-w-[22rem] sm:max-w-[34rem]">
+            <div className="animate-home-rise flex items-center gap-3">
+              <span className="h-px w-8 bg-oak sm:w-14" aria-hidden />
+              <p className="text-[10px] uppercase tracking-[0.26em] text-ink-muted sm:tracking-[0.32em]">
                 {dict.home.eyebrow}
               </p>
             </div>
 
-            <h1 className="animate-home-rise-d1 mt-5 font-serif text-[clamp(2.6rem,7vw,4.75rem)] leading-[0.98] tracking-[-0.025em] text-ink sm:mt-7">
+            <h1 className="animate-home-rise-d1 mt-4 font-serif text-[clamp(2.35rem,11vw,3.4rem)] leading-[1.02] tracking-[-0.025em] text-ink sm:mt-7 sm:text-[clamp(2.6rem,7vw,4.75rem)] sm:leading-[0.98]">
               <span className="block">{dict.home.headlineLead}</span>
               <span className="mt-1 block italic text-sage-dark">
                 {dict.home.headlineTrail}
               </span>
             </h1>
 
-            <p className="animate-home-rise-d2 mt-5 max-w-[34ch] text-[15px] leading-[1.75] text-ink-muted sm:mt-7 sm:text-base sm:leading-[1.8]">
+            <p className="animate-home-rise-d2 mt-4 max-w-[30ch] text-[14px] leading-[1.7] text-ink-muted sm:mt-7 sm:max-w-[34ch] sm:text-base sm:leading-[1.8]">
               {dict.home.subhead}
             </p>
 
-            <div className="animate-home-rise-d3 mt-8 flex flex-wrap items-center gap-3 sm:mt-10 sm:gap-4">
+            <div className="animate-home-rise-d3 mt-7 flex flex-col gap-2.5 sm:mt-10 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
               <Link
                 href="/skincare"
-                className="group inline-flex h-12 items-center gap-2.5 bg-sage px-7 text-[11px] uppercase tracking-[0.16em] text-bg shadow-[0_14px_34px_-16px_rgba(43,41,39,0.55)] transition-colors hover:bg-sage-dark"
+                className="group inline-flex h-12 w-full items-center justify-center gap-2.5 bg-sage px-7 text-[11px] uppercase tracking-[0.16em] text-bg shadow-[0_14px_34px_-16px_rgba(43,41,39,0.55)] transition-colors hover:bg-sage-dark sm:w-auto"
               >
                 {dict.home.heroCta}
                 <ArrowRight
@@ -130,7 +130,7 @@ export default async function HomePage() {
               </Link>
               <Link
                 href="/skin-type"
-                className="inline-flex h-12 items-center border border-ink/20 bg-bg/55 px-6 text-[11px] uppercase tracking-[0.16em] text-ink backdrop-blur-[2px] transition-colors hover:border-ink/40 hover:bg-bg/80"
+                className="inline-flex h-12 w-full items-center justify-center border border-ink/20 bg-bg/70 px-6 text-[11px] uppercase tracking-[0.16em] text-ink backdrop-blur-[2px] transition-colors hover:border-ink/40 hover:bg-bg/80 sm:w-auto sm:bg-bg/55"
               >
                 {dict.nav.findForMySkin}
               </Link>
@@ -145,12 +145,15 @@ export default async function HomePage() {
           </div>
         </div>
 
-        <div className="relative border-t border-ink/[0.12] bg-bg/70 backdrop-blur-[3px]">
-          <ul className="container-page flex flex-wrap items-center justify-center gap-x-10 gap-y-2.5 py-5 text-[10px] uppercase tracking-[0.22em] text-ink-muted sm:justify-between sm:text-[11px]">
+        <div className="relative border-t border-ink/[0.12] bg-bg/80 backdrop-blur-[3px]">
+          <ul className="container-page flex gap-x-8 overflow-x-auto py-3.5 text-[10px] uppercase tracking-[0.18em] text-ink-muted [-ms-overflow-style:none] [scrollbar-width:none] sm:justify-between sm:gap-x-10 sm:overflow-visible sm:py-5 sm:tracking-[0.22em] sm:text-[11px] [&::-webkit-scrollbar]:hidden">
             {uspPoints.map((point) => (
-              <li key={point} className="flex items-center gap-3">
+              <li
+                key={point}
+                className="flex shrink-0 items-center gap-2.5 whitespace-nowrap sm:gap-3"
+              >
                 <span
-                  className="h-1 w-1 rounded-full bg-oak sm:hidden"
+                  className="h-1 w-1 rounded-full bg-oak"
                   aria-hidden
                 />
                 {point}
