@@ -207,6 +207,7 @@ export const el: Dictionary = {
     outOfStock: "Το προϊόν δεν είναι διαθέσιμο.",
     quickAdd: "Γρήγορη προσθήκη",
     continueShopping: "Συνέχεια αγορών",
+    loading: "Φόρτωση…",
   },
   locale: {
     el: "ΕΛ",

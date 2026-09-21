@@ -186,6 +186,7 @@ export const en: Dictionary = {
     outOfStock: "This item is currently out of stock.",
     quickAdd: "Quick add",
     continueShopping: "Continue shopping",
+    loading: "Loading…",
   },
   locale: {
     el: "EL",

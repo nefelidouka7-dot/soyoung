@@ -181,6 +181,7 @@ export type Dictionary = {
     outOfStock: string;
     quickAdd: string;
     continueShopping: string;
+    loading: string;
   };
   locale: {
     el: string;
