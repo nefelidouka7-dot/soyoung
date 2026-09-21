@@ -195,11 +195,11 @@ export const en: Dictionary = {
   },
   home: {
     eyebrow: "For every skin type",
-    headline: "Beauty, chosen with intention.",
-    headlineLead: "Beauty,",
-    headlineTrail: "chosen with intention.",
+    headline: "Your Korean routine starts here.",
+    headlineLead: "Your Korean routine",
+    headlineTrail: "starts here.",
     subhead:
-      "Discover skincare, makeup and beauty essentials selected for your everyday ritual.",
+      "Discover K-beauty skincare and makeup, chosen with care.",
     heroCta: "Shop skincare",
     exploreSkincare: "Explore skincare",
     shopByCategory: "Shop by category",
