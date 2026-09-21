@@ -55,4 +55,5 @@ export const FREE_SHIPPING_THRESHOLD = Number(
   process.env.FREE_SHIPPING_THRESHOLD ?? 50
 );
 
-export const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME ?? "SoYoung";
+export const STORE_NAME =
+  process.env.NEXT_PUBLIC_STORE_NAME?.trim() || "SoYoung";
