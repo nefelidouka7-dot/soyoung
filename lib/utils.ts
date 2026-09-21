@@ -23,9 +23,21 @@ export function slugify(text: string) {
     .replace(/(^-|-$)+/g, "");
 }
 
+function appBaseUrl() {
+  const explicit = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  if (explicit) return explicit.replace(/\/$/, "");
+
+  // Vercel sets this automatically during build/runtime (no protocol).
+  const vercel = process.env.VERCEL_URL?.trim();
+  if (vercel) return `https://${vercel.replace(/\/$/, "")}`;
+
+  return "http://localhost:3000";
+}
+
 export function absoluteUrl(path = "") {
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-  return `${base.replace(/\/$/, "")}${path.startsWith("/") ? path : `/${path}`}`;
+  const base = appBaseUrl();
+  if (!path || path === "/") return base;
+  return `${base}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
 export const FREE_SHIPPING_THRESHOLD = Number(
