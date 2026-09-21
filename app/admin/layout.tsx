@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/admin";
 import { STORE_NAME } from "@/lib/utils";
 import { AdminNav } from "@/features/admin/components/admin-nav";
+import { logoutAction } from "@/features/auth/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -39,6 +40,14 @@ export default async function AdminLayout({
           >
             ← Back to storefront
           </Link>
+          <form action={logoutAction} className="mt-3">
+            <button
+              type="submit"
+              className="text-xs font-medium text-ink-muted underline-offset-4 transition-colors hover:text-ink hover:underline"
+            >
+              Log out
+            </button>
+          </form>
         </div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
