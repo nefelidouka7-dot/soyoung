@@ -97,7 +97,7 @@ export default async function HomePage() {
         <div className="hero-veil pointer-events-none absolute inset-0" aria-hidden />
         <div className="hero-grain pointer-events-none absolute inset-0" aria-hidden />
 
-        <div className="container-page relative flex min-h-[min(86svh,38rem)] flex-col justify-end pb-9 pt-24 sm:min-h-[88svh] sm:justify-center sm:pb-20 sm:pt-28 lg:min-h-[min(90svh,46rem)]">
+        <div className="container-page relative flex min-h-[min(86svh,38rem)] flex-col justify-end pb-8 pt-24 sm:min-h-[88svh] sm:justify-center sm:pb-20 sm:pt-28 lg:min-h-[min(90svh,46rem)]">
           <div className="w-full max-w-[22rem] sm:max-w-[34rem]">
             <div className="animate-home-rise flex items-center gap-3">
               <span className="h-px w-8 bg-oak sm:w-14" aria-hidden />
@@ -136,6 +136,21 @@ export default async function HomePage() {
               </Link>
             </div>
 
+            <ul className="animate-home-rise-d3 mt-8 space-y-2.5 sm:hidden">
+              {uspPoints.map((point) => (
+                <li
+                  key={point}
+                  className="flex items-start gap-2.5 text-[10px] uppercase tracking-[0.14em] text-ink-muted"
+                >
+                  <span
+                    className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-oak"
+                    aria-hidden
+                  />
+                  <span className="leading-relaxed">{point}</span>
+                </li>
+              ))}
+            </ul>
+
             <span
               className="animate-home-rise-d3 mt-14 hidden h-14 w-px overflow-hidden bg-oak/50 lg:flex"
               aria-hidden
@@ -145,17 +160,14 @@ export default async function HomePage() {
           </div>
         </div>
 
-        <div className="relative border-t border-ink/[0.12] bg-bg/80 backdrop-blur-[3px]">
-          <ul className="container-page flex gap-x-8 overflow-x-auto py-3.5 text-[10px] uppercase tracking-[0.18em] text-ink-muted [-ms-overflow-style:none] [scrollbar-width:none] sm:justify-between sm:gap-x-10 sm:overflow-visible sm:py-5 sm:tracking-[0.22em] sm:text-[11px] [&::-webkit-scrollbar]:hidden">
+        <div className="relative hidden border-t border-ink/[0.12] bg-bg/80 backdrop-blur-[3px] sm:block">
+          <ul className="container-page flex justify-between gap-x-10 py-5 text-[11px] uppercase tracking-[0.22em] text-ink-muted">
             {uspPoints.map((point) => (
               <li
                 key={point}
-                className="flex shrink-0 items-center gap-2.5 whitespace-nowrap sm:gap-3"
+                className="flex shrink-0 items-center gap-3 whitespace-nowrap"
               >
-                <span
-                  className="h-1 w-1 rounded-full bg-oak"
-                  aria-hidden
-                />
+                <span className="h-1 w-1 rounded-full bg-oak" aria-hidden />
                 {point}
               </li>
             ))}
