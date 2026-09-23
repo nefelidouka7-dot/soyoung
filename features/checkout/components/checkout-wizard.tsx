@@ -1150,9 +1150,7 @@ export function CheckoutWizard({
                 >
                   {pending
                     ? dict.checkout.placingOrder
-                    : paymentMethod === "card"
-                      ? dict.checkout.payWithViva
-                      : dict.checkout.placeOrder}
+                    : dict.checkout.placeOrder}
                   {!pending ? (
                     <ArrowRight
                       className="h-3.5 w-3.5 transition-transform duration-300 ease-out group-hover:translate-x-1"

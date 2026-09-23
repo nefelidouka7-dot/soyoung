@@ -125,7 +125,6 @@ export const en: Dictionary = {
     paymentFailed: "Payment failed. Try another card or method.",
     paymentUnavailable: "Card payments are unavailable right now.",
     payNow: "Pay now",
-    payWithViva: "Pay with Viva.com",
     order: "Order",
     orderSummary: "Order summary",
     subtotal: "Subtotal",

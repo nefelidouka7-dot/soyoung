@@ -1,13 +1,32 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/use-translation";
 
+function mainFingerprint() {
+  const main = document.querySelector("main");
+  if (!main) return "";
+  return (main.textContent ?? "").replace(/\s+/g, "").slice(0, 500);
+}
+
+function mainIsBusy() {
+  return Boolean(document.querySelector("main [aria-busy='true'], main [data-page-loader]"));
+}
+
+function mainHasContent() {
+  const len = (document.querySelector("main")?.textContent ?? "").replace(
+    /\s+/g,
+    ""
+  ).length;
+  return len > 48;
+}
+
 /**
  * Top progress bar + visible page loader while App Router navigations resolve.
- * Click on internal <a> starts it; pathname/search change finishes it.
+ * Starts on internal <a> clicks; stays until the new route has painted content
+ * (not merely when the URL changes).
  */
 function NavigationProgressInner() {
   const { dict } = useTranslation();
@@ -16,17 +35,54 @@ function NavigationProgressInner() {
   const [active, setActive] = useState(false);
   const [progress, setProgress] = useState(0);
   const [visible, setVisible] = useState(false);
+  const fromFingerprintRef = useRef<string>("");
 
-  // Finish when the new route is ready
+  // Finish only once the destination UI has replaced the previous page
   useEffect(() => {
     if (!active) return;
-    setProgress(100);
-    const done = window.setTimeout(() => {
+
+    let cancelled = false;
+    let pollId = 0;
+    let doneId = 0;
+    const startedAt = Date.now();
+    const fromFp = fromFingerprintRef.current;
+
+    const clearUI = () => {
       setActive(false);
       setVisible(false);
       setProgress(0);
-    }, 220);
-    return () => window.clearTimeout(done);
+    };
+
+    const finish = () => {
+      if (cancelled) return;
+      setProgress(100);
+      doneId = window.setTimeout(clearUI, 220);
+    };
+
+    const tick = () => {
+      if (cancelled) return;
+
+      const busy = mainIsBusy();
+      const fp = mainFingerprint();
+      const swapped = fp !== fromFp;
+      const ready = swapped && !busy && mainHasContent();
+      const elapsed = Date.now() - startedAt;
+
+      if (!ready && elapsed < 8000) {
+        pollId = window.setTimeout(tick, 50);
+        return;
+      }
+      finish();
+    };
+
+    // Let React commit loading.tsx / the next page after the URL update
+    pollId = window.setTimeout(tick, 32);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(pollId);
+      window.clearTimeout(doneId);
+    };
     // Intentionally only when the URL settles — not when `active` flips on.
   }, [pathname, searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -70,6 +126,7 @@ function NavigationProgressInner() {
       const current = `${window.location.pathname}${window.location.search}`;
       if (next === current) return;
 
+      fromFingerprintRef.current = mainFingerprint();
       setVisible(true);
       setActive(true);
       setProgress(14);

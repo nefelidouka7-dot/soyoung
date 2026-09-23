@@ -3,6 +3,7 @@
 export function PageLoader() {
   return (
     <div
+      data-page-loader
       className="flex min-h-[40vh] items-center justify-center py-16"
       aria-busy="true"
       aria-live="polite"

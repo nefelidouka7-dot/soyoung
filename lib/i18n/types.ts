@@ -125,7 +125,6 @@ export type Dictionary = {
     paymentFailed: string;
     paymentUnavailable: string;
     payNow: string;
-    payWithViva: string;
     order: string;
     orderSummary: string;
     subtotal: string;

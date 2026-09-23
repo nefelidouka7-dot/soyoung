@@ -147,7 +147,6 @@ export const el: Dictionary = {
     paymentFailed: "Η πληρωμή απέτυχε. Δοκίμασε άλλη κάρτα ή μέθοδο.",
     paymentUnavailable: "Οι πληρωμές με κάρτα δεν είναι διαθέσιμες αυτή τη στιγμή.",
     payNow: "Πληρωμή τώρα",
-    payWithViva: "Πληρωμή με Viva.com",
     order: "Παραγγελία",
     orderSummary: "Η παραγγελία σου",
     subtotal: "Υποσύνολο",
