@@ -1,15 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #f5ebe1;
-  --bg-muted: #faf4ed;
+  --bg: #feeadf;
+  --bg-muted: #ffd1bd;
   --ink: #2b2927;
-  --oak: #d0b89a;
-  --sage: #8a9a86;
-  --coral: #e08a79;
+  --oak: #feb79a;
+  --sage: #fe9875;
+  --coral: #fe9875;
   --ink-muted: #5c5650;
-  --oak-soft: #e8d9c8;
-  --sage-dark: #6f7f6c;
+  --oak-soft: #eedacb;
+  --sage-dark: #e87a52;
+  --logo-bg: #eedacb;
   --radius: 0.125rem;
 }
 
@@ -23,6 +24,7 @@
   --color-ink-muted: var(--ink-muted);
   --color-oak-soft: var(--oak-soft);
   --color-sage-dark: var(--sage-dark);
+  --color-logo-bg: var(--logo-bg);
   --font-serif: var(--font-cormorant);
   --font-sans: var(--font-manrope);
 }
@@ -59,6 +61,35 @@
   :focus-visible {
     outline: 2px solid var(--sage);
     outline-offset: 2px;
+  }
+
+  /* Admin: neutral workspace palette; brand coral stays as the only accent. */
+  [data-admin] {
+    --bg: #f7f6f4;
+    --bg-muted: #efece9;
+    --oak: #e3ded9;
+    --oak-soft: #eeeae6;
+    --ink-muted: #6f6962;
+    background: var(--bg);
+  }
+
+  [data-admin] * {
+    border-color: rgb(43 41 39 / 0.09);
+  }
+
+  [data-admin] input:not([type="checkbox"]):not([type="radio"]),
+  [data-admin] textarea,
+  [data-admin] select,
+  [data-admin] button {
+    border-radius: 0.5rem;
+  }
+
+  [data-admin] h1,
+  [data-admin] h2,
+  [data-admin] h3 {
+    font-family: var(--font-manrope), system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.015em;
   }
 }
 
@@ -105,6 +136,10 @@
 
   .animate-cart-badge {
     animation: cart-badge 0.42s cubic-bezier(0.34, 1.45, 0.64, 1) both;
+  }
+
+  .animate-field-shake {
+    animation: field-shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
   }
 
   .animate-hero-zoom {
@@ -245,6 +280,7 @@
     .animate-menu-item,
     .animate-cart-bump,
     .animate-cart-badge,
+    .animate-field-shake,
     .animate-hero-zoom,
     .animate-hero-cue,
     .animate-home-rise,
@@ -367,6 +403,25 @@
   }
   100% {
     transform: scale(1);
+  }
+}
+
+@keyframes field-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-6px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(4px);
   }
 }
 

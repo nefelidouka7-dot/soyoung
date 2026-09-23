@@ -2,7 +2,16 @@ import { prisma } from "@/db/prisma";
 import { requireAdmin, decimalToNumber, formatAdminDate } from "@/lib/admin";
 import { formatPrice } from "@/lib/utils";
 import { toggleCoupon, deleteCoupon } from "@/features/admin/actions/misc";
-import { AdminPageHeader, StatusBadge } from "@/features/admin/components/admin-ui";
+import {
+  AdminEmpty,
+  AdminPageHeader,
+  AdminPanel,
+  AdminTable,
+  AdminTableHead,
+  AdminTd,
+  AdminTh,
+  StatusBadge,
+} from "@/features/admin/components/admin-ui";
 import { CouponForm } from "@/features/admin/components/coupon-form";
 
 export default async function AdminDiscountsPage() {
@@ -16,31 +25,31 @@ export default async function AdminDiscountsPage() {
     <div>
       <AdminPageHeader
         title="Discounts"
-        description="Coupon codes and promotions."
+        description="Create and manage coupon codes used at checkout."
       />
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="overflow-x-auto rounded-sm border border-oak/40 bg-white">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-oak/30 bg-bg-muted text-[10px] uppercase tracking-wider text-ink-muted">
+        <AdminPanel title="Coupons" description={`${coupons.length} codes`} flush>
+          <AdminTable minWidth="0" bare>
+            <AdminTableHead>
               <tr>
-                <th className="px-3 py-2.5 font-medium">Code</th>
-                <th className="px-3 py-2.5 font-medium">Value</th>
-                <th className="px-3 py-2.5 font-medium">Usage</th>
-                <th className="px-3 py-2.5 font-medium">Expires</th>
-                <th className="px-3 py-2.5 font-medium" />
+                <AdminTh>Code</AdminTh>
+                <AdminTh>Value</AdminTh>
+                <AdminTh>Usage</AdminTh>
+                <AdminTh>Expires</AdminTh>
+                <AdminTh />
               </tr>
-            </thead>
+            </AdminTableHead>
             <tbody className="divide-y divide-oak/20">
               {coupons.map((c) => (
-                <tr key={c.id}>
-                  <td className="px-3 py-2.5">
+                <tr key={c.id} className="transition-colors hover:bg-bg/40">
+                  <AdminTd>
                     <p className="font-medium">{c.code}</p>
                     <StatusBadge tone={c.active ? "success" : "neutral"}>
                       {c.active ? "Active" : "Off"}
                     </StatusBadge>
-                  </td>
-                  <td className="px-3 py-2.5">
+                  </AdminTd>
+                  <AdminTd>
                     {c.type === "PERCENTAGE"
                       ? `${decimalToNumber(c.value)}%`
                       : formatPrice(decimalToNumber(c.value))}
@@ -49,22 +58,22 @@ export default async function AdminDiscountsPage() {
                         Min {formatPrice(decimalToNumber(c.minOrderAmount))}
                       </p>
                     ) : null}
-                  </td>
-                  <td className="px-3 py-2.5">
+                  </AdminTd>
+                  <AdminTd className="tabular-nums">
                     {c.usageCount}
                     {c.usageLimit != null ? ` / ${c.usageLimit}` : ""}
-                  </td>
-                  <td className="px-3 py-2.5 text-ink-muted">
+                  </AdminTd>
+                  <AdminTd className="text-ink-muted">
                     {c.expiresAt ? formatAdminDate(c.expiresAt) : "—"}
-                  </td>
-                  <td className="space-x-2 px-3 py-2.5 text-right">
+                  </AdminTd>
+                  <AdminTd className="space-x-2 text-right">
                     <form
                       action={toggleCoupon.bind(null, c.id, !c.active)}
                       className="inline"
                     >
                       <button
                         type="submit"
-                        className="text-xs text-sage hover:underline"
+                        className="text-xs font-medium text-sage-dark hover:underline"
                       >
                         {c.active ? "Disable" : "Enable"}
                       </button>
@@ -72,24 +81,20 @@ export default async function AdminDiscountsPage() {
                     <form action={deleteCoupon.bind(null, c.id)} className="inline">
                       <button
                         type="submit"
-                        className="text-xs text-coral hover:underline"
+                        className="text-xs font-medium text-coral hover:underline"
                       >
                         Delete
                       </button>
                     </form>
-                  </td>
+                  </AdminTd>
                 </tr>
               ))}
               {coupons.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-3 py-8 text-center text-ink-muted">
-                    No coupons yet.
-                  </td>
-                </tr>
+                <AdminEmpty colSpan={5}>No coupons yet.</AdminEmpty>
               ) : null}
             </tbody>
-          </table>
-        </div>
+          </AdminTable>
+        </AdminPanel>
 
         <CouponForm />
       </div>

@@ -32,7 +32,7 @@ export default function CartPage() {
           </p>
           <Link
             href="/skincare"
-            className="mt-8 inline-flex h-12 items-center bg-sage px-8 text-xs uppercase tracking-wide text-bg transition-colors hover:bg-sage-dark"
+            className="mt-8 inline-flex h-12 items-center bg-sage px-8 text-xs uppercase tracking-wide font-bold text-white transition-colors hover:bg-sage-dark"
           >
             {dict.cart.shopSkincare}
           </Link>
@@ -234,7 +234,7 @@ export default function CartPage() {
 
           <Link
             href="/checkout"
-            className="mt-6 flex h-12 items-center justify-center bg-sage text-xs uppercase tracking-wide text-bg transition-colors hover:bg-sage-dark"
+            className="mt-6 flex h-12 items-center justify-center bg-sage text-xs uppercase tracking-wide font-bold text-white transition-colors hover:bg-sage-dark"
           >
             {dict.cart.checkout}
           </Link>

@@ -525,7 +525,7 @@ export function ProductFilters({
                 <button
                   type="button"
                   onClick={applyDraftAndClose}
-                  className="bg-sage py-3 text-[11px] uppercase tracking-[0.14em] text-bg transition-colors hover:bg-sage-dark"
+                  className="bg-sage py-3 text-[11px] uppercase tracking-[0.14em] font-bold text-white transition-colors hover:bg-sage-dark"
                 >
                   {dict.filters.done}
                 </button>
@@ -650,7 +650,7 @@ function CheckRow({
         className={cn(
           "flex h-4 w-4 shrink-0 items-center justify-center border transition-colors",
           checked
-            ? "border-sage bg-sage text-bg"
+            ? "border-sage bg-sage font-bold text-white"
             : "border-oak/55 bg-bg"
         )}
         aria-hidden

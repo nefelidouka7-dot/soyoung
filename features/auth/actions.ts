@@ -1,6 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/db/prisma";
@@ -17,6 +18,8 @@ export type AuthErrorCode =
   | "invalidEmail"
   | "tooManyRequests";
 
+export type AuthActionState = { error?: AuthErrorCode } | null;
+
 const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
@@ -24,11 +27,27 @@ const registerSchema = z.object({
   lastName: z.string().min(1),
 });
 
-export async function registerAction(formData: FormData) {
+function safeCallbackUrl(value: string): string {
+  if (!value.startsWith("/") || value.startsWith("//")) return "/account";
+  return value;
+}
+
+function isFailedSignInUrl(url: string): boolean {
+  return (
+    url.includes("error=") ||
+    url.includes("CredentialsSignin") ||
+    url.includes("/api/auth/signin")
+  );
+}
+
+export async function registerAction(
+  _prev: AuthActionState,
+  formData: FormData
+): Promise<AuthActionState> {
   const h = await headers();
   const ip = clientIpFromHeaders(h);
   if (!rateLimit(`register:${ip}`, 5, 60_000).ok) {
-    return { error: "tooManyRequests" as const };
+    return { error: "tooManyRequests" };
   }
 
   const parsed = registerSchema.safeParse({
@@ -38,12 +57,12 @@ export async function registerAction(formData: FormData) {
     lastName: formData.get("lastName"),
   });
   if (!parsed.success) {
-    return { error: "checkDetails" as const };
+    return { error: "checkDetails" };
   }
 
   const email = parsed.data.email.toLowerCase();
   const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) return { error: "emailExists" as const };
+  if (existing) return { error: "emailExists" };
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 12);
   await prisma.user.create({
@@ -59,44 +78,69 @@ export async function registerAction(formData: FormData) {
     },
   });
 
-  const callbackUrl = String(formData.get("callbackUrl") ?? "/account");
+  const callbackUrl = safeCallbackUrl(
+    String(formData.get("callbackUrl") ?? "/account")
+  );
 
   try {
-    await signIn("credentials", {
+    const result = await signIn("credentials", {
       email,
       password: parsed.data.password,
       redirectTo: callbackUrl,
+      redirect: false,
     });
+
+    const url = typeof result === "string" ? result : "";
+    if (!url || isFailedSignInUrl(url)) {
+      return { error: "createdSignIn" };
+    }
   } catch (e) {
-    if (e instanceof AuthError) return { error: "createdSignIn" as const };
+    if (e instanceof AuthError) return { error: "createdSignIn" };
     throw e;
   }
+
+  redirect(callbackUrl);
 }
 
-export async function loginAction(formData: FormData) {
+export async function loginAction(
+  _prev: AuthActionState,
+  formData: FormData
+): Promise<AuthActionState> {
   const h = await headers();
   const ip = clientIpFromHeaders(h);
-  const email = String(formData.get("email") ?? "").toLowerCase();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
   if (!rateLimit(`login:${ip}:${email}`, 10, 60_000).ok) {
-    return { error: "tooManyRequests" as const };
+    return { error: "tooManyRequests" };
   }
 
   const password = String(formData.get("password") ?? "");
-  const callbackUrl = String(formData.get("callbackUrl") ?? "/account");
+  if (!email || !password) {
+    return { error: "invalidCredentials" };
+  }
+
+  const callbackUrl = safeCallbackUrl(
+    String(formData.get("callbackUrl") ?? "/account")
+  );
 
   try {
-    await signIn("credentials", {
+    const result = await signIn("credentials", {
       email,
       password,
       redirectTo: callbackUrl,
+      redirect: false,
     });
-  } catch (e) {
-    // Successful sign-in throws a Next.js redirect — rethrow it.
-    if (e instanceof AuthError) {
-      return { error: "invalidCredentials" as const };
+
+    const url = typeof result === "string" ? result : "";
+    if (!url || isFailedSignInUrl(url)) {
+      return { error: "invalidCredentials" };
     }
+  } catch (e) {
+    // Wrong credentials throw AuthError when using the server signIn helper.
+    if (e instanceof AuthError) return { error: "invalidCredentials" };
     throw e;
   }
+
+  redirect(callbackUrl);
 }
 
 export async function logoutAction() {
@@ -125,7 +169,6 @@ export async function requestPasswordResetAction(formData: FormData) {
     try {
       await sendPasswordResetEmail(email, resetUrl);
     } catch {
-      // Avoid leaking config errors to the client; still return success shape.
       console.error("[auth] password reset email failed");
     }
   }

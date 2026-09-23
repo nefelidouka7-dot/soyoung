@@ -67,71 +67,71 @@ export function CartDrawer() {
     <div className="fixed inset-0 z-[120]">
       <button
         type="button"
-        className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ease-out ${
+        className={`absolute inset-0 bg-ink/25 backdrop-blur-[1px] transition-opacity duration-300 ease-out ${
           visible ? "opacity-100" : "opacity-0"
         }`}
         onClick={close}
         aria-label={dict.cart.closeCart}
       />
       <aside
-        className={`absolute inset-y-0 right-0 flex w-full max-w-md flex-col border-l border-[#D0B89A]/60 bg-[#FAF4ED] text-[#2B2927] shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform ${
+        className={`absolute inset-y-0 right-0 flex w-full max-w-md flex-col border-l border-oak/40 bg-[#fff8f3] text-ink shadow-[-12px_0_40px_rgba(43,41,39,0.08)] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform ${
           visible ? "translate-x-0" : "translate-x-full"
         }`}
         role="dialog"
         aria-modal="true"
         aria-label={dict.cart.yourBag}
       >
-        <div className="flex h-14 shrink-0 items-center justify-between border-b border-[#D0B89A]/50 px-5">
-          <h2 className="font-serif text-xl text-[#2B2927]">{dict.cart.yourBag}</h2>
+        <div className="flex h-14 shrink-0 items-center justify-between border-b border-oak/30 px-5">
+          <h2 className="font-serif text-xl text-ink">{dict.cart.yourBag}</h2>
           <button
             type="button"
             onClick={close}
-            className="inline-flex h-9 w-9 items-center justify-center"
+            className="inline-flex h-9 w-9 items-center justify-center text-ink-muted transition-colors hover:text-ink"
             aria-label={dict.cart.closeCart}
           >
             <X className="h-5 w-5" strokeWidth={1.5} />
           </button>
         </div>
 
-        <div className="shrink-0 border-b border-[#D0B89A]/40 px-5 py-4">
+        <div className="shrink-0 border-b border-oak/30 px-5 py-4">
           {remaining > 0 ? (
             <>
-              <div className="flex justify-between text-xs text-[#5c5650]">
+              <div className="flex justify-between text-xs text-ink-muted">
                 <span>
                   {formatPrice(subtotal)} / {formatPrice(FREE_SHIPPING_THRESHOLD)}
                 </span>
                 <span>{dict.cart.freeShipping}</span>
               </div>
-              <div className="mt-2 h-1 w-full bg-[#D0B89A]/30">
+              <div className="mt-2 h-1 w-full bg-oak/25">
                 <div
-                  className="h-full bg-[#8A9A86] transition-all duration-500"
+                  className="h-full bg-sage-dark/80 transition-all duration-500"
                   style={{ width: `${progress}%` }}
                 />
               </div>
-              <p className="mt-2 text-xs text-[#5c5650]">
+              <p className="mt-2 text-xs text-ink-muted">
                 {t((d) => d.cart.awayFromFree, {
                   amount: formatPrice(remaining),
                 })}
               </p>
             </>
           ) : (
-            <p className="text-xs text-[#5c5650]">{dict.cart.unlockedFree}</p>
+            <p className="text-xs text-ink-muted">{dict.cart.unlockedFree}</p>
           )}
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-4">
           {items.length === 0 ? (
             <div className="py-16 text-center">
-              <p className="font-serif text-xl text-[#2B2927]">
+              <p className="font-serif text-xl text-ink">
                 {dict.cart.emptyTitle}
               </p>
-              <p className="mt-2 text-sm text-[#5c5650]">
+              <p className="mt-2 text-sm text-ink-muted">
                 {dict.cart.emptyDescription}
               </p>
               <Link
                 href="/skincare"
                 onClick={close}
-                className="mt-6 inline-flex h-11 items-center bg-[#8A9A86] px-6 text-xs uppercase tracking-wide text-[#F5EBE1] hover:bg-[#6f7f6c]"
+                className="mt-6 inline-flex h-11 items-center bg-sage px-6 text-xs uppercase tracking-wide font-bold text-white hover:bg-sage-dark"
               >
                 {dict.cart.shopSkincare}
               </Link>
@@ -146,7 +146,7 @@ export function CartDrawer() {
                   <Link
                     href={`/product/${item.slug}`}
                     onClick={close}
-                    className="relative h-24 w-20 shrink-0 overflow-hidden bg-[#F5EBE1]"
+                    className="relative h-24 w-20 shrink-0 overflow-hidden bg-white"
                   >
                     <Image
                       src={item.image}
@@ -157,22 +157,22 @@ export function CartDrawer() {
                     />
                   </Link>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[11px] uppercase tracking-wider text-[#5c5650]">
+                    <p className="text-[11px] uppercase tracking-wider text-ink-muted">
                       {item.brand}
                     </p>
                     <Link
                       href={`/product/${item.slug}`}
                       onClick={close}
-                      className="line-clamp-2 text-sm text-[#2B2927]"
+                      className="line-clamp-2 text-sm text-ink"
                     >
                       {item.name}
                     </Link>
                     {item.variantName ? (
-                      <p className="text-xs text-[#5c5650]">{item.variantName}</p>
+                      <p className="text-xs text-ink-muted">{item.variantName}</p>
                     ) : null}
                     <p className="mt-1 text-sm">{formatPrice(item.price)}</p>
                     <div className="mt-2 flex items-center gap-3">
-                      <div className="inline-flex items-center border border-[#D0B89A]/60">
+                      <div className="inline-flex items-center border border-oak/60">
                         <button
                           type="button"
                           className="p-1.5"
@@ -207,7 +207,7 @@ export function CartDrawer() {
                       </div>
                       <button
                         type="button"
-                        className="text-xs text-[#5c5650] underline-offset-2 hover:underline"
+                        className="text-xs text-ink-muted underline-offset-2 hover:underline"
                         onClick={() =>
                           removeItem(item.productId, item.variantId)
                         }
@@ -223,25 +223,25 @@ export function CartDrawer() {
         </div>
 
         {items.length > 0 ? (
-          <div className="shrink-0 border-t border-[#D0B89A]/50 px-5 py-5">
+          <div className="shrink-0 border-t border-oak/30 bg-[#fff8f3] px-5 py-5">
             <div className="flex justify-between text-sm">
               <span>{dict.cart.subtotal}</span>
               <span className="font-medium">{formatPrice(subtotal)}</span>
             </div>
-            <p className="mt-1 text-xs text-[#5c5650]">
+            <p className="mt-1 text-xs text-ink-muted">
               {dict.cart.shippingAtCheckout}
             </p>
             <Link
               href="/checkout"
               onClick={close}
-              className="mt-4 flex h-12 w-full items-center justify-center bg-[#8A9A86] text-xs uppercase tracking-wide text-[#F5EBE1] hover:bg-[#6f7f6c]"
+              className="mt-4 flex h-12 w-full items-center justify-center bg-sage text-xs uppercase tracking-wide font-bold text-white hover:bg-sage-dark"
             >
               {dict.cart.checkout}
             </Link>
             <Link
               href="/cart"
               onClick={close}
-              className="mt-2 flex h-10 w-full items-center justify-center text-xs uppercase tracking-wide text-[#2B2927] underline-offset-4 hover:underline"
+              className="mt-2 flex h-10 w-full items-center justify-center text-xs uppercase tracking-wide text-ink underline-offset-4 hover:underline"
             >
               {dict.cart.viewBag}
             </Link>

@@ -16,7 +16,7 @@ export default async function AdminSettingsPage() {
     <div>
       <AdminPageHeader
         title="Settings"
-        description="Store configuration."
+        description="Store configuration and site settings."
       />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2">

@@ -1,6 +1,9 @@
 import { prisma } from "@/db/prisma";
 import { requireAdmin } from "@/lib/admin";
-import { AdminPageHeader } from "@/features/admin/components/admin-ui";
+import {
+  AdminBreadcrumb,
+  AdminPageHeader,
+} from "@/features/admin/components/admin-ui";
 import { ProductForm } from "@/features/admin/components/product-form";
 
 export default async function NewProductPage() {
@@ -16,7 +19,18 @@ export default async function NewProductPage() {
 
   return (
     <div>
-      <AdminPageHeader title="New product" description="Create a catalog item." />
+      <AdminPageHeader
+        title="New product"
+        description="Create a catalog item."
+        breadcrumb={
+          <AdminBreadcrumb
+            items={[
+              { href: "/admin/products", label: "Products" },
+              { label: "New" },
+            ]}
+          />
+        }
+      />
       <ProductForm brands={brands} categories={categories} skinTypes={skinTypes} />
     </div>
   );

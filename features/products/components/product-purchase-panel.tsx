@@ -121,7 +121,7 @@ export function ProductPurchasePanel({ product }: Props) {
           </div>
         ) : null}
 
-        <div className="w-full max-w-[380px]">
+        <div className="w-full max-w-[380px] shrink-0 lg:w-[380px]">
           <button
             type="button"
             className="relative block aspect-square w-full overflow-hidden border border-oak/35 bg-white"
@@ -135,7 +135,8 @@ export function ProductPurchasePanel({ product }: Props) {
                 fill
                 className="object-contain"
                 sizes="(max-width:640px) 90vw, 380px"
-                priority
+                loading="eager"
+                fetchPriority="high"
               />
             </span>
             {onSale ? (

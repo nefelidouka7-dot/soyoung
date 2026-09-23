@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
+import { useTranslation } from "@/lib/i18n/use-translation";
 
 type Brand = {
   id: string;
@@ -14,6 +15,7 @@ type Brand = {
 };
 
 export function BrandDirectory({ brands }: { brands: Brand[] }) {
+  const { dict, t } = useTranslation();
   const [q, setQ] = useState("");
   const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
@@ -40,8 +42,8 @@ export function BrandDirectory({ brands }: { brands: Brand[] }) {
       <Input
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="Search brands"
-        aria-label="Search brands"
+        placeholder={dict.brands.searchPlaceholder}
+        aria-label={dict.brands.searchPlaceholder}
         className="max-w-md"
       />
 
@@ -82,7 +84,7 @@ export function BrandDirectory({ brands }: { brands: Brand[] }) {
                     <div>
                       <p className="text-sm text-ink">{b.name}</p>
                       <p className="text-xs text-ink-muted">
-                        {b.count} products
+                        {t((d) => d.brands.productsCount, { count: b.count })}
                       </p>
                     </div>
                   </Link>

@@ -55,7 +55,7 @@ export default function WishlistPage() {
         <div className="mt-10 flex flex-wrap gap-3">
           <button
             type="button"
-            className="inline-flex h-11 items-center gap-2 bg-sage px-6 text-xs uppercase tracking-wide text-bg hover:bg-sage-dark"
+            className="inline-flex h-11 items-center gap-2 bg-sage px-6 text-xs uppercase tracking-wide font-bold text-white hover:bg-sage-dark"
             onClick={() => {
               products.forEach((p) => {
                 addItem({

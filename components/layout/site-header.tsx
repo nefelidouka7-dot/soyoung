@@ -14,12 +14,13 @@ import {
   X,
 } from "lucide-react";
 import { brand } from "@/lib/constants";
-import { STORE_NAME, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { useCartStore } from "@/features/cart/store";
 import { useUIStore } from "@/lib/ui-store";
 import { useTranslation } from "@/lib/i18n/use-translation";
 import { navLabel, productTypeLabel } from "@/lib/i18n/nav";
 import type { NavigationData } from "@/types";
+import { SiteLogo } from "@/components/layout/site-logo";
 
 const MENU_ANIM_MS = 320;
 /** Long enough to cross an item without flashing, short enough to feel instant. */
@@ -194,14 +195,18 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
             : "h-16 bg-bg/90 backdrop-blur-sm md:h-[4.5rem]"
         )}
       >
-        <div className="container-page flex h-full items-center gap-3 lg:gap-5">
-          <Link
-            href="/"
-            className="shrink-0 font-serif text-2xl tracking-tight text-ink md:text-[1.75rem]"
-            aria-label={`${STORE_NAME} home`}
+        <div className="container-page flex h-full items-center gap-2 sm:gap-3 lg:gap-5">
+          <button
+            type="button"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center text-ink lg:hidden"
+            onClick={openMenu}
+            aria-label={dict.nav.openMenu}
+            aria-expanded={mobileOpen}
           >
-            {STORE_NAME}
-          </Link>
+            <Menu className="pointer-events-none h-5 w-5" strokeWidth={1.5} />
+          </button>
+
+          <SiteLogo priority className="translate-y-0.5" />
 
           <nav
             className="hidden min-w-0 flex-1 items-center justify-center gap-6 lg:flex xl:gap-8"
@@ -292,20 +297,6 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
             >
               <Search className="pointer-events-none h-5 w-5" strokeWidth={1.5} />
             </button>
-            <Link
-              href="/login"
-              className="hidden h-10 w-10 items-center justify-center text-ink transition-opacity hover:opacity-70 lg:inline-flex"
-              aria-label={dict.nav.account}
-            >
-              <User className="pointer-events-none h-5 w-5" strokeWidth={1.5} />
-            </Link>
-            <Link
-              href="/wishlist"
-              className="hidden h-10 w-10 items-center justify-center text-ink transition-opacity hover:opacity-70 lg:inline-flex"
-              aria-label={dict.nav.wishlist}
-            >
-              <Heart className="pointer-events-none h-5 w-5" strokeWidth={1.5} />
-            </Link>
             <button
               type="button"
               onClick={() => {
@@ -328,7 +319,7 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
               {displayCount > 0 ? (
                 <span
                   className={cn(
-                    "pointer-events-none absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center bg-sage px-1 text-[10px] text-bg",
+                    "pointer-events-none absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center bg-sage px-1 text-[10px] font-bold text-white",
                     cartBump && "animate-cart-badge"
                   )}
                 >
@@ -336,15 +327,20 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
                 </span>
               ) : null}
             </button>
-            <button
-              type="button"
-              className="inline-flex h-10 w-10 items-center justify-center text-ink lg:hidden"
-              onClick={openMenu}
-              aria-label={dict.nav.openMenu}
-              aria-expanded={mobileOpen}
+            <Link
+              href="/login"
+              className="inline-flex h-10 w-10 items-center justify-center text-ink transition-opacity hover:opacity-70"
+              aria-label={dict.nav.account}
             >
-              <Menu className="pointer-events-none h-5 w-5" strokeWidth={1.5} />
-            </button>
+              <User className="pointer-events-none h-5 w-5" strokeWidth={1.5} />
+            </Link>
+            <Link
+              href="/wishlist"
+              className="hidden h-10 w-10 items-center justify-center text-ink transition-opacity hover:opacity-70 lg:inline-flex"
+              aria-label={dict.nav.wishlist}
+            >
+              <Heart className="pointer-events-none h-5 w-5" strokeWidth={1.5} />
+            </Link>
           </div>
         </div>
 
@@ -457,12 +453,12 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
           />
           <div
             className={cn(
-              "absolute inset-y-0 right-0 flex w-[min(100%,22rem)] flex-col bg-bg shadow-[-20px_0_50px_rgba(43,41,39,0.14)] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform sm:w-[23.5rem]",
-              menuVisible ? "translate-x-0" : "translate-x-full"
+              "absolute inset-y-0 left-0 flex w-[min(100%,22rem)] flex-col bg-bg shadow-[20px_0_50px_rgba(43,41,39,0.14)] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform sm:w-[23.5rem]",
+              menuVisible ? "translate-x-0" : "-translate-x-full"
             )}
           >
             <div
-              className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[radial-gradient(90%_80%_at_100%_0%,color-mix(in_srgb,var(--oak-soft)_55%,transparent),transparent_70%)]"
+              className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[radial-gradient(90%_80%_at_0%_0%,color-mix(in_srgb,var(--oak-soft)_55%,transparent),transparent_70%)]"
               aria-hidden
             />
 

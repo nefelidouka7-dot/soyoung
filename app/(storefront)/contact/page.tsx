@@ -35,7 +35,7 @@ export default function ContactPage() {
         />
         <button
           type="submit"
-          className="h-11 bg-sage px-6 text-xs uppercase tracking-wide text-bg hover:bg-sage-dark"
+          className="h-11 bg-sage px-6 text-xs uppercase tracking-wide font-bold text-white hover:bg-sage-dark"
         >
           Send message
         </button>

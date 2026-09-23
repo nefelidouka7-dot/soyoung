@@ -1,6 +1,15 @@
 import { prisma } from "@/db/prisma";
 import { requireAdmin } from "@/lib/admin";
-import { AdminPageHeader, StatusBadge } from "@/features/admin/components/admin-ui";
+import {
+  AdminEmpty,
+  AdminPageHeader,
+  AdminPanel,
+  AdminTable,
+  AdminTableHead,
+  AdminTd,
+  AdminTh,
+  StatusBadge,
+} from "@/features/admin/components/admin-ui";
 import { CategoryForm } from "@/features/admin/components/category-form";
 import { deleteCategory } from "@/features/admin/actions/categories";
 
@@ -29,42 +38,48 @@ export default async function AdminCategoriesPage({
       />
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="overflow-x-auto rounded-sm border border-oak/40 bg-white">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-oak/30 bg-bg-muted text-[10px] uppercase tracking-wider text-ink-muted">
+        <AdminPanel
+          title="All categories"
+          description={`${categories.length} total`}
+          flush
+        >
+          <AdminTable minWidth="0" bare>
+            <AdminTableHead>
               <tr>
-                <th className="px-3 py-2.5 font-medium">Category</th>
-                <th className="px-3 py-2.5 font-medium">Parent</th>
-                <th className="px-3 py-2.5 font-medium">Sort</th>
-                <th className="px-3 py-2.5 font-medium">Status</th>
-                <th className="px-3 py-2.5 font-medium" />
+                <AdminTh>Category</AdminTh>
+                <AdminTh>Parent</AdminTh>
+                <AdminTh>Sort</AdminTh>
+                <AdminTh>Status</AdminTh>
+                <AdminTh />
               </tr>
-            </thead>
+            </AdminTableHead>
             <tbody className="divide-y divide-oak/20">
               {categories.map((c) => (
-                <tr key={c.id}>
-                  <td className="px-3 py-2.5">
+                <tr key={c.id} className="transition-colors hover:bg-bg/40">
+                  <AdminTd>
                     <p className="font-medium">
-                      {c.parentId ? "↳ " : ""}
+                      {c.parentId ? (
+                        <span className="mr-1 text-ink-muted">↳</span>
+                      ) : null}
                       {c.name}
                     </p>
                     <p className="text-xs text-ink-muted">
                       {c.slug} · {c._count.products} products
                     </p>
-                  </td>
-                  <td className="px-3 py-2.5 text-ink-muted">
+                  </AdminTd>
+                  <AdminTd className="text-ink-muted">
                     {c.parent?.name ?? "—"}
-                  </td>
-                  <td className="px-3 py-2.5">{c.sortOrder}</td>
-                  <td className="px-3 py-2.5">
+                  </AdminTd>
+                  <AdminTd className="tabular-nums">{c.sortOrder}</AdminTd>
+                  <AdminTd>
                     <StatusBadge tone={c.active ? "success" : "neutral"}>
                       {c.active ? "Active" : "Inactive"}
                     </StatusBadge>
-                  </td>
-                  <td className="px-3 py-2.5 text-right">
+                  </AdminTd>
+                  <AdminTd className="text-right">
                     <a
                       href={`/admin/categories?edit=${c.id}`}
-                      className="mr-2 text-xs font-medium text-sage hover:underline"
+                      className="mr-2 text-xs font-semibold text-sage-dark hover:underline"
                     >
                       Edit
                     </a>
@@ -75,18 +90,21 @@ export default async function AdminCategoriesPage({
                       >
                         <button
                           type="submit"
-                          className="text-xs text-coral hover:underline"
+                          className="text-xs font-medium text-coral hover:underline"
                         >
                           Delete
                         </button>
                       </form>
                     ) : null}
-                  </td>
+                  </AdminTd>
                 </tr>
               ))}
+              {categories.length === 0 ? (
+                <AdminEmpty colSpan={5}>No categories yet.</AdminEmpty>
+              ) : null}
             </tbody>
-          </table>
-        </div>
+          </AdminTable>
+        </AdminPanel>
 
         <CategoryForm
           category={editing}

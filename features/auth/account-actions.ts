@@ -3,6 +3,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/db/prisma";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 export async function updateAccountDetails(formData: FormData) {
   const session = await auth();
@@ -22,5 +23,7 @@ export async function updateAccountDetails(formData: FormData) {
     },
   });
 
+  revalidatePath("/account");
   revalidatePath("/account/details");
+  redirect("/account/details?saved=1");
 }

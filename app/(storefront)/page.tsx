@@ -120,7 +120,7 @@ export default async function HomePage() {
             <div className="animate-home-rise-d3 mt-7 flex flex-col gap-2.5 sm:mt-10 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
               <Link
                 href="/skincare"
-                className="group inline-flex h-12 w-full items-center justify-center gap-2.5 bg-sage px-7 text-[11px] uppercase tracking-[0.16em] text-bg shadow-[0_14px_34px_-16px_rgba(43,41,39,0.55)] transition-colors hover:bg-sage-dark sm:w-auto"
+                className="group inline-flex h-12 w-full items-center justify-center gap-2.5 bg-sage px-7 text-[11px] uppercase tracking-[0.16em] font-bold text-white shadow-[0_14px_34px_-16px_rgba(43,41,39,0.55)] transition-colors hover:bg-sage-dark sm:w-auto"
               >
                 {dict.home.heroCta}
                 <ArrowRight
@@ -340,7 +340,7 @@ export default async function HomePage() {
             </p>
             <Link
               href="/skincare"
-              className="mt-10 inline-flex h-11 items-center bg-sage px-7 text-[11px] uppercase tracking-[0.14em] text-bg transition-colors hover:bg-sage-dark"
+              className="mt-10 inline-flex h-11 items-center bg-sage px-7 text-[11px] uppercase tracking-[0.14em] font-bold text-white transition-colors hover:bg-sage-dark"
             >
               {dict.home.exploreSkincare}
             </Link>

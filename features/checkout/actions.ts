@@ -53,7 +53,18 @@ export async function validateCheckoutTotals(input: {
       shippingMethod: input.shippingMethod,
       paymentMethod: input.paymentMethod,
     });
-    return { ok: true as const, totals };
+    return {
+      ok: true as const,
+      totals: {
+        subtotal: totals.subtotal,
+        discountAmount: totals.discountAmount,
+        shippingAmount: totals.shippingAmount,
+        paymentFee: totals.paymentFee,
+        total: totals.total,
+        couponCode: totals.coupon?.code ?? null,
+        couponRejection: totals.couponRejection,
+      },
+    };
   } catch (e) {
     return {
       ok: false as const,

@@ -601,7 +601,7 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-sm border border-oak/40 bg-white p-4">
+    <div className="rounded-xl border border-ink/[0.08] bg-white p-5 shadow-[0_1px_2px_rgba(28,25,23,0.04)]">
       <h3 className="mb-3 text-xs font-medium uppercase tracking-wider text-ink-muted">
         {title}
       </h3>

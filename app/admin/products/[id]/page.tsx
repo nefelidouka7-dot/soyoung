@@ -1,7 +1,10 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/db/prisma";
 import { requireAdmin } from "@/lib/admin";
-import { AdminPageHeader } from "@/features/admin/components/admin-ui";
+import {
+  AdminBreadcrumb,
+  AdminPageHeader,
+} from "@/features/admin/components/admin-ui";
 import {
   ProductForm,
   ProductDangerActions,
@@ -36,7 +39,18 @@ export default async function EditProductPage({
 
   return (
     <div>
-      <AdminPageHeader title={product.name} description="Edit product details." />
+      <AdminPageHeader
+        title={product.name}
+        description="Edit product details, stock, and media."
+        breadcrumb={
+          <AdminBreadcrumb
+            items={[
+              { href: "/admin/products", label: "Products" },
+              { label: product.name },
+            ]}
+          />
+        }
+      />
       <ProductForm
         product={product}
         brands={brands}

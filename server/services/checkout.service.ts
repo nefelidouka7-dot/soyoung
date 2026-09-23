@@ -5,7 +5,7 @@ import {
   type PaymentMethod,
   type ShippingMethod,
 } from "@/lib/checkout-options";
-import type { Coupon } from "@prisma/client";
+import type { Coupon, Prisma } from "@prisma/client";
 import { FREE_SHIPPING_THRESHOLD } from "@/lib/utils";
 import { prisma } from "@/db/prisma";
 
@@ -36,7 +36,84 @@ export type ComputedTotals = {
   paymentFee: number;
   total: number;
   coupon: Coupon | null;
+  couponRejection: {
+    reason: CouponRejectReason;
+    minOrderAmount?: number;
+  } | null;
 };
+
+export type CouponRejectReason =
+  | "not_found"
+  | "inactive"
+  | "not_started"
+  | "expired"
+  | "usage_limit"
+  | "min_order";
+
+export type CouponResolution =
+  | { ok: true; coupon: Coupon; discountAmount: number }
+  | {
+      ok: false;
+      reason: CouponRejectReason;
+      minOrderAmount?: number;
+    };
+
+export async function resolveCoupon(
+  code: string | null | undefined,
+  subtotal: number,
+  options?: { productIds?: string[]; categoryIds?: string[] }
+): Promise<CouponResolution | null> {
+  const trimmed = code?.trim();
+  if (!trimmed) return null;
+
+  const coupon = await prisma.coupon.findFirst({
+    where: { code: trimmed.toUpperCase() },
+  });
+
+  if (!coupon) return { ok: false, reason: "not_found" };
+  if (!coupon.active) return { ok: false, reason: "inactive" };
+
+  const now = new Date();
+  if (coupon.startsAt && coupon.startsAt > now) {
+    return { ok: false, reason: "not_started" };
+  }
+  if (coupon.expiresAt && coupon.expiresAt < now) {
+    return { ok: false, reason: "expired" };
+  }
+  if (coupon.usageLimit != null && coupon.usageCount >= coupon.usageLimit) {
+    return { ok: false, reason: "usage_limit" };
+  }
+
+  const minOrder =
+    coupon.minOrderAmount != null ? Number(coupon.minOrderAmount) : 0;
+  if (minOrder > 0 && subtotal < minOrder) {
+    return { ok: false, reason: "min_order", minOrderAmount: minOrder };
+  }
+
+  if (coupon.productIds.length > 0) {
+    const hit = options?.productIds?.some((id) => coupon.productIds.includes(id));
+    if (!hit) return { ok: false, reason: "not_found" };
+  }
+  if (coupon.categoryIds.length > 0) {
+    const hit = options?.categoryIds?.some((id) =>
+      coupon.categoryIds.includes(id)
+    );
+    if (!hit) return { ok: false, reason: "not_found" };
+  }
+
+  let discountAmount = 0;
+  if (coupon.type === "PERCENTAGE") {
+    discountAmount = (subtotal * Number(coupon.value)) / 100;
+    if (coupon.maxDiscount) {
+      discountAmount = Math.min(discountAmount, Number(coupon.maxDiscount));
+    }
+  } else {
+    discountAmount = Number(coupon.value);
+  }
+  discountAmount = Math.min(Math.max(0, discountAmount), subtotal);
+
+  return { ok: true, coupon, discountAmount };
+}
 
 export async function computeCartTotals(
   items: CheckoutLineInput[],
@@ -58,6 +135,7 @@ export async function computeCartTotals(
       paymentFee: 0,
       total: 0,
       coupon: null,
+      couponRejection: null,
     };
   }
 
@@ -107,39 +185,19 @@ export async function computeCartTotals(
   const subtotal = lines.reduce((n, l) => n + l.totalPrice, 0);
   let coupon: Coupon | null = null;
   let discountAmount = 0;
+  let couponRejection: ComputedTotals["couponRejection"] = null;
 
-  if (couponCode) {
-    coupon = await prisma.coupon.findFirst({
-      where: {
-        code: couponCode.toUpperCase(),
-        active: true,
-      },
-    });
-    if (coupon) {
-      const now = new Date();
-      if (coupon.startsAt && coupon.startsAt > now) coupon = null;
-      if (coupon?.expiresAt && coupon.expiresAt < now) coupon = null;
-      if (coupon?.usageLimit != null && coupon.usageCount >= coupon.usageLimit) {
-        coupon = null;
-      }
-      if (
-        coupon?.minOrderAmount &&
-        subtotal < Number(coupon.minOrderAmount)
-      ) {
-        coupon = null;
-      }
-    }
-    if (coupon) {
-      if (coupon.type === "PERCENTAGE") {
-        discountAmount = (subtotal * Number(coupon.value)) / 100;
-        if (coupon.maxDiscount) {
-          discountAmount = Math.min(discountAmount, Number(coupon.maxDiscount));
-        }
-      } else {
-        discountAmount = Number(coupon.value);
-      }
-      discountAmount = Math.min(discountAmount, subtotal);
-    }
+  const resolved = await resolveCoupon(couponCode, subtotal, {
+    productIds: lines.map((l) => l.productId),
+  });
+  if (resolved?.ok) {
+    coupon = resolved.coupon;
+    discountAmount = resolved.discountAmount;
+  } else if (resolved) {
+    couponRejection = {
+      reason: resolved.reason,
+      minOrderAmount: resolved.minOrderAmount,
+    };
   }
 
   const afterDiscount = subtotal - discountAmount;
@@ -159,13 +217,26 @@ export async function computeCartTotals(
     paymentFee,
     total,
     coupon,
+    couponRejection,
   };
 }
 
-function generateOrderNumber() {
-  const n = Date.now().toString(36).toUpperCase();
-  const r = Math.random().toString(36).slice(2, 6).toUpperCase();
-  return `SY-${n}-${r}`;
+/** Short sequential numbers (SY-1001) — easy to say, type, and search. */
+async function allocateOrderNumber(tx: Prisma.TransactionClient) {
+  const count = await tx.order.count();
+  let n = 1001 + count;
+
+  for (let i = 0; i < 50; i++) {
+    const orderNumber = `SY-${n + i}`;
+    const exists = await tx.order.findUnique({
+      where: { orderNumber },
+      select: { id: true },
+    });
+    if (!exists) return orderNumber;
+  }
+
+  // Extremely unlikely fallback if the range above is exhausted.
+  return `SY-${Date.now().toString().slice(-8)}`;
 }
 
 export async function createOrderFromCheckout(input: {
@@ -281,9 +352,11 @@ export async function createOrderFromCheckout(input: {
       totals.paymentFee > 0 ? `COD fee €${totals.paymentFee.toFixed(2)}` : null,
     ].filter(Boolean);
 
+    const orderNumber = await allocateOrderNumber(tx);
+
     const order = await tx.order.create({
       data: {
-        orderNumber: generateOrderNumber(),
+        orderNumber,
         ...(input.userId
           ? { user: { connect: { id: input.userId } } }
           : {}),

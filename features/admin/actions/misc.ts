@@ -34,13 +34,23 @@ const couponSchema = z.object({
   code: z.string().min(1),
   type: z.enum(["PERCENTAGE", "FIXED"]),
   value: z.coerce.number().positive(),
-  minOrder: z.coerce.number().nonnegative().optional().or(z.literal("")),
-  usageLimit: z.coerce.number().int().positive().optional().or(z.literal("")),
+  minOrder: z.union([z.coerce.number().nonnegative(), z.literal("")]).optional(),
+  maxDiscount: z
+    .union([z.coerce.number().nonnegative(), z.literal("")])
+    .optional(),
+  usageLimit: z.union([z.coerce.number().int().positive(), z.literal("")]).optional(),
+  startsAt: z.string().optional(),
   expiresAt: z.string().optional(),
-  active: z.coerce.boolean().optional(),
+  active: z.boolean().optional(),
 });
 
-export type CouponActionState = { error?: string };
+export type CouponActionState = { error?: string; success?: string };
+
+function optionalNumber(value: FormDataEntryValue | null) {
+  if (value == null) return "";
+  const s = String(value).trim();
+  return s === "" ? "" : s;
+}
 
 export async function createCoupon(
   _prev: CouponActionState,
@@ -51,14 +61,30 @@ export async function createCoupon(
     code: formData.get("code"),
     type: formData.get("type"),
     value: formData.get("value"),
-    minOrder: formData.get("minOrder") || "",
-    usageLimit: formData.get("usageLimit") || "",
+    minOrder: optionalNumber(formData.get("minOrder")),
+    maxDiscount: optionalNumber(formData.get("maxDiscount")),
+    usageLimit: optionalNumber(formData.get("usageLimit")),
+    startsAt: formData.get("startsAt") || undefined,
     expiresAt: formData.get("expiresAt") || undefined,
     active: formData.get("active") === "on" || formData.get("active") === "true",
   });
   if (!parsed.success) return { error: "Please check the coupon fields." };
 
-  const { code, type, value, minOrder, usageLimit, expiresAt, active } = parsed.data;
+  const {
+    code,
+    type,
+    value,
+    minOrder,
+    maxDiscount,
+    usageLimit,
+    startsAt,
+    expiresAt,
+    active,
+  } = parsed.data;
+
+  if (type === "PERCENTAGE" && value > 100) {
+    return { error: "Percentage cannot exceed 100." };
+  }
 
   try {
     await prisma.coupon.create({
@@ -68,7 +94,10 @@ export async function createCoupon(
         value,
         minOrderAmount:
           minOrder === "" || minOrder == null ? null : minOrder,
+        maxDiscount:
+          maxDiscount === "" || maxDiscount == null ? null : maxDiscount,
         usageLimit: usageLimit === "" || usageLimit == null ? null : usageLimit,
+        startsAt: startsAt ? new Date(startsAt) : null,
         expiresAt: expiresAt ? new Date(expiresAt) : null,
         active: active !== false,
       },
@@ -78,7 +107,7 @@ export async function createCoupon(
   }
 
   revalidatePath("/admin/discounts");
-  return {};
+  return { success: `Coupon ${code.trim().toUpperCase()} created.` };
 }
 
 export async function toggleCoupon(id: string, active: boolean) {

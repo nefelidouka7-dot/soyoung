@@ -1,6 +1,15 @@
 import { prisma } from "@/db/prisma";
 import { requireAdmin } from "@/lib/admin";
-import { AdminPageHeader, StatusBadge } from "@/features/admin/components/admin-ui";
+import {
+  AdminEmpty,
+  AdminPageHeader,
+  AdminPanel,
+  AdminTable,
+  AdminTableHead,
+  AdminTd,
+  AdminTh,
+  StatusBadge,
+} from "@/features/admin/components/admin-ui";
 import { BrandForm } from "@/features/admin/components/brand-form";
 import { deleteBrand } from "@/features/admin/actions/brands";
 
@@ -26,25 +35,25 @@ export default async function AdminBrandsPage({
       />
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="overflow-x-auto rounded-sm border border-oak/40 bg-white">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-oak/30 bg-bg-muted text-[10px] uppercase tracking-wider text-ink-muted">
+        <AdminPanel title="All brands" description={`${brands.length} total`} flush>
+          <AdminTable minWidth="0" bare>
+            <AdminTableHead>
               <tr>
-                <th className="px-3 py-2.5 font-medium">Brand</th>
-                <th className="px-3 py-2.5 font-medium">Products</th>
-                <th className="px-3 py-2.5 font-medium">Flags</th>
-                <th className="px-3 py-2.5 font-medium" />
+                <AdminTh>Brand</AdminTh>
+                <AdminTh>Products</AdminTh>
+                <AdminTh>Flags</AdminTh>
+                <AdminTh />
               </tr>
-            </thead>
+            </AdminTableHead>
             <tbody className="divide-y divide-oak/20">
               {brands.map((b) => (
-                <tr key={b.id}>
-                  <td className="px-3 py-2.5">
+                <tr key={b.id} className="transition-colors hover:bg-bg/40">
+                  <AdminTd>
                     <p className="font-medium">{b.name}</p>
                     <p className="text-xs text-ink-muted">{b.slug}</p>
-                  </td>
-                  <td className="px-3 py-2.5">{b._count.products}</td>
-                  <td className="px-3 py-2.5">
+                  </AdminTd>
+                  <AdminTd className="tabular-nums">{b._count.products}</AdminTd>
+                  <AdminTd>
                     <div className="flex flex-wrap gap-1">
                       {b.featured ? (
                         <StatusBadge tone="info">Featured</StatusBadge>
@@ -53,11 +62,11 @@ export default async function AdminBrandsPage({
                         {b.active ? "Active" : "Inactive"}
                       </StatusBadge>
                     </div>
-                  </td>
-                  <td className="px-3 py-2.5 text-right">
+                  </AdminTd>
+                  <AdminTd className="text-right">
                     <a
                       href={`/admin/brands?edit=${b.id}`}
-                      className="mr-2 text-xs font-medium text-sage hover:underline"
+                      className="mr-2 text-xs font-semibold text-sage-dark hover:underline"
                     >
                       Edit
                     </a>
@@ -65,18 +74,21 @@ export default async function AdminBrandsPage({
                       <form action={deleteBrand.bind(null, b.id)} className="inline">
                         <button
                           type="submit"
-                          className="text-xs text-coral hover:underline"
+                          className="text-xs font-medium text-coral hover:underline"
                         >
                           Delete
                         </button>
                       </form>
                     ) : null}
-                  </td>
+                  </AdminTd>
                 </tr>
               ))}
+              {brands.length === 0 ? (
+                <AdminEmpty colSpan={4}>No brands yet.</AdminEmpty>
+              ) : null}
             </tbody>
-          </table>
-        </div>
+          </AdminTable>
+        </AdminPanel>
 
         <BrandForm brand={editing} key={editing?.id ?? "new"} />
       </div>

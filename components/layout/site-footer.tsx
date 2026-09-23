@@ -4,6 +4,7 @@ import Link from "next/link";
 import { brand } from "@/lib/constants";
 import { STORE_NAME } from "@/lib/utils";
 import { NewsletterForm } from "@/components/layout/newsletter-form";
+import { SiteLogo } from "@/components/layout/site-logo";
 import { useTranslation } from "@/lib/i18n/use-translation";
 import { navLabel } from "@/lib/i18n/nav";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
@@ -17,9 +18,7 @@ export function SiteFooter() {
       <div className="container-page py-12 sm:py-14 lg:py-16">
         <div className="grid gap-10 sm:gap-12 lg:grid-cols-6 lg:gap-10">
           <div className="lg:col-span-2">
-            <Link href="/" className="font-serif text-2xl text-ink">
-              {STORE_NAME}
-            </Link>
+            <SiteLogo />
             <p className="mt-3 max-w-sm text-sm leading-relaxed text-ink-muted">
               {dict.footer.tagline}
             </p>

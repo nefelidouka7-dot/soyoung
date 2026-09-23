@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ProductCard, type ProductCardData } from "@/features/products/components/product-card";
+import {
+  ProductCard,
+  type ProductCardData,
+} from "@/features/products/components/product-card";
 import { ProductGrid } from "@/features/products/components/product-grid";
 import { useWishlistStore } from "@/features/wishlist/store";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -25,12 +28,17 @@ export default function AccountWishlistPage() {
   }, [ids, hydrated]);
 
   return (
-    <div className="container-page py-10 lg:py-14">
-      <h1 className="font-serif text-3xl">{dict.wishlist.title}</h1>
+    <div>
+      <h2 className="font-serif text-2xl text-ink sm:text-[1.75rem]">
+        {dict.account.wishlist}
+      </h2>
+      <p className="mt-2 text-sm text-ink-muted">{dict.wishlist.subtitle}</p>
+
       {!hydrated || loading ? (
         <p className="mt-8 text-sm text-ink-muted">{dict.wishlist.loading}</p>
       ) : products.length === 0 ? (
         <EmptyState
+          className="mt-4 items-start px-0 py-12 text-left"
           title={dict.wishlist.emptyTitle}
           description={dict.wishlist.emptyDescription}
           action={{ label: dict.home.exploreSkincare, href: "/skincare" }}

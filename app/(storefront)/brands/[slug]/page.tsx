@@ -8,6 +8,8 @@ import {
 } from "@/server/repositories/product.repository";
 import { ProductCard } from "@/features/products/components/product-card";
 import { ProductGrid } from "@/features/products/components/product-grid";
+import { getServerDictionary } from "@/lib/i18n/server";
+import { interpolate } from "@/lib/i18n";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -23,7 +25,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function BrandPage({ params }: Props) {
   const { slug } = await params;
-  const brand = await findBrandBySlug(slug);
+  const [brand, dict] = await Promise.all([
+    findBrandBySlug(slug),
+    getServerDictionary(),
+  ]);
   if (!brand) notFound();
 
   const products = await findProducts({
@@ -60,7 +65,9 @@ export default async function BrandPage({ params }: Props) {
             <div>
               <h1 className="font-serif text-3xl sm:text-4xl">{brand.name}</h1>
               <p className="mt-1 text-sm text-ink-muted">
-                {brand._count.products} products
+                {interpolate(dict.brands.productsCount, {
+                  count: brand._count.products,
+                })}
               </p>
             </div>
           </div>
@@ -71,7 +78,7 @@ export default async function BrandPage({ params }: Props) {
               rel="noopener noreferrer"
               className="text-xs uppercase tracking-wider text-ink-muted underline-offset-4 hover:underline"
             >
-              Visit website
+              {dict.brands.visitWebsite}
             </a>
           ) : null}
         </div>
@@ -83,7 +90,9 @@ export default async function BrandPage({ params }: Props) {
 
         {featured.length > 0 ? (
           <section className="mt-12">
-            <h2 className="font-serif text-2xl">Featured from {brand.name}</h2>
+            <h2 className="font-serif text-2xl">
+              {interpolate(dict.brands.featuredFrom, { brand: brand.name })}
+            </h2>
             <div className="mt-6">
               <ProductGrid variant="featured">
                 {featured.map((p) => (
@@ -95,9 +104,9 @@ export default async function BrandPage({ params }: Props) {
         ) : null}
 
         <section className="mt-16">
-          <h2 className="font-serif text-2xl">All {brand.name} products</h2>
+          <h2 className="font-serif text-2xl">{dict.brands.allProducts}</h2>
           {products.products.length === 0 ? (
-            <p className="mt-6 text-sm text-ink-muted">No products yet.</p>
+            <p className="mt-6 text-sm text-ink-muted">{dict.brands.empty}</p>
           ) : (
             <div className="mt-6">
               <ProductGrid>
@@ -113,7 +122,7 @@ export default async function BrandPage({ params }: Props) {
           href="/brands"
           className="mt-12 inline-block text-xs uppercase tracking-wider text-ink-muted underline-offset-4 hover:underline"
         >
-          ← All brands
+          ← {dict.nav.brands}
         </Link>
       </div>
     </div>

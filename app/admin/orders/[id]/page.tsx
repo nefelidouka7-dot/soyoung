@@ -8,8 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
+  AdminBreadcrumb,
   AdminPageHeader,
   AdminPanel,
+  AdminSelect,
   StatusBadge,
   orderStatusTone,
 } from "@/features/admin/components/admin-ui";
@@ -51,14 +53,17 @@ export default async function AdminOrderDetailPage({
       <AdminPageHeader
         title={order.orderNumber}
         description={`Placed ${formatAdminDate(order.createdAt)}`}
-        actions={
-          <Link href="/admin/orders" className="text-sm text-sage hover:underline">
-            ← All orders
-          </Link>
+        breadcrumb={
+          <AdminBreadcrumb
+            items={[
+              { href: "/admin/orders", label: "Orders" },
+              { label: order.orderNumber },
+            ]}
+          />
         }
       />
 
-      <div className="mb-4 flex flex-wrap gap-2">
+      <div className="mb-5 flex flex-wrap gap-2">
         <StatusBadge tone={orderStatusTone(order.status)}>{order.status}</StatusBadge>
         <StatusBadge tone={order.paymentStatus === "PAID" ? "success" : "warning"}>
           Payment: {order.paymentStatus}
@@ -146,18 +151,18 @@ export default async function AdminOrderDetailPage({
             <form action={updateWithId} className="space-y-3">
               <div>
                 <Label htmlFor="status">Status</Label>
-                <select
+                <AdminSelect
                   id="status"
                   name="status"
                   defaultValue={order.status}
-                  className="mt-1.5 flex h-10 w-full border border-oak/50 bg-white px-3 text-sm"
+                  className="mt-1.5 w-full"
                 >
                   {STATUSES.map((s) => (
                     <option key={s} value={s}>
                       {s}
                     </option>
                   ))}
-                </select>
+                </AdminSelect>
               </div>
               <div>
                 <Label htmlFor="note">Note (optional)</Label>

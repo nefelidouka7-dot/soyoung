@@ -1,11 +1,12 @@
 export const brand = {
   colors: {
-    bg: "#F5EBE1",
-    bgMuted: "#FAF4ED",
+    bg: "#FEEADF",
+    bgMuted: "#FFD1BD",
     ink: "#2B2927",
-    oak: "#D0B89A",
-    sage: "#8A9A86",
-    coral: "#E08A79",
+    oak: "#FEB79A",
+    sage: "#FE9875",
+    coral: "#FE9875",
+    logoBg: "#EEDACB",
   },
   nav: [
     { label: "Makeup", href: "/makeup" },

@@ -1,39 +1,60 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
-import { registerAction, type AuthErrorCode } from "@/features/auth/actions";
+import { Eye, EyeOff } from "lucide-react";
+import {
+  registerAction,
+  type AuthActionState,
+} from "@/features/auth/actions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n/use-translation";
+import { guardRequiredForm } from "@/lib/field-shake";
+import {
+  AuthPageShell,
+  authFieldClass,
+} from "@/features/auth/components/auth-page-shell";
 
 export function RegisterForm() {
   const { dict } = useTranslation();
-  const [error, setError] = useState<AuthErrorCode | null>(null);
-  const [pending, setPending] = useState(false);
+  const [state, formAction, pending] = useActionState<AuthActionState, FormData>(
+    registerAction,
+    null
+  );
+  const [showPassword, setShowPassword] = useState(false);
 
   return (
     <form
-      className="space-y-4"
-      action={async (fd) => {
-        setPending(true);
-        setError(null);
-        const res = await registerAction(fd);
-        if (res?.error) setError(res.error);
-        setPending(false);
-      }}
+      className="space-y-5"
+      noValidate
+      onSubmit={guardRequiredForm}
+      action={formAction}
     >
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <Label htmlFor="firstName">{dict.auth.firstName}</Label>
-          <Input id="firstName" name="firstName" required className="mt-1.5" />
+          <Input
+            id="firstName"
+            name="firstName"
+            required
+            className={authFieldClass}
+            autoComplete="given-name"
+          />
         </div>
         <div>
           <Label htmlFor="lastName">{dict.auth.lastName}</Label>
-          <Input id="lastName" name="lastName" required className="mt-1.5" />
+          <Input
+            id="lastName"
+            name="lastName"
+            required
+            className={authFieldClass}
+            autoComplete="family-name"
+          />
         </div>
       </div>
+
       <div>
         <Label htmlFor="email">{dict.auth.email}</Label>
         <Input
@@ -41,30 +62,55 @@ export function RegisterForm() {
           name="email"
           type="email"
           required
-          className="mt-1.5"
+          className={authFieldClass}
+          autoComplete="email"
         />
       </div>
+
       <div>
         <Label htmlFor="password">{dict.auth.password}</Label>
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          required
-          minLength={8}
-          className="mt-1.5"
-        />
-        <p className="mt-1 text-xs text-ink-muted">{dict.auth.passwordHint}</p>
+        <div className="relative mt-1.5">
+          <Input
+            id="password"
+            name="password"
+            type={showPassword ? "text" : "password"}
+            required
+            minLength={8}
+            className={`${authFieldClass} mt-0 pr-11`}
+            autoComplete="new-password"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-ink-muted transition-colors hover:text-ink"
+            aria-label={showPassword ? "Hide password" : "Show password"}
+          >
+            {showPassword ? (
+              <EyeOff className="h-4 w-4" aria-hidden />
+            ) : (
+              <Eye className="h-4 w-4" aria-hidden />
+            )}
+          </button>
+        </div>
+        <p className="mt-1.5 text-xs text-ink-muted">{dict.auth.passwordHint}</p>
       </div>
-      {error ? (
-        <p className="text-sm text-coral">{dict.auth.errors[error]}</p>
+
+      {state?.error ? (
+        <p role="alert" className="text-sm text-coral">
+          {dict.auth.errors[state.error]}
+        </p>
       ) : null}
+
       <Button type="submit" className="w-full" disabled={pending}>
         {pending ? dict.auth.creating : dict.auth.createAccount}
       </Button>
-      <p className="text-center text-sm text-ink-muted">
+
+      <p className="pt-1 text-center text-sm text-ink-muted">
         {dict.auth.alreadyHaveAccount}{" "}
-        <Link href="/login" className="underline-offset-4 hover:underline">
+        <Link
+          href="/login"
+          className="font-medium text-ink underline-offset-4 hover:underline"
+        >
           {dict.auth.signIn}
         </Link>
       </p>
@@ -76,14 +122,11 @@ export function RegisterPageView() {
   const { dict } = useTranslation();
 
   return (
-    <div className="container-page flex justify-center py-16">
-      <div className="w-full max-w-md border border-oak/40 bg-bg-muted p-8">
-        <h1 className="font-serif text-3xl">{dict.auth.createAccountTitle}</h1>
-        <p className="mt-2 text-sm text-ink-muted">{dict.auth.createAccountHint}</p>
-        <div className="mt-8">
-          <RegisterForm />
-        </div>
-      </div>
-    </div>
+    <AuthPageShell
+      title={dict.auth.createAccountTitle}
+      description={dict.auth.createAccountHint}
+    >
+      <RegisterForm />
+    </AuthPageShell>
   );
 }

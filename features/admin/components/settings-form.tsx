@@ -19,7 +19,7 @@ export function SettingsForm() {
   return (
     <form
       action={action}
-      className="space-y-4 rounded-sm border border-oak/40 bg-white p-4"
+      className="space-y-4 rounded-xl border border-ink/[0.08] bg-white p-5 shadow-[0_1px_2px_rgba(28,25,23,0.04)]"
     >
       <h3 className="text-sm font-medium">Site setting (key / value)</h3>
       {state.error ? <p className="text-sm text-coral">{state.error}</p> : null}

@@ -20,6 +20,7 @@ import {
   type ShippingMethod,
 } from "@/lib/checkout-options";
 import { formatPrice, FREE_SHIPPING_THRESHOLD } from "@/lib/utils";
+import { shakeFieldsById, guardRequiredForm } from "@/lib/field-shake";
 import { useTranslation } from "@/lib/i18n/use-translation";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,9 +28,11 @@ import { Button } from "@/components/ui/button";
 
 type AccountMode = "guest" | "login" | "register";
 
-const fieldClass = "mt-1.5";
-const panelClass = "border border-oak/40 bg-bg-muted p-5 sm:p-6";
+const fieldClass = "mt-1.5 bg-transparent";
+const panelClass = "py-7";
 const sectionTitleClass = "font-serif text-xl text-ink";
+const summaryClass =
+  "border border-oak/35 bg-oak-soft/40 p-5 sm:p-6";
 
 function MethodRow({
   selected,
@@ -51,8 +54,8 @@ function MethodRow({
       aria-pressed={selected}
       className={`flex w-full items-start gap-3 border px-4 py-3.5 text-left transition-colors ${
         selected
-          ? "border-ink bg-bg"
-          : "border-oak/30 bg-bg/60 hover:border-oak"
+          ? "border-ink bg-oak-soft/40"
+          : "border-oak/40 bg-transparent hover:border-oak"
       }`}
     >
       <span
@@ -94,8 +97,15 @@ export function CheckoutWizard({
   const clear = useCartStore((s) => s.clear);
   const [step, setStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [pending, setPending] = useState(false);
   const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
+  const [couponMessage, setCouponMessage] = useState<{
+    tone: "ok" | "error";
+    text: string;
+  } | null>(null);
+  const [couponPending, setCouponPending] = useState(false);
   const [shippingMethod, setShippingMethod] =
     useState<ShippingMethod>("delivery");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
@@ -141,6 +151,31 @@ export function CheckoutWizard({
 
   function update<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm((f) => ({ ...f, [key]: value }));
+    setFieldErrors((prev) => {
+      if (!prev[key]) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  }
+
+  function messageForField(id: string) {
+    if (id === "email") return dict.checkout.invalidEmail;
+    if (id === "phone") return dict.checkout.phoneNeeded;
+    if (id === "firstName") return dict.checkout.firstNameNeeded;
+    if (id === "lastName") return dict.checkout.lastNameNeeded;
+    if (id === "line1") return dict.checkout.addressNeeded;
+    if (id === "city") return dict.checkout.cityNeeded;
+    if (id === "postalCode") return dict.checkout.postalNeeded;
+    return dict.checkout.completeAddress;
+  }
+
+  function showMissingFields(ids: string[]) {
+    const next: Record<string, string> = {};
+    for (const id of ids) next[id] = messageForField(id);
+    setFieldErrors(next);
+    setError(null);
+    shakeFieldsById(ids);
   }
 
   function selectShipping(method: ShippingMethod) {
@@ -174,14 +209,38 @@ export function CheckoutWizard({
     });
   }
 
-  async function refreshTotals() {
+  function couponRejectionText(
+    rejection: {
+      reason: string;
+      minOrderAmount?: number;
+    } | null
+  ) {
+    if (!rejection) return dict.checkout.couponInvalid;
+    switch (rejection.reason) {
+      case "expired":
+        return dict.checkout.couponExpired;
+      case "not_started":
+        return dict.checkout.couponNotStarted;
+      case "usage_limit":
+        return dict.checkout.couponUsageLimit;
+      case "min_order":
+        return t((d) => d.checkout.couponMinOrder, {
+          amount: formatPrice(rejection.minOrderAmount ?? 0),
+        });
+      default:
+        return dict.checkout.couponInvalid;
+    }
+  }
+
+  async function refreshTotals(opts?: { fromCouponApply?: boolean }) {
+    const code = couponCode.trim() || undefined;
     const res = await validateCheckoutTotals({
       items: items.map((i) => ({
         productId: i.productId,
         variantId: i.variantId,
         quantity: i.quantity,
       })),
-      couponCode: couponCode || undefined,
+      couponCode: code,
       shippingMethod,
       paymentMethod,
     });
@@ -194,10 +253,63 @@ export function CheckoutWizard({
         total: res.totals.total,
       });
       setError(null);
+
+      if (code) {
+        if (res.totals.couponCode && res.totals.discountAmount > 0) {
+          setAppliedCoupon(res.totals.couponCode);
+          setCouponMessage({
+            tone: "ok",
+            text: t((d) => d.checkout.discountApplied, {
+              amount: formatPrice(res.totals.discountAmount),
+            }),
+          });
+        } else if (opts?.fromCouponApply || appliedCoupon) {
+          setAppliedCoupon(null);
+          setCouponMessage({
+            tone: "error",
+            text: couponRejectionText(res.totals.couponRejection),
+          });
+        }
+      } else {
+        setAppliedCoupon(null);
+        if (!opts?.fromCouponApply) setCouponMessage(null);
+      }
+
       return true;
     }
     setError(res.error);
     return false;
+  }
+
+  async function applyCoupon() {
+    setCouponPending(true);
+    await refreshTotals({ fromCouponApply: true });
+    setCouponPending(false);
+  }
+
+  function removeCoupon() {
+    setCouponCode("");
+    setAppliedCoupon(null);
+    setCouponMessage(null);
+    void validateCheckoutTotals({
+      items: items.map((i) => ({
+        productId: i.productId,
+        variantId: i.variantId,
+        quantity: i.quantity,
+      })),
+      shippingMethod,
+      paymentMethod,
+    }).then((res) => {
+      if (res.ok) {
+        setServerTotals({
+          subtotal: res.totals.subtotal,
+          discountAmount: res.totals.discountAmount,
+          shippingAmount: res.totals.shippingAmount,
+          paymentFee: res.totals.paymentFee,
+          total: res.totals.total,
+        });
+      }
+    });
   }
 
   useEffect(() => {
@@ -205,6 +317,24 @@ export function CheckoutWizard({
     void refreshTotals();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items.length, shippingMethod, paymentMethod]);
+
+  function missingContactFields() {
+    const missing: string[] = [];
+    if (!form.email.includes("@")) missing.push("email");
+    if (!form.firstName.trim()) missing.push("firstName");
+    if (!form.lastName.trim()) missing.push("lastName");
+    if (!form.phone.trim()) missing.push("phone");
+    return missing;
+  }
+
+  function missingAddressFields() {
+    if (!needsAddress) return [];
+    const missing: string[] = [];
+    if (!form.line1.trim()) missing.push("line1");
+    if (!form.city.trim()) missing.push("city");
+    if (!form.postalCode.trim()) missing.push("postalCode");
+    return missing;
+  }
 
   function validateDetails(): string | null {
     if (!form.email.includes("@")) return dict.checkout.invalidEmail;
@@ -218,19 +348,12 @@ export function CheckoutWizard({
 
   async function goToPayment() {
     setError(null);
-    // Contact only on step 0 — address is asked with delivery on step 1.
-    if (!form.email.includes("@")) {
-      setError(dict.checkout.invalidEmail);
+    const missing = missingContactFields();
+    if (missing.length > 0) {
+      showMissingFields(missing);
       return;
     }
-    if (!form.firstName || !form.lastName) {
-      setError(dict.checkout.completeContact);
-      return;
-    }
-    if (!form.phone.trim()) {
-      setError(dict.checkout.phoneNeeded);
-      return;
-    }
+    setFieldErrors({});
     const ok = await refreshTotals();
     if (ok) setStep(1);
   }
@@ -238,21 +361,21 @@ export function CheckoutWizard({
   async function placeOrder() {
     setPending(true);
     setError(null);
+    const contactMissing = missingContactFields();
+    const addressMissing = missingAddressFields();
     const detailsError = validateDetails();
     if (detailsError) {
-      setError(detailsError);
       setPending(false);
-      // Address is collected on this step when delivery is selected.
-      if (
-        detailsError === dict.checkout.completeAddress ||
-        detailsError === dict.checkout.phoneNeeded
-      ) {
+      if (addressMissing.length > 0) {
         setStep(1);
-      } else {
+        window.setTimeout(() => showMissingFields(addressMissing), 50);
+      } else if (contactMissing.length > 0) {
         setStep(0);
+        window.setTimeout(() => showMissingFields(contactMissing), 50);
       }
       return;
     }
+    setFieldErrors({});
 
     const res = await placeOrderAction({
       ...form,
@@ -346,7 +469,7 @@ export function CheckoutWizard({
 
   return (
     <div className="mx-auto w-full max-w-5xl">
-      <header className="flex flex-col gap-4 border-b border-oak/30 pb-6 sm:flex-row sm:items-end sm:justify-between">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <h1 className="font-serif text-3xl text-ink sm:text-4xl">
           {dict.checkout.title}
         </h1>
@@ -373,24 +496,30 @@ export function CheckoutWizard({
         </ol>
       </header>
 
-      <div className="mt-8 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-10 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="order-2 min-w-0 space-y-6 lg:order-1">
+      <div className="mt-10 grid items-start gap-10 lg:mt-12 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-12 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="order-2 min-w-0 lg:order-1">
+          {error ? (
+            <p className="mb-5 text-sm text-coral" role="alert">
+              {error}
+            </p>
+          ) : null}
+          <div className="divide-y divide-oak/30">
           {step === 0 ? (
             <>
               {isAuthenticated ? (
-                <div className={`${panelClass} text-sm leading-relaxed`}>
+                <div className={`${panelClass} text-sm leading-relaxed text-ink-muted first:pt-0`}>
                   {dict.checkout.signedInAs}{" "}
                   <span className="font-medium text-ink">{defaultEmail}</span>.{" "}
                   {dict.checkout.savedToAccount}
                 </div>
               ) : (
-                <section className={panelClass}>
+                <section className={`${panelClass} first:pt-0`}>
                   <h2 className={sectionTitleClass}>{dict.checkout.account}</h2>
                   <p className="mt-2 text-sm text-ink-muted">
                     {dict.checkout.accountHint}
                   </p>
                   <div
-                    className="mt-5 grid grid-cols-3 gap-px border border-oak/40 bg-oak/40"
+                    className="mt-5 grid grid-cols-3 gap-px border border-oak/40 bg-oak/35"
                     role="tablist"
                     aria-label={dict.checkout.account}
                   >
@@ -410,10 +539,10 @@ export function CheckoutWizard({
                           setAccountMode(mode);
                           setAuthError(null);
                         }}
-                        className={`h-11 bg-bg text-xs uppercase tracking-wide transition-colors ${
+                        className={`h-11 text-xs uppercase tracking-wide transition-colors ${
                           accountMode === mode
-                            ? "bg-ink text-bg"
-                            : "text-ink hover:bg-bg-muted"
+                            ? "bg-ink font-bold text-white"
+                            : "bg-bg text-ink hover:bg-oak-soft/50"
                         }`}
                       >
                         {label}
@@ -424,10 +553,12 @@ export function CheckoutWizard({
                   {accountMode === "login" ? (
                     <form
                       className="mt-5 space-y-4 border-t border-oak/30 pt-5"
+                      noValidate
+                      onSubmit={guardRequiredForm}
                       action={async (fd) => {
                         setAuthPending(true);
                         setAuthError(null);
-                        const res = await loginAction(fd);
+                        const res = await loginAction(null, fd);
                         if (res?.error) setAuthError(res.error);
                         setAuthPending(false);
                       }}
@@ -481,10 +612,12 @@ export function CheckoutWizard({
                   {accountMode === "register" ? (
                     <form
                       className="mt-5 space-y-4 border-t border-oak/30 pt-5"
+                      noValidate
+                      onSubmit={guardRequiredForm}
                       action={async (fd) => {
                         setAuthPending(true);
                         setAuthError(null);
-                        const res = await registerAction(fd);
+                        const res = await registerAction(null, fd);
                         if (res?.error) setAuthError(res.error);
                         setAuthPending(false);
                       }}
@@ -582,7 +715,20 @@ export function CheckoutWizard({
                         onChange={(e) => update("email", e.target.value)}
                         className={fieldClass}
                         autoComplete="email"
+                        aria-invalid={Boolean(fieldErrors.email)}
+                        aria-describedby={
+                          fieldErrors.email ? "email-error" : undefined
+                        }
                       />
+                      {fieldErrors.email ? (
+                        <p
+                          id="email-error"
+                          className="mt-1.5 text-sm text-coral"
+                          role="alert"
+                        >
+                          {fieldErrors.email}
+                        </p>
+                      ) : null}
                     </div>
                     <div>
                       <Label htmlFor="phone">{dict.checkout.phoneRequired}</Label>
@@ -593,7 +739,20 @@ export function CheckoutWizard({
                         className={fieldClass}
                         autoComplete="tel"
                         required
+                        aria-invalid={Boolean(fieldErrors.phone)}
+                        aria-describedby={
+                          fieldErrors.phone ? "phone-error" : undefined
+                        }
                       />
+                      {fieldErrors.phone ? (
+                        <p
+                          id="phone-error"
+                          className="mt-1.5 text-sm text-coral"
+                          role="alert"
+                        >
+                          {fieldErrors.phone}
+                        </p>
+                      ) : null}
                     </div>
                     <div>
                       <Label htmlFor="firstName">{dict.checkout.firstName}</Label>
@@ -603,7 +762,20 @@ export function CheckoutWizard({
                         onChange={(e) => update("firstName", e.target.value)}
                         className={fieldClass}
                         autoComplete="given-name"
+                        aria-invalid={Boolean(fieldErrors.firstName)}
+                        aria-describedby={
+                          fieldErrors.firstName ? "firstName-error" : undefined
+                        }
                       />
+                      {fieldErrors.firstName ? (
+                        <p
+                          id="firstName-error"
+                          className="mt-1.5 text-sm text-coral"
+                          role="alert"
+                        >
+                          {fieldErrors.firstName}
+                        </p>
+                      ) : null}
                     </div>
                     <div>
                       <Label htmlFor="lastName">{dict.checkout.lastName}</Label>
@@ -613,7 +785,20 @@ export function CheckoutWizard({
                         onChange={(e) => update("lastName", e.target.value)}
                         className={fieldClass}
                         autoComplete="family-name"
+                        aria-invalid={Boolean(fieldErrors.lastName)}
+                        aria-describedby={
+                          fieldErrors.lastName ? "lastName-error" : undefined
+                        }
                       />
+                      {fieldErrors.lastName ? (
+                        <p
+                          id="lastName-error"
+                          className="mt-1.5 text-sm text-coral"
+                          role="alert"
+                        >
+                          {fieldErrors.lastName}
+                        </p>
+                      ) : null}
                     </div>
                   </div>
                 </section>
@@ -625,27 +810,52 @@ export function CheckoutWizard({
                   <Input
                     id="coupon"
                     value={couponCode}
-                    onChange={(e) =>
-                      setCouponCode(e.target.value.toUpperCase())
-                    }
+                    onChange={(e) => {
+                      setCouponCode(e.target.value.toUpperCase());
+                      setCouponMessage(null);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        void applyCoupon();
+                      }
+                    }}
                     placeholder={dict.checkout.enterCode}
-                    className="min-w-0 flex-1"
+                    className="min-w-0 flex-1 bg-transparent uppercase"
                     aria-label={dict.checkout.coupon}
+                    autoComplete="off"
                   />
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    className="shrink-0"
-                    onClick={refreshTotals}
-                  >
-                    {dict.checkout.apply}
-                  </Button>
+                  {appliedCoupon ? (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="shrink-0"
+                      onClick={removeCoupon}
+                    >
+                      {dict.checkout.removeCoupon}
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="shrink-0"
+                      disabled={couponPending || !couponCode.trim()}
+                      onClick={() => void applyCoupon()}
+                    >
+                      {dict.checkout.apply}
+                    </Button>
+                  )}
                 </div>
-                {totals.discountAmount > 0 ? (
-                  <p className="mt-3 text-sm text-sage">
-                    {t((d) => d.checkout.discountApplied, {
-                      amount: formatPrice(totals.discountAmount),
-                    })}
+                {couponMessage ? (
+                  <p
+                    className={`mt-3 text-sm ${
+                      couponMessage.tone === "ok"
+                        ? "text-sage-dark"
+                        : "text-coral"
+                    }`}
+                    role="status"
+                  >
+                    {couponMessage.text}
                   </p>
                 ) : null}
               </section>
@@ -654,7 +864,7 @@ export function CheckoutWizard({
 
           {step === 1 ? (
             <>
-              <section className={panelClass}>
+              <section className={`${panelClass} first:pt-0`}>
                 <h2 className={sectionTitleClass}>
                   {dict.checkout.shippingMethod}
                 </h2>
@@ -675,16 +885,54 @@ export function CheckoutWizard({
                   />
                 </div>
                 {shippingMethod === "delivery" && remainingForFree > 0 ? (
-                  <p className="mt-4 text-sm text-ink-muted">
-                    {t((d) => d.checkout.addMoreToUnlock, {
-                      amount: formatPrice(remainingForFree),
-                    })}
-                  </p>
+                  <div className="mt-5 border border-oak/35 bg-oak-soft/30 px-4 py-3.5">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <p className="text-[11px] uppercase tracking-[0.14em] text-ink-muted">
+                        {dict.checkout.freeShippingProgress}
+                      </p>
+                      <p className="text-xs tabular-nums text-ink-muted">
+                        {formatPrice(afterDiscount)} /{" "}
+                        {formatPrice(FREE_SHIPPING_THRESHOLD)}
+                      </p>
+                    </div>
+                    <div className="mt-2.5 h-1 w-full overflow-hidden bg-oak/25">
+                      <div
+                        className="h-full bg-sage-dark/80 transition-[width] duration-500 ease-out"
+                        style={{
+                          width: `${Math.min(
+                            100,
+                            (afterDiscount / FREE_SHIPPING_THRESHOLD) * 100
+                          )}%`,
+                        }}
+                      />
+                    </div>
+                    <p className="mt-2.5 text-sm text-ink">
+                      {t((d) => d.checkout.addMoreToUnlock, {
+                        amount: formatPrice(remainingForFree),
+                      })}
+                    </p>
+                  </div>
                 ) : null}
                 {shippingMethod === "delivery" && remainingForFree === 0 ? (
-                  <p className="mt-4 text-sm text-sage">
-                    {dict.checkout.freeOnOrder}
-                  </p>
+                  <div className="mt-5 flex items-start gap-3 border border-oak/35 bg-oak-soft/40 px-4 py-3.5">
+                    <span
+                      className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-ink text-[10px] font-bold text-white"
+                      aria-hidden
+                    >
+                      ✓
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-[11px] uppercase tracking-[0.14em] text-ink-muted">
+                        {dict.checkout.unlocked}
+                      </p>
+                      <p className="mt-1 text-sm leading-snug text-ink">
+                        {dict.checkout.freeOnOrder}
+                      </p>
+                      <p className="mt-1 text-xs text-ink-muted">
+                        {dict.checkout.freeOnOrderHint}
+                      </p>
+                    </div>
+                  </div>
                 ) : null}
                 {shippingMethod === "pickup" ? (
                   <div className="mt-4 space-y-3 text-sm text-ink-muted">
@@ -738,7 +986,20 @@ export function CheckoutWizard({
                         onChange={(e) => update("line1", e.target.value)}
                         className={fieldClass}
                         autoComplete="address-line1"
+                        aria-invalid={Boolean(fieldErrors.line1)}
+                        aria-describedby={
+                          fieldErrors.line1 ? "line1-error" : undefined
+                        }
                       />
+                      {fieldErrors.line1 ? (
+                        <p
+                          id="line1-error"
+                          className="mt-1.5 text-sm text-coral"
+                          role="alert"
+                        >
+                          {fieldErrors.line1}
+                        </p>
+                      ) : null}
                     </div>
                     <div className="sm:col-span-2">
                       <Label htmlFor="line2">{dict.checkout.apartment}</Label>
@@ -758,7 +1019,20 @@ export function CheckoutWizard({
                         onChange={(e) => update("city", e.target.value)}
                         className={fieldClass}
                         autoComplete="address-level2"
+                        aria-invalid={Boolean(fieldErrors.city)}
+                        aria-describedby={
+                          fieldErrors.city ? "city-error" : undefined
+                        }
                       />
+                      {fieldErrors.city ? (
+                        <p
+                          id="city-error"
+                          className="mt-1.5 text-sm text-coral"
+                          role="alert"
+                        >
+                          {fieldErrors.city}
+                        </p>
+                      ) : null}
                     </div>
                     <div>
                       <Label htmlFor="postalCode">
@@ -772,7 +1046,22 @@ export function CheckoutWizard({
                         }
                         className={fieldClass}
                         autoComplete="postal-code"
+                        aria-invalid={Boolean(fieldErrors.postalCode)}
+                        aria-describedby={
+                          fieldErrors.postalCode
+                            ? "postalCode-error"
+                            : undefined
+                        }
                       />
+                      {fieldErrors.postalCode ? (
+                        <p
+                          id="postalCode-error"
+                          className="mt-1.5 text-sm text-coral"
+                          role="alert"
+                        >
+                          {fieldErrors.postalCode}
+                        </p>
+                      ) : null}
                     </div>
                     <div className="sm:col-span-2">
                       <Label htmlFor="country">{dict.checkout.country}</Label>
@@ -824,20 +1113,15 @@ export function CheckoutWizard({
             </section>
             </>
           ) : null}
+          </div>
 
-          {error ? <p className="text-sm text-coral">{error}</p> : null}
-
-          <div
-            className={
-              "border-t border-oak/30 pt-6"
-            }
-          >
+          <div className="mt-6">
             {step === 0 && showAddressForm ? (
               <div className="flex justify-end lg:hidden">
                 <button
                   type="button"
                   onClick={goToPayment}
-                  className="group inline-flex h-12 w-full items-center justify-center gap-2.5 bg-sage px-7 text-[11px] uppercase tracking-[0.16em] text-white shadow-[0_14px_34px_-16px_rgba(43,41,39,0.45)] transition-colors hover:bg-sage-dark sm:w-auto sm:min-w-[15rem]"
+                  className="group inline-flex h-12 w-full items-center justify-center gap-2.5 bg-sage px-7 text-[11px] uppercase tracking-[0.16em] font-bold text-white shadow-[0_14px_34px_-16px_rgba(43,41,39,0.45)] transition-colors hover:bg-sage-dark sm:w-auto sm:min-w-[15rem]"
                 >
                   {dict.checkout.continuePayment}
                   <ArrowRight
@@ -862,7 +1146,7 @@ export function CheckoutWizard({
                   type="button"
                   onClick={placeOrder}
                   disabled={pending}
-                  className="group inline-flex h-12 w-full items-center justify-center gap-2.5 bg-sage px-7 text-[11px] uppercase tracking-[0.16em] text-bg shadow-[0_14px_34px_-16px_rgba(43,41,39,0.45)] transition-colors hover:bg-sage-dark disabled:pointer-events-none disabled:opacity-50 sm:min-w-[14rem] sm:w-auto"
+                  className="group inline-flex h-12 w-full items-center justify-center gap-2.5 bg-sage px-7 text-[11px] uppercase tracking-[0.16em] font-bold text-white shadow-[0_14px_34px_-16px_rgba(43,41,39,0.45)] transition-colors hover:bg-sage-dark disabled:pointer-events-none disabled:opacity-50 sm:min-w-[14rem] sm:w-auto"
                 >
                   {pending
                     ? dict.checkout.placingOrder
@@ -882,7 +1166,7 @@ export function CheckoutWizard({
         </div>
 
         <aside className="order-1 lg:sticky lg:top-24 lg:order-2">
-          <div className={panelClass}>
+          <div className={summaryClass}>
             <h2 className={sectionTitleClass}>{dict.checkout.orderSummary}</h2>
             <ul className="mt-5 space-y-3">
               {items.map((i) => (
@@ -953,7 +1237,7 @@ export function CheckoutWizard({
             <button
               type="button"
               onClick={goToPayment}
-              className="group mt-4 hidden h-12 w-full items-center justify-center gap-2.5 bg-sage px-7 text-[11px] uppercase tracking-[0.16em] text-white shadow-[0_14px_34px_-16px_rgba(43,41,39,0.45)] transition-colors hover:bg-sage-dark lg:inline-flex"
+              className="group mt-4 hidden h-12 w-full items-center justify-center gap-2.5 bg-sage px-7 text-[11px] uppercase tracking-[0.16em] font-bold text-white shadow-[0_14px_34px_-16px_rgba(43,41,39,0.45)] transition-colors hover:bg-sage-dark lg:inline-flex"
             >
               {dict.checkout.continuePayment}
               <ArrowRight

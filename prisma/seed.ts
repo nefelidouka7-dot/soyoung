@@ -1031,7 +1031,7 @@ async function main() {
 
   const order = await prisma.order.create({
     data: {
-      orderNumber: "SY-DEMO-0001",
+      orderNumber: "SY-1001",
       userId: customer.id,
       email: customer.email,
       status: "PROCESSING",

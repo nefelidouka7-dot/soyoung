@@ -22,8 +22,11 @@ export function BrandForm({ brand }: { brand?: Brand }) {
   );
 
   return (
-    <form action={formAction} className="space-y-4 rounded-sm border border-oak/40 bg-white p-4">
-      <h3 className="text-sm font-medium text-ink">
+    <form
+      action={formAction}
+      className="space-y-4 rounded-xl border border-ink/[0.08] bg-white p-4 shadow-[0_1px_2px_rgba(28,25,23,0.04)] sm:p-5"
+    >
+      <h3 className="text-sm font-semibold tracking-tight text-ink">
         {brand ? "Edit brand" : "New brand"}
       </h3>
       {state.error ? <p className="text-sm text-coral">{state.error}</p> : null}

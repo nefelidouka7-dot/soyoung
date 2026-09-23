@@ -142,7 +142,7 @@ export default async function CheckoutSuccessPage({
       <div className="mt-8 flex justify-center gap-3">
         <Link
           href="/account/orders"
-          className="inline-flex h-11 items-center bg-sage px-6 text-xs uppercase tracking-wide text-bg hover:bg-sage-dark"
+          className="inline-flex h-11 items-center bg-sage px-6 text-xs uppercase tracking-wide font-bold text-white hover:bg-sage-dark"
         >
           {dict.checkout.success.viewOrders}
         </Link>

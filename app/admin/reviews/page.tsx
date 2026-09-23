@@ -5,7 +5,13 @@ import {
   hideReview,
   deleteReview,
 } from "@/features/admin/actions/misc";
-import { AdminPageHeader, StatusBadge } from "@/features/admin/components/admin-ui";
+import {
+  AdminEmpty,
+  AdminPageHeader,
+  AdminSelect,
+  AdminToolbar,
+  StatusBadge,
+} from "@/features/admin/components/admin-ui";
 import { Button } from "@/components/ui/button";
 
 export default async function AdminReviewsPage({
@@ -32,35 +38,33 @@ export default async function AdminReviewsPage({
     <div>
       <AdminPageHeader
         title="Reviews"
-        description="Moderate customer reviews."
+        description="Moderate customer reviews before they go live."
       />
 
-      <form className="mb-4">
-        <select
-          name="status"
-          defaultValue={status ?? ""}
-          className="h-10 border border-oak/50 bg-white px-3 text-sm"
-        >
-          <option value="">All</option>
-          <option value="PENDING">Pending</option>
-          <option value="APPROVED">Approved</option>
-          <option value="HIDDEN">Hidden</option>
-        </select>
-        <Button type="submit" size="sm" variant="secondary" className="ml-2">
-          Filter
-        </Button>
+      <form>
+        <AdminToolbar>
+          <AdminSelect name="status" defaultValue={status ?? ""}>
+            <option value="">All statuses</option>
+            <option value="PENDING">Pending</option>
+            <option value="APPROVED">Approved</option>
+            <option value="HIDDEN">Hidden</option>
+          </AdminSelect>
+          <Button type="submit" size="sm" variant="secondary">
+            Filter
+          </Button>
+        </AdminToolbar>
       </form>
 
       <div className="space-y-3">
         {reviews.map((r) => (
           <article
             key={r.id}
-            className="rounded-sm border border-oak/40 bg-white p-4"
+            className="rounded-sm border border-oak/35 bg-white p-4 shadow-[0_1px_0_rgba(43,41,39,0.03)] sm:p-5"
           >
             <div className="flex flex-wrap items-start justify-between gap-2">
-              <div>
-                <p className="text-sm font-medium">{r.product.name}</p>
-                <p className="text-xs text-ink-muted">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-ink">{r.product.name}</p>
+                <p className="mt-0.5 text-xs text-ink-muted">
                   {r.user.name ?? r.user.email} · {r.rating}/5 ·{" "}
                   {formatAdminDate(r.createdAt)}
                   {r.verifiedPurchase ? " · Verified" : ""}
@@ -79,12 +83,14 @@ export default async function AdminReviewsPage({
               </StatusBadge>
             </div>
             {r.title ? (
-              <p className="mt-2 text-sm font-medium">{r.title}</p>
+              <p className="mt-3 text-sm font-medium text-ink">{r.title}</p>
             ) : null}
             {r.comment ? (
-              <p className="mt-1 text-sm text-ink-muted">{r.comment}</p>
+              <p className="mt-1 text-sm leading-relaxed text-ink-muted">
+                {r.comment}
+              </p>
             ) : null}
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-4 flex flex-wrap gap-2 border-t border-oak/20 pt-3">
               {r.status !== "APPROVED" ? (
                 <form action={approveReview.bind(null, r.id)}>
                   <Button type="submit" size="sm" variant="secondary">
@@ -100,16 +106,19 @@ export default async function AdminReviewsPage({
                 </form>
               ) : null}
               <form action={deleteReview.bind(null, r.id)}>
-                <Button type="submit" size="sm" variant="ghost" className="text-coral">
+                <Button
+                  type="submit"
+                  size="sm"
+                  variant="ghost"
+                  className="text-coral"
+                >
                   Delete
                 </Button>
               </form>
             </div>
           </article>
         ))}
-        {reviews.length === 0 ? (
-          <p className="text-sm text-ink-muted">No reviews.</p>
-        ) : null}
+        {reviews.length === 0 ? <AdminEmpty>No reviews.</AdminEmpty> : null}
       </div>
     </div>
   );

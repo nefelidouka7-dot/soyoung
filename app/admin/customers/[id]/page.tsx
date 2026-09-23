@@ -4,6 +4,7 @@ import { prisma } from "@/db/prisma";
 import { requireAdmin, decimalToNumber, formatAdminDate } from "@/lib/admin";
 import { formatPrice } from "@/lib/utils";
 import {
+  AdminBreadcrumb,
   AdminPageHeader,
   AdminPanel,
   StatusBadge,
@@ -27,26 +28,27 @@ export default async function AdminCustomerDetailPage({
   });
   if (!customer) notFound();
 
+  const displayName =
+    customer.name ??
+    (`${customer.firstName ?? ""} ${customer.lastName ?? ""}`.trim() ||
+      customer.email);
+
   return (
     <div>
       <AdminPageHeader
-        title={
-          customer.name ??
-          (`${customer.firstName ?? ""} ${customer.lastName ?? ""}`.trim() ||
-            customer.email)
-        }
+        title={displayName}
         description={customer.email}
-        actions={
-          <Link
-            href="/admin/customers"
-            className="text-sm text-sage hover:underline"
-          >
-            ← All customers
-          </Link>
+        breadcrumb={
+          <AdminBreadcrumb
+            items={[
+              { href: "/admin/customers", label: "Customers" },
+              { label: displayName },
+            ]}
+          />
         }
       />
 
-      <div className="mb-4 flex flex-wrap gap-2">
+      <div className="mb-5 flex flex-wrap items-center gap-2">
         <StatusBadge tone="neutral">{customer.role}</StatusBadge>
         <StatusBadge tone={customer.active ? "success" : "danger"}>
           {customer.active ? "Active" : "Inactive"}
@@ -57,48 +59,50 @@ export default async function AdminCustomerDetailPage({
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <AdminPanel title="Orders">
+        <AdminPanel title="Orders" flush>
           <ul className="divide-y divide-oak/20">
             {customer.orders.map((o) => (
-              <li
-                key={o.id}
-                className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0"
-              >
-                <div>
-                  <Link
-                    href={`/admin/orders/${o.id}`}
-                    className="text-sm font-medium hover:underline"
-                  >
-                    {o.orderNumber}
-                  </Link>
-                  <p className="text-xs text-ink-muted">
-                    {formatAdminDate(o.createdAt)}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm">
-                    {formatPrice(decimalToNumber(o.total))}
-                  </p>
-                  <StatusBadge tone={orderStatusTone(o.status)}>
-                    {o.status}
-                  </StatusBadge>
-                </div>
+              <li key={o.id}>
+                <Link
+                  href={`/admin/orders/${o.id}`}
+                  className="flex items-center justify-between px-4 py-3 transition-colors hover:bg-bg/50 sm:px-5"
+                >
+                  <div>
+                    <p className="text-sm font-medium">{o.orderNumber}</p>
+                    <p className="text-xs text-ink-muted">
+                      {formatAdminDate(o.createdAt)}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm tabular-nums">
+                      {formatPrice(decimalToNumber(o.total))}
+                    </p>
+                    <StatusBadge tone={orderStatusTone(o.status)}>
+                      {o.status}
+                    </StatusBadge>
+                  </div>
+                </Link>
               </li>
             ))}
             {customer.orders.length === 0 ? (
-              <li className="text-sm text-ink-muted">No orders.</li>
+              <li className="px-4 py-8 text-center text-sm text-ink-muted sm:px-5">
+                No orders.
+              </li>
             ) : null}
           </ul>
         </AdminPanel>
 
         <AdminPanel title="Addresses">
-          <ul className="space-y-4">
+          <ul className="space-y-3">
             {customer.addresses.map((a) => (
-              <li key={a.id} className="text-sm leading-relaxed text-ink-muted">
+              <li
+                key={a.id}
+                className="rounded-sm border border-oak/25 bg-bg/30 px-3 py-2.5 text-sm leading-relaxed text-ink-muted"
+              >
                 {a.isDefault ? (
                   <StatusBadge tone="info">Default</StatusBadge>
                 ) : null}
-                {a.label ? <p className="mt-1 text-ink">{a.label}</p> : null}
+                {a.label ? <p className="mt-1 font-medium text-ink">{a.label}</p> : null}
                 <p className="text-ink">
                   {a.firstName} {a.lastName}
                 </p>
@@ -107,9 +111,7 @@ export default async function AdminCustomerDetailPage({
                 <p>
                   {a.postalCode} {a.city}
                 </p>
-                <p>
-                  {[a.state, a.country].filter(Boolean).join(", ")}
-                </p>
+                <p>{[a.state, a.country].filter(Boolean).join(", ")}</p>
               </li>
             ))}
             {customer.addresses.length === 0 ? (
