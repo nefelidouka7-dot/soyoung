@@ -237,6 +237,7 @@ export const el: Dictionary = {
     headlineTrail: "ξεκινά εδώ.",
     subhead: "Ανακάλυψε τη ρουτίνα που σου μοιάζει.",
     heroCta: "Shop now",
+    heroQuizCta: "Quiz επιδερμίδας",
     announcement: "🌱 Δωρεάν αποστολή από {amount} | 2–5 εργάσιμες",
     exploreSkincare: "Εξερεύνησε περιποίηση",
     shopByCategory: "Ψώνισε ανά κατηγορία",

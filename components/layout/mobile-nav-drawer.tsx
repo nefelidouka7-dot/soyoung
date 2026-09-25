@@ -81,27 +81,27 @@ export function MobileNavDrawer({
           aria-hidden
         />
 
-        <div className="relative flex shrink-0 items-center justify-between px-3 pt-4">
+        <div className="relative flex h-14 shrink-0 items-center justify-between px-5">
           {panel ? (
             <button
               type="button"
               onClick={() => setPanel(null)}
-              className="inline-flex h-11 items-center gap-1 px-2 text-ink-muted transition-colors hover:text-ink"
+              className="inline-flex h-10 items-center gap-2 -ml-1.5 pl-1.5 pr-3 text-ink-muted transition-colors hover:text-ink"
               aria-label={dict.nav.back}
             >
-              <ChevronLeft className="h-5 w-5" strokeWidth={1.5} />
-              <span className="text-[12px] uppercase tracking-[0.12em]">
+              <ChevronLeft className="h-4 w-4 shrink-0" strokeWidth={1.5} />
+              <span className="text-[11px] uppercase tracking-[0.16em]">
                 {dict.nav.back}
               </span>
             </button>
           ) : (
-            <span className="w-11" aria-hidden />
+            <span className="w-10" aria-hidden />
           )}
           <button
             type="button"
             onClick={onClose}
             aria-label={dict.nav.closeMenu}
-            className="inline-flex h-11 w-11 items-center justify-center text-ink-muted transition-colors hover:text-ink"
+            className="inline-flex h-10 w-10 items-center justify-center -mr-1 text-ink-muted transition-colors hover:text-ink"
           >
             <X className="h-5 w-5" strokeWidth={1.25} />
           </button>
@@ -111,7 +111,7 @@ export function MobileNavDrawer({
           {/* Root menu */}
           <nav
             className={cn(
-              "absolute inset-0 flex flex-col overflow-y-auto px-5 pb-8 pt-2 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+              "absolute inset-0 flex flex-col overflow-y-auto px-5 pb-8 pt-3 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
               panel ? "-translate-x-[18%] opacity-0 pointer-events-none" : "translate-x-0 opacity-100"
             )}
             aria-hidden={Boolean(panel)}
@@ -229,7 +229,7 @@ export function MobileNavDrawer({
           {/* Subcategory panel */}
           <nav
             className={cn(
-              "absolute inset-0 flex flex-col overflow-y-auto px-5 pb-8 pt-1 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+              "absolute inset-0 flex flex-col overflow-y-auto px-5 pb-8 pt-2 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
               panel ? "translate-x-0 opacity-100" : "translate-x-full opacity-0 pointer-events-none"
             )}
             aria-hidden={!panel}
@@ -239,7 +239,7 @@ export function MobileNavDrawer({
                 <Link
                   href={panel.kind === "brands" ? "/brands" : panel.href}
                   onClick={onClose}
-                  className="group mb-6 flex items-baseline justify-between gap-3 border-b border-oak/25 pb-4"
+                  className="group mb-8 flex items-baseline justify-between gap-3 border-b border-oak/25 pb-5"
                 >
                   <h2 className="font-serif text-[2rem] leading-[1.05] tracking-tight text-ink sm:text-[2.15rem]">
                     {panel.label}

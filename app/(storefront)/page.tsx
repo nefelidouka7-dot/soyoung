@@ -9,9 +9,7 @@ import {
   findSkinTypes,
 } from "@/server/repositories/product.repository";
 import { brand } from "@/lib/constants";
-import { interpolate } from "@/lib/i18n";
 import { getLocale, getServerDictionary } from "@/lib/i18n/server";
-import { FREE_SHIPPING_THRESHOLD, formatPrice } from "@/lib/utils";
 
 export default async function HomePage() {
   const dict = await getServerDictionary();
@@ -63,16 +61,6 @@ export default async function HomePage() {
       href: "/body",
       image: "/images/category-body.jpg",
     },
-  ];
-
-  const freeShippingFrom = formatPrice(FREE_SHIPPING_THRESHOLD).replace(
-    /[.,]00$/,
-    ""
-  );
-  const uspPoints = [
-    interpolate(dict.home.uspShipping, { amount: freeShippingFrom }),
-    dict.home.uspDelivery,
-    dict.home.uspReturns,
   ];
 
   const skinCards =
@@ -140,24 +128,9 @@ export default async function HomePage() {
                 href="/skin-type"
                 className="inline-flex h-12 min-h-12 w-full shrink-0 items-center justify-center border border-ink/20 bg-bg/70 px-6 text-[11px] uppercase tracking-[0.16em] text-ink backdrop-blur-[2px] transition-colors hover:border-ink/40 hover:bg-bg/80 sm:w-auto sm:bg-bg/55"
               >
-                {dict.nav.findForMySkin}
+                {dict.home.heroQuizCta}
               </Link>
             </div>
-
-            <ul className="animate-home-rise-d3 mt-8 space-y-2.5 sm:hidden">
-              {uspPoints.map((point) => (
-                <li
-                  key={point}
-                  className="flex items-start gap-2.5 text-[10px] uppercase tracking-[0.14em] text-ink-muted"
-                >
-                  <span
-                    className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-oak"
-                    aria-hidden
-                  />
-                  <span className="leading-relaxed">{point}</span>
-                </li>
-              ))}
-            </ul>
 
             <span
               className="animate-home-rise-d3 mt-14 hidden h-14 w-px overflow-hidden bg-oak/50 lg:flex"
@@ -166,20 +139,6 @@ export default async function HomePage() {
               <span className="animate-hero-cue block h-5 w-px bg-ink/55" />
             </span>
           </div>
-        </div>
-
-        <div className="relative hidden border-t border-ink/[0.12] bg-bg/80 backdrop-blur-[3px] sm:block">
-          <ul className="container-page flex justify-between gap-x-10 py-5 text-[11px] uppercase tracking-[0.22em] text-ink-muted">
-            {uspPoints.map((point) => (
-              <li
-                key={point}
-                className="flex shrink-0 items-center gap-3 whitespace-nowrap"
-              >
-                <span className="h-1 w-1 rounded-full bg-oak" aria-hidden />
-                {point}
-              </li>
-            ))}
-          </ul>
         </div>
       </section>
 

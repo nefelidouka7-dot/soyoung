@@ -215,6 +215,7 @@ export const en: Dictionary = {
     headlineTrail: "starts here.",
     subhead: "Discover the routine that feels like you.",
     heroCta: "Shop now",
+    heroQuizCta: "Skin quiz",
     announcement: "🌱 Free shipping from {amount} | 2–5 working days",
     exploreSkincare: "Explore skincare",
     shopByCategory: "Shop by category",

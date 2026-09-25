@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Menu, Search, ShoppingBag, User } from "lucide-react";
+import { Menu, Search, ShoppingBag, User, X } from "lucide-react";
 import { cn, FREE_SHIPPING_THRESHOLD, formatPrice } from "@/lib/utils";
 import { interpolate } from "@/lib/i18n";
 import { useCartStore } from "@/features/cart/store";
@@ -12,8 +12,18 @@ import { useTranslation } from "@/lib/i18n/use-translation";
 import type { NavigationData } from "@/types";
 import { SiteLogo } from "@/components/layout/site-logo";
 import { MobileNavDrawer } from "@/components/layout/mobile-nav-drawer";
+import { DesktopMegaMenu } from "@/components/layout/desktop-mega-menu";
 
 const MENU_ANIM_MS = 320;
+const MEGA_OPEN_DELAY_MS = 80;
+const MEGA_CLOSE_DELAY_MS = 220;
+
+function isDesktopNav() {
+  return (
+    typeof window !== "undefined" &&
+    window.matchMedia("(min-width: 1024px)").matches
+  );
+}
 
 export function SiteHeader({ navigation }: { navigation: NavigationData }) {
   const { dict } = useTranslation();
@@ -22,6 +32,7 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [menuMounted, setMenuMounted] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
+  const [megaOpen, setMegaOpen] = useState(false);
   const cartHydrated = useCartStore((s) => s.hydrated);
   const cartCount = useCartStore((s) =>
     s.items.reduce((n, i) => n + i.quantity, 0)
@@ -29,6 +40,41 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
   const displayCount = cartHydrated ? cartCount : 0;
   const [cartBump, setCartBump] = useState(false);
   const prevCartCount = useRef<number | null>(null);
+  const megaOpenTimer = useRef<number | null>(null);
+  const megaCloseTimer = useRef<number | null>(null);
+
+  const clearMegaTimers = useCallback(() => {
+    if (megaOpenTimer.current) window.clearTimeout(megaOpenTimer.current);
+    if (megaCloseTimer.current) window.clearTimeout(megaCloseTimer.current);
+    megaOpenTimer.current = null;
+    megaCloseTimer.current = null;
+  }, []);
+
+  const openMega = useCallback(() => {
+    clearMegaTimers();
+    setMegaOpen(true);
+  }, [clearMegaTimers]);
+
+  const closeMega = useCallback(() => {
+    clearMegaTimers();
+    setMegaOpen(false);
+  }, [clearMegaTimers]);
+
+  const scheduleOpenMega = useCallback(() => {
+    clearMegaTimers();
+    megaOpenTimer.current = window.setTimeout(openMega, MEGA_OPEN_DELAY_MS);
+  }, [clearMegaTimers, openMega]);
+
+  const scheduleCloseMega = useCallback(() => {
+    clearMegaTimers();
+    megaCloseTimer.current = window.setTimeout(closeMega, MEGA_CLOSE_DELAY_MS);
+  }, [clearMegaTimers, closeMega]);
+
+  useEffect(() => clearMegaTimers, [clearMegaTimers]);
+
+  useEffect(() => {
+    closeMega();
+  }, [pathname, closeMega]);
 
   useEffect(() => {
     if (!cartHydrated) return;
@@ -56,7 +102,6 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // The drawer mounts off-screen first, then animates in on the next frame.
   useEffect(() => {
     if (mobileOpen) {
       const id = requestAnimationFrame(() => {
@@ -83,19 +128,32 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
     setMobileOpen(false);
   }, []);
 
-  function openMenu() {
+  function openMobileMenu() {
+    closeMega();
     setMenuMounted(true);
     setMobileOpen(true);
   }
 
+  function onMenuButtonClick() {
+    if (isDesktopNav()) {
+      if (megaOpen) closeMega();
+      else openMega();
+      return;
+    }
+    openMobileMenu();
+  }
+
   useEffect(() => {
-    if (!mobileOpen) return;
+    if (!mobileOpen && !megaOpen) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeMenu();
+      if (e.key === "Escape") {
+        closeMenu();
+        closeMega();
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [mobileOpen, closeMenu]);
+  }, [mobileOpen, megaOpen, closeMenu, closeMega]);
 
   function isActive(href: string) {
     return pathname === href || pathname.startsWith(`${href}/`);
@@ -111,7 +169,12 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
 
   return (
     <>
-      <div className="sticky top-0 z-50">
+      <div
+        className="sticky top-0 z-50"
+        onMouseLeave={() => {
+          if (isDesktopNav()) scheduleCloseMega();
+        }}
+      >
         <div className="bg-ink text-white">
           <p className="container-page py-2 text-center text-[10px] uppercase tracking-[0.16em] sm:text-[11px] sm:tracking-[0.18em]">
             {announcement}
@@ -122,19 +185,39 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
             "relative border-b border-transparent transition-all duration-300",
             scrolled
               ? "h-16 border-oak/40 bg-bg/95 backdrop-blur-sm"
-              : "h-16 bg-bg/95 backdrop-blur-sm md:h-[4.5rem]"
+              : "h-16 bg-bg/95 backdrop-blur-sm md:h-[4.5rem]",
+            megaOpen && "border-oak/30"
           )}
         >
           <div className="container-page grid h-full grid-cols-[1fr_auto_1fr] items-center gap-2">
             <div className="flex items-center justify-start gap-0.5 sm:gap-1">
               <button
                 type="button"
-                className="inline-flex h-10 w-10 shrink-0 items-center justify-center text-sage transition-opacity hover:opacity-70"
-                onClick={openMenu}
+                className={cn(
+                  "inline-flex h-10 w-10 shrink-0 items-center justify-center text-sage transition-opacity hover:opacity-70",
+                  megaOpen && "opacity-100"
+                )}
+                onClick={onMenuButtonClick}
+                onMouseEnter={() => {
+                  if (isDesktopNav()) scheduleOpenMega();
+                }}
                 aria-label={dict.nav.openMenu}
-                aria-expanded={mobileOpen}
+                aria-expanded={mobileOpen || megaOpen}
+                aria-haspopup="true"
               >
-                <Menu className="pointer-events-none h-5 w-5" strokeWidth={1.5} />
+                {megaOpen ? (
+                  <X
+                    className="pointer-events-none hidden h-5 w-5 lg:block"
+                    strokeWidth={1.5}
+                  />
+                ) : null}
+                <Menu
+                  className={cn(
+                    "pointer-events-none h-5 w-5",
+                    megaOpen && "lg:hidden"
+                  )}
+                  strokeWidth={1.5}
+                />
               </button>
               <button
                 type="button"
@@ -191,6 +274,15 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
             </div>
           </div>
         </header>
+
+        <DesktopMegaMenu
+          navigation={navigation}
+          open={megaOpen}
+          onClose={closeMega}
+          onMouseEnter={() => {
+            if (isDesktopNav()) scheduleOpenMega();
+          }}
+        />
       </div>
 
       {menuMounted ? (

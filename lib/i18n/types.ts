@@ -210,6 +210,7 @@ export type Dictionary = {
     headlineTrail: string;
     subhead: string;
     heroCta: string;
+    heroQuizCta: string;
     announcement: string;
     exploreSkincare: string;
     shopByCategory: string;
