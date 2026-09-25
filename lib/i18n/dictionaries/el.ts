@@ -9,6 +9,7 @@ export const el: Dictionary = {
     body: "Σώμα",
     brands: "Μάρκες",
     offers: "Προσφορές",
+    bestSellers: "Τα πιο δημοφιλή",
     findForMySkin: "Για την επιδερμίδα μου",
     findForMySkinShort: "Επιδερμίδα",
     search: "Αναζήτηση",
@@ -274,6 +275,7 @@ export const el: Dictionary = {
     shop: "Κατάστημα",
     newIn: "Νέες παραλαβές",
     offers: "Προσφορές",
+    bestSellers: "Τα πιο δημοφιλή",
     productsCount: "{count} προϊόντα",
     noProductsTitle: "Δεν βρέθηκαν προϊόντα",
     noProductsDescription:

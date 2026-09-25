@@ -8,6 +8,7 @@ const NAV_BY_HREF: Record<string, keyof Dictionary["nav"]> = {
   "/body": "body",
   "/brands": "brands",
   "/offers": "offers",
+  "/best-sellers": "bestSellers",
 };
 
 export function navLabel(dict: Dictionary, href: string, fallback: string) {

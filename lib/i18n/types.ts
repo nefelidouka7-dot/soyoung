@@ -12,6 +12,7 @@ export type Dictionary = {
     body: string;
     brands: string;
     offers: string;
+    bestSellers: string;
     findForMySkin: string;
     findForMySkinShort: string;
     search: string;
@@ -244,6 +245,7 @@ export type Dictionary = {
     shop: string;
     newIn: string;
     offers: string;
+    bestSellers: string;
     productsCount: string;
     noProductsTitle: string;
     noProductsDescription: string;

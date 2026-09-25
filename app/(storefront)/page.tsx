@@ -115,7 +115,7 @@ export default async function HomePage() {
 
             <div className="animate-home-rise-d3 mt-7 flex flex-col gap-2.5 sm:mt-10 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
               <Link
-                href="/skincare"
+                href="/best-sellers"
                 className="group inline-flex h-12 w-full items-center justify-center gap-2.5 bg-coral px-7 text-[11px] uppercase tracking-[0.16em] font-bold text-white shadow-[0_14px_34px_-16px_rgba(28,27,26,0.45)] transition-colors hover:bg-coral-dark sm:w-auto"
               >
                 {dict.home.heroCta}
@@ -217,7 +217,7 @@ export default async function HomePage() {
               </p>
             </div>
             <Link
-              href="/skincare?sort=recommended"
+              href="/best-sellers"
               className="text-[11px] uppercase tracking-[0.16em] text-ink-muted underline decoration-oak/50 underline-offset-[5px] transition-colors hover:text-ink hover:decoration-ink/40"
             >
               {dict.home.viewAll}

@@ -16,7 +16,7 @@ import { useTranslation } from "@/lib/i18n/use-translation";
 import { navLabel, productTypeLabel } from "@/lib/i18n/nav";
 import type { NavigationData } from "@/types";
 
-const PROMO_HREFS = new Set(["/new-in", "/offers"]);
+const PROMO_HREFS = new Set(["/best-sellers", "/new-in", "/offers"]);
 const CATEGORY_HREFS = new Set([
   "/makeup",
   "/skincare",

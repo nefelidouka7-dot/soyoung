@@ -9,6 +9,7 @@ export const en: Dictionary = {
     body: "Body",
     brands: "Brands",
     offers: "Offers",
+    bestSellers: "Best sellers",
     findForMySkin: "Find for my skin",
     findForMySkinShort: "My skin",
     search: "Search",
@@ -251,6 +252,7 @@ export const en: Dictionary = {
     shop: "Shop",
     newIn: "New arrivals",
     offers: "Offers",
+    bestSellers: "Best sellers",
     productsCount: "{count} products",
     noProductsTitle: "No products found",
     noProductsDescription:

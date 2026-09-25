@@ -14,6 +14,7 @@ export const brand = {
     { label: "Haircare", href: "/haircare" },
     { label: "Body", href: "/body" },
     { label: "Brands", href: "/brands" },
+    { label: "Best sellers", href: "/best-sellers" },
     { label: "New arrivals", href: "/new-in" },
     { label: "Offers", href: "/offers" },
   ],

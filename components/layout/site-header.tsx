@@ -15,8 +15,6 @@ import { MobileNavDrawer } from "@/components/layout/mobile-nav-drawer";
 import { DesktopMegaMenu } from "@/components/layout/desktop-mega-menu";
 
 const MENU_ANIM_MS = 320;
-const MEGA_OPEN_DELAY_MS = 80;
-const MEGA_CLOSE_DELAY_MS = 220;
 
 function isDesktopNav() {
   return (
@@ -40,37 +38,10 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
   const displayCount = cartHydrated ? cartCount : 0;
   const [cartBump, setCartBump] = useState(false);
   const prevCartCount = useRef<number | null>(null);
-  const megaOpenTimer = useRef<number | null>(null);
-  const megaCloseTimer = useRef<number | null>(null);
-
-  const clearMegaTimers = useCallback(() => {
-    if (megaOpenTimer.current) window.clearTimeout(megaOpenTimer.current);
-    if (megaCloseTimer.current) window.clearTimeout(megaCloseTimer.current);
-    megaOpenTimer.current = null;
-    megaCloseTimer.current = null;
-  }, []);
-
-  const openMega = useCallback(() => {
-    clearMegaTimers();
-    setMegaOpen(true);
-  }, [clearMegaTimers]);
 
   const closeMega = useCallback(() => {
-    clearMegaTimers();
     setMegaOpen(false);
-  }, [clearMegaTimers]);
-
-  const scheduleOpenMega = useCallback(() => {
-    clearMegaTimers();
-    megaOpenTimer.current = window.setTimeout(openMega, MEGA_OPEN_DELAY_MS);
-  }, [clearMegaTimers, openMega]);
-
-  const scheduleCloseMega = useCallback(() => {
-    clearMegaTimers();
-    megaCloseTimer.current = window.setTimeout(closeMega, MEGA_CLOSE_DELAY_MS);
-  }, [clearMegaTimers, closeMega]);
-
-  useEffect(() => clearMegaTimers, [clearMegaTimers]);
+  }, []);
 
   useEffect(() => {
     closeMega();
@@ -136,8 +107,7 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
 
   function onMenuButtonClick() {
     if (isDesktopNav()) {
-      if (megaOpen) closeMega();
-      else openMega();
+      setMegaOpen((open) => !open);
       return;
     }
     openMobileMenu();
@@ -169,12 +139,7 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
 
   return (
     <>
-      <div
-        className="sticky top-0 z-50"
-        onMouseLeave={() => {
-          if (isDesktopNav()) scheduleCloseMega();
-        }}
-      >
+      <div className="sticky top-0 z-50">
         <div className="bg-ink text-white">
           <p className="container-page py-2 text-center text-[10px] uppercase tracking-[0.16em] sm:text-[11px] sm:tracking-[0.18em]">
             {announcement}
@@ -198,9 +163,6 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
                   megaOpen && "opacity-100"
                 )}
                 onClick={onMenuButtonClick}
-                onMouseEnter={() => {
-                  if (isDesktopNav()) scheduleOpenMega();
-                }}
                 aria-label={dict.nav.openMenu}
                 aria-expanded={mobileOpen || megaOpen}
                 aria-haspopup="true"
@@ -279,9 +241,6 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
           navigation={navigation}
           open={megaOpen}
           onClose={closeMega}
-          onMouseEnter={() => {
-            if (isDesktopNav()) scheduleOpenMega();
-          }}
         />
       </div>
 
