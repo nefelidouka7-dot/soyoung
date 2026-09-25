@@ -25,16 +25,19 @@ export default async function HomePage() {
     products: [],
   };
   let newIn = bestSellers;
+  let soYoungChoice = bestSellers;
   let featuredBrands: Awaited<ReturnType<typeof findFeaturedBrands>> = [];
   let skinTypes: Awaited<ReturnType<typeof findSkinTypes>> = [];
 
   try {
-    [bestSellers, newIn, featuredBrands, skinTypes] = await Promise.all([
-      findProducts({ bestSeller: true, pageSize: 8 }),
-      findProducts({ sort: "newest", pageSize: 8 }),
-      findFeaturedBrands(6),
-      findSkinTypes(),
-    ]);
+    [bestSellers, newIn, soYoungChoice, featuredBrands, skinTypes] =
+      await Promise.all([
+        findProducts({ bestSeller: true, pageSize: 8 }),
+        findProducts({ sort: "newest", pageSize: 8 }),
+        findProducts({ featured: true, pageSize: 8 }),
+        findFeaturedBrands(6),
+        findSkinTypes(),
+      ]);
   } catch (error) {
     console.error("[home] Catalog query failed — check DATABASE_URL / Neon:", error);
   }
@@ -83,6 +86,11 @@ export default async function HomePage() {
           name: locale === "el" ? s.nameEl : s.name,
         }));
 
+  const choiceProducts =
+    soYoungChoice.products.length > 0
+      ? soYoungChoice.products
+      : bestSellers.products;
+
   return (
     <>
       <section className="relative isolate overflow-hidden bg-bg">
@@ -108,7 +116,7 @@ export default async function HomePage() {
 
             <h1 className="animate-home-rise-d1 mt-4 font-serif text-[clamp(2.35rem,11vw,3.4rem)] leading-[1.02] tracking-[-0.025em] text-ink sm:mt-7 sm:text-[clamp(2.6rem,7vw,4.75rem)] sm:leading-[0.98]">
               <span className="block">{dict.home.headlineLead}</span>
-              <span className="mt-1 block italic text-sage-dark">
+              <span className="mt-1 block italic text-coral">
                 {dict.home.headlineTrail}
               </span>
             </h1>
@@ -120,7 +128,7 @@ export default async function HomePage() {
             <div className="animate-home-rise-d3 mt-7 flex flex-col gap-2.5 sm:mt-10 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
               <Link
                 href="/skincare"
-                className="group inline-flex h-12 w-full items-center justify-center gap-2.5 bg-sage px-7 text-[11px] uppercase tracking-[0.16em] font-bold text-white shadow-[0_14px_34px_-16px_rgba(43,41,39,0.55)] transition-colors hover:bg-sage-dark sm:w-auto"
+                className="group inline-flex h-12 w-full items-center justify-center gap-2.5 bg-coral px-7 text-[11px] uppercase tracking-[0.16em] font-bold text-white shadow-[0_14px_34px_-16px_rgba(28,27,26,0.45)] transition-colors hover:bg-coral-dark sm:w-auto"
               >
                 {dict.home.heroCta}
                 <ArrowRight
@@ -174,6 +182,37 @@ export default async function HomePage() {
           </ul>
         </div>
       </section>
+
+      {choiceProducts.length > 0 ? (
+        <section className="container-page py-20 lg:py-28">
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <div className="max-w-md">
+              <p className="text-[10px] uppercase tracking-[0.22em] text-sage">
+                So Young
+              </p>
+              <h2 className="mt-3 font-serif text-[2rem] leading-tight text-ink sm:text-[2.35rem]">
+                {dict.home.soYoungChoice}
+              </h2>
+              <p className="mt-3 text-[15px] leading-[1.7] text-ink-muted">
+                {dict.home.soYoungChoiceSubhead}
+              </p>
+            </div>
+            <Link
+              href="/skincare?sort=recommended"
+              className="text-[11px] uppercase tracking-[0.16em] text-ink-muted underline decoration-oak/50 underline-offset-[5px] transition-colors hover:text-ink hover:decoration-ink/40"
+            >
+              {dict.home.viewAll}
+            </Link>
+          </div>
+          <div className="mt-10 sm:mt-12">
+            <ProductGrid>
+              {choiceProducts.map((p) => (
+                <ProductCard key={p.id} product={p} />
+              ))}
+            </ProductGrid>
+          </div>
+        </section>
+      ) : null}
 
       <section className="container-page py-20 lg:py-28">
         <div className="flex max-w-xl flex-col gap-3">
@@ -340,7 +379,7 @@ export default async function HomePage() {
             </p>
             <Link
               href="/skincare"
-              className="mt-10 inline-flex h-11 items-center bg-sage px-7 text-[11px] uppercase tracking-[0.14em] font-bold text-white transition-colors hover:bg-sage-dark"
+              className="mt-10 inline-flex h-11 items-center bg-coral px-7 text-[11px] uppercase tracking-[0.14em] font-bold text-white transition-colors hover:bg-coral-dark"
             >
               {dict.home.exploreSkincare}
             </Link>

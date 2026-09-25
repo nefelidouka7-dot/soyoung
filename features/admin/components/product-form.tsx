@@ -49,7 +49,7 @@ const variantTypes: VariantType[] = [
 ];
 
 const fieldClass =
-  "mt-1.5 h-10 border-oak/50 bg-white text-sm focus-visible:ring-sage";
+  "mt-1.5 h-10 border-oak/50 bg-white text-sm focus-visible:ring-coral";
 
 export function ProductForm({
   product,

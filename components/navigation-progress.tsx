@@ -159,7 +159,7 @@ function NavigationProgressInner() {
         aria-hidden
       >
         <div
-          className="h-full origin-left bg-sage shadow-[0_0_12px_color-mix(in_srgb,var(--sage)_55%,transparent)] transition-[width] duration-200 ease-out"
+          className="h-full origin-left bg-coral shadow-[0_0_12px_color-mix(in_srgb,var(--coral)_55%,transparent)] transition-[width] duration-200 ease-out"
           style={{ width: `${progress}%` }}
         />
       </div>
@@ -174,7 +174,7 @@ function NavigationProgressInner() {
         aria-hidden={!active}
       >
         <span
-          className="h-8 w-8 rounded-full border-2 border-oak/40 border-t-sage animate-loader-spin"
+          className="h-8 w-8 rounded-full border-2 border-oak/40 border-t-coral animate-loader-spin"
           aria-hidden
         />
         <p className="text-[11px] uppercase tracking-[0.18em] text-ink-muted">

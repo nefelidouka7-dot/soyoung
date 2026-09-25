@@ -64,7 +64,7 @@ export function CookieBanner() {
           <button
             type="button"
             onClick={() => choose("accepted")}
-            className="inline-flex h-11 items-center bg-sage px-5 text-[11px] uppercase tracking-[0.12em] font-bold text-white transition-colors hover:bg-sage-dark"
+            className="inline-flex h-11 items-center bg-coral px-5 text-[11px] uppercase tracking-[0.12em] font-bold text-white transition-colors hover:bg-coral-dark"
           >
             {dict.cookies.accept}
           </button>

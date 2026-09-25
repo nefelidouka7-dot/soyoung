@@ -166,7 +166,7 @@ export function AdminStat({
       <div className="flex items-center justify-between gap-2">
         <p className="text-[13px] font-medium text-ink-muted">{label}</p>
         {Icon ? (
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-ink/[0.04] text-ink/70 transition-colors group-hover:bg-sage/12 group-hover:text-sage-dark">
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-ink/[0.04] text-ink/70 transition-colors group-hover:bg-coral/12 group-hover:text-sage-dark">
             <Icon className="h-4 w-4" aria-hidden />
           </span>
         ) : null}
@@ -223,7 +223,7 @@ export function AdminSelect({
     <select
       className={cn(
         "h-10 min-w-[9rem] rounded-lg border border-ink/[0.12] bg-white px-3 text-sm text-ink transition-colors",
-        "hover:border-ink/25 focus-visible:border-sage focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sage/15",
+        "hover:border-ink/25 focus-visible:border-coral focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-coral/15",
         className
       )}
       {...props}

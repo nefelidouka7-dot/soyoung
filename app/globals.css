@@ -1,26 +1,31 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #feeadf;
-  --bg-muted: #ffd1bd;
-  --ink: #2b2927;
-  --oak: #feb79a;
-  --sage: #fe9875;
-  --coral: #fe9875;
-  --ink-muted: #5c5650;
-  --oak-soft: #eedacb;
-  --sage-dark: #e87a52;
-  --logo-bg: #eedacb;
+  /* Soft peach canvas · espresso type · coral CTAs · sage accents */
+  --bg: #faf6f0;
+  --bg-muted: #f2ebe3;
+  --surface: #ffffff;
+  --ink: #1c1b1a;
+  --ink-muted: #5e584f;
+  --oak: #e2d9ce;
+  --oak-soft: #efe7dc;
+  --coral: #d97757;
+  --coral-dark: #c46548;
+  --sage: #7e8f7c;
+  --sage-dark: #667564;
+  --logo-bg: #faf6f0;
   --radius: 0.125rem;
 }
 
 @theme inline {
   --color-bg: var(--bg);
   --color-bg-muted: var(--bg-muted);
+  --color-surface: var(--surface);
   --color-ink: var(--ink);
   --color-oak: var(--oak);
   --color-sage: var(--sage);
   --color-coral: var(--coral);
+  --color-coral-dark: var(--coral-dark);
   --color-ink-muted: var(--ink-muted);
   --color-oak-soft: var(--oak-soft);
   --color-sage-dark: var(--sage-dark);
@@ -55,15 +60,15 @@
   }
 
   ::selection {
-    background: color-mix(in srgb, var(--sage) 35%, transparent);
+    background: color-mix(in srgb, var(--coral) 32%, transparent);
   }
 
   :focus-visible {
-    outline: 2px solid var(--sage);
+    outline: 2px solid var(--coral);
     outline-offset: 2px;
   }
 
-  /* Admin: neutral workspace palette; brand coral stays as the only accent. */
+  /* Admin: neutral workspace; coral remains the brand accent. */
   [data-admin] {
     --bg: #f7f6f4;
     --bg-muted: #efece9;
@@ -263,7 +268,7 @@
       ),
       radial-gradient(
         70% 55% at 100% 8%,
-        color-mix(in srgb, var(--sage) 8%, transparent),
+        color-mix(in srgb, var(--coral) 7%, transparent),
         transparent 52%
       ),
       var(--bg);

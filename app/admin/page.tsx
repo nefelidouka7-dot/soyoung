@@ -351,7 +351,7 @@ export default async function AdminDashboardPage({
             </div>
             <div className="flex items-center gap-4 text-xs text-ink-muted">
               <span className="inline-flex items-center gap-1.5">
-                <span className="h-0.5 w-4 rounded-full bg-sage-dark" aria-hidden />
+                <span className="h-0.5 w-4 rounded-full bg-coral-dark" aria-hidden />
                 This period
               </span>
               <span className="inline-flex items-center gap-1.5">
@@ -555,7 +555,7 @@ export default async function AdminDashboardPage({
                       <div className="mt-1.5 flex items-center gap-2">
                         <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-ink/[0.05]">
                           <div
-                            className="h-full rounded-full bg-sage"
+                            className="h-full rounded-full bg-coral"
                             style={{ width: `${(total / topRevenueMax) * 100}%` }}
                           />
                         </div>

@@ -104,7 +104,7 @@ export function CartDrawer() {
               </div>
               <div className="mt-2 h-1 w-full bg-oak/25">
                 <div
-                  className="h-full bg-sage-dark/80 transition-all duration-500"
+                  className="h-full bg-coral-dark/80 transition-all duration-500"
                   style={{ width: `${progress}%` }}
                 />
               </div>
@@ -131,7 +131,7 @@ export function CartDrawer() {
               <Link
                 href="/skincare"
                 onClick={close}
-                className="mt-6 inline-flex h-11 items-center bg-sage px-6 text-xs uppercase tracking-wide font-bold text-white hover:bg-sage-dark"
+                className="mt-6 inline-flex h-11 items-center bg-coral px-6 text-xs uppercase tracking-wide font-bold text-white hover:bg-coral-dark"
               >
                 {dict.cart.shopSkincare}
               </Link>
@@ -234,7 +234,7 @@ export function CartDrawer() {
             <Link
               href="/checkout"
               onClick={close}
-              className="mt-4 flex h-12 w-full items-center justify-center bg-sage text-xs uppercase tracking-wide font-bold text-white hover:bg-sage-dark"
+              className="mt-4 flex h-12 w-full items-center justify-center bg-coral text-xs uppercase tracking-wide font-bold text-white hover:bg-coral-dark"
             >
               {dict.cart.checkout}
             </Link>

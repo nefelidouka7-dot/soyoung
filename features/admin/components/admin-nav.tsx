@@ -118,7 +118,7 @@ export function AdminNav({
                           className={cn(
                             "min-w-5 rounded-full px-1.5 text-center text-[11px] font-semibold leading-5 tabular-nums",
                             active
-                              ? "bg-sage text-white"
+                              ? "bg-coral text-white"
                               : "bg-ink/[0.07] text-ink/70"
                           )}
                         >

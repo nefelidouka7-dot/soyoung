@@ -20,6 +20,7 @@ export type Dictionary = {
     cart: string;
     openMenu: string;
     closeMenu: string;
+    back: string;
     menuByType: string;
     menuByBrand: string;
     menuBySkin: string;
@@ -209,9 +210,12 @@ export type Dictionary = {
     headlineTrail: string;
     subhead: string;
     heroCta: string;
+    announcement: string;
     exploreSkincare: string;
     shopByCategory: string;
     categorySubhead: string;
+    soYoungChoice: string;
+    soYoungChoiceSubhead: string;
     bestSellers: string;
     bestSellersSubhead: string;
     newIn: string;

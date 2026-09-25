@@ -127,7 +127,7 @@ export default async function AdminOrderDetailPage({
             <ol className="space-y-3">
               {order.timeline.map((t) => (
                 <li key={t.id} className="flex gap-3 text-sm">
-                  <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-sage" />
+                  <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-coral" />
                   <div>
                     <p className="font-medium">{t.status}</p>
                     {t.note ? (

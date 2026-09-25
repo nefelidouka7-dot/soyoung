@@ -148,8 +148,8 @@ export function RevenueChart({ points }: { points: RevenuePoint[] }) {
           >
             <defs>
               <linearGradient id="revenue-fill" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor="var(--sage)" stopOpacity="0.28" />
-                <stop offset="100%" stopColor="var(--sage)" stopOpacity="0" />
+                <stop offset="0%" stopColor="var(--coral)" stopOpacity="0.28" />
+                <stop offset="100%" stopColor="var(--coral)" stopOpacity="0" />
               </linearGradient>
             </defs>
             {prevPath ? (
@@ -166,7 +166,7 @@ export function RevenueChart({ points }: { points: RevenuePoint[] }) {
             <path
               d={linePath}
               fill="none"
-              stroke="var(--sage-dark)"
+              stroke="var(--coral-dark)"
               strokeWidth={2.25}
               strokeLinejoin="round"
               strokeLinecap="round"
@@ -187,7 +187,7 @@ export function RevenueChart({ points }: { points: RevenuePoint[] }) {
               >
                 <div className="absolute inset-y-0 left-1/2 w-px bg-ink/15 opacity-0 transition-opacity group-hover:opacity-100" />
                 <div
-                  className="absolute left-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-sage-dark opacity-0 shadow transition-opacity group-hover:opacity-100"
+                  className="absolute left-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-coral-dark opacity-0 shadow transition-opacity group-hover:opacity-100"
                   style={{ top: `${top}%` }}
                 />
                 <div

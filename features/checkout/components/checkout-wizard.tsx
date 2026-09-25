@@ -897,7 +897,7 @@ export function CheckoutWizard({
                     </div>
                     <div className="mt-2.5 h-1 w-full overflow-hidden bg-oak/25">
                       <div
-                        className="h-full bg-sage-dark/80 transition-[width] duration-500 ease-out"
+                        className="h-full bg-coral-dark/80 transition-[width] duration-500 ease-out"
                         style={{
                           width: `${Math.min(
                             100,
@@ -1121,7 +1121,7 @@ export function CheckoutWizard({
                 <button
                   type="button"
                   onClick={goToPayment}
-                  className="group inline-flex h-12 w-full items-center justify-center gap-2.5 bg-sage px-7 text-[11px] uppercase tracking-[0.16em] font-bold text-white shadow-[0_14px_34px_-16px_rgba(43,41,39,0.45)] transition-colors hover:bg-sage-dark sm:w-auto sm:min-w-[15rem]"
+                  className="group inline-flex h-12 w-full items-center justify-center gap-2.5 bg-coral px-7 text-[11px] uppercase tracking-[0.16em] font-bold text-white shadow-[0_14px_34px_-16px_rgba(43,41,39,0.45)] transition-colors hover:bg-coral-dark sm:w-auto sm:min-w-[15rem]"
                 >
                   {dict.checkout.continuePayment}
                   <ArrowRight
@@ -1146,7 +1146,7 @@ export function CheckoutWizard({
                   type="button"
                   onClick={placeOrder}
                   disabled={pending}
-                  className="group inline-flex h-12 w-full items-center justify-center gap-2.5 bg-sage px-7 text-[11px] uppercase tracking-[0.16em] font-bold text-white shadow-[0_14px_34px_-16px_rgba(43,41,39,0.45)] transition-colors hover:bg-sage-dark disabled:pointer-events-none disabled:opacity-50 sm:min-w-[14rem] sm:w-auto"
+                  className="group inline-flex h-12 w-full items-center justify-center gap-2.5 bg-coral px-7 text-[11px] uppercase tracking-[0.16em] font-bold text-white shadow-[0_14px_34px_-16px_rgba(43,41,39,0.45)] transition-colors hover:bg-coral-dark disabled:pointer-events-none disabled:opacity-50 sm:min-w-[14rem] sm:w-auto"
                 >
                   {pending
                     ? dict.checkout.placingOrder
@@ -1235,7 +1235,7 @@ export function CheckoutWizard({
             <button
               type="button"
               onClick={goToPayment}
-              className="group mt-4 hidden h-12 w-full items-center justify-center gap-2.5 bg-sage px-7 text-[11px] uppercase tracking-[0.16em] font-bold text-white shadow-[0_14px_34px_-16px_rgba(43,41,39,0.45)] transition-colors hover:bg-sage-dark lg:inline-flex"
+              className="group mt-4 hidden h-12 w-full items-center justify-center gap-2.5 bg-coral px-7 text-[11px] uppercase tracking-[0.16em] font-bold text-white shadow-[0_14px_34px_-16px_rgba(43,41,39,0.45)] transition-colors hover:bg-coral-dark lg:inline-flex"
             >
               {dict.checkout.continuePayment}
               <ArrowRight

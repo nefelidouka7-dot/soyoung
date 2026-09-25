@@ -461,7 +461,7 @@ export function ProductFilters({
             >
               <span className="sr-only">{dict.common.loading}</span>
               <span
-                className="h-5 w-5 rounded-full border border-oak/30 border-t-sage/80 animate-loader-spin"
+                className="h-5 w-5 rounded-full border border-oak/30 border-t-coral/80 animate-loader-spin"
                 aria-hidden
               />
             </div>
@@ -525,7 +525,7 @@ export function ProductFilters({
                 <button
                   type="button"
                   onClick={applyDraftAndClose}
-                  className="bg-sage py-3 text-[11px] uppercase tracking-[0.14em] font-bold text-white transition-colors hover:bg-sage-dark"
+                  className="bg-coral py-3 text-[11px] uppercase tracking-[0.14em] font-bold text-white transition-colors hover:bg-coral-dark"
                 >
                   {dict.filters.done}
                 </button>
@@ -650,7 +650,7 @@ function CheckRow({
         className={cn(
           "flex h-4 w-4 shrink-0 items-center justify-center border transition-colors",
           checked
-            ? "border-sage bg-sage font-bold text-white"
+            ? "border-coral bg-coral font-bold text-white"
             : "border-oak/55 bg-bg"
         )}
         aria-hidden

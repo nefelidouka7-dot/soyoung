@@ -10,7 +10,7 @@ export function PageLoader() {
     >
       <span className="sr-only">Loading</span>
       <span
-        className="h-5 w-5 rounded-full border border-oak/30 border-t-sage/80 animate-loader-spin"
+        className="h-5 w-5 rounded-full border border-oak/30 border-t-coral/80 animate-loader-spin"
         aria-hidden
       />
     </div>
