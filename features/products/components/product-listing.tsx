@@ -69,6 +69,7 @@ export default async function CategoryListingPage({
   const sp = await searchParams;
   const brandSlugs = parseList(sp.brand);
   const skinTypeSlugs = parseList(sp.skinType);
+  const concernSlugs = parseList(sp.concern);
   const productTypes = parseList(sp.type);
   const sort = (typeof sp.sort === "string" ? sp.sort : "recommended") as
     | "recommended"
@@ -105,6 +106,7 @@ export default async function CategoryListingPage({
         categorySlug,
         brandSlugs,
         skinTypeSlugs,
+        concernSlugs,
         productTypes,
         sort,
         page,

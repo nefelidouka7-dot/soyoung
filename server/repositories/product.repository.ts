@@ -5,6 +5,7 @@ export type ProductListParams = {
   categorySlug?: string;
   brandSlugs?: string[];
   skinTypeSlugs?: string[];
+  concernSlugs?: string[];
   productTypes?: string[];
   minPrice?: number;
   maxPrice?: number;
@@ -36,6 +37,11 @@ function buildWhere(params: ProductListParams): Prisma.ProductWhereInput {
   if (params.skinTypeSlugs?.length) {
     and.push({
       skinTypes: { some: { skinType: { slug: { in: params.skinTypeSlugs } } } },
+    });
+  }
+  if (params.concernSlugs?.length) {
+    and.push({
+      concerns: { some: { concern: { slug: { in: params.concernSlugs } } } },
     });
   }
   if (params.productTypes?.length) {
@@ -175,6 +181,32 @@ export async function findFeaturedBrands(take = 8) {
     where: { active: true, featured: true },
     orderBy: { name: "asc" },
     take,
+  });
+}
+
+export async function findFeaturedReviews(take = 3) {
+  return prisma.review.findMany({
+    where: {
+      status: "APPROVED",
+      OR: [{ comment: { not: null } }, { title: { not: null } }],
+    },
+    orderBy: [{ rating: "desc" }, { createdAt: "desc" }],
+    take,
+    include: {
+      product: {
+        select: {
+          name: true,
+          slug: true,
+          brand: { select: { name: true } },
+          images: {
+            orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }],
+            take: 1,
+            select: { url: true, alt: true },
+          },
+        },
+      },
+      user: { select: { name: true, firstName: true } },
+    },
   });
 }
 

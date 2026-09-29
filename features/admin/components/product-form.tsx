@@ -24,6 +24,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { decimalToNumber } from "@/lib/admin";
+import { CATALOG_PRODUCT_TYPES } from "@/lib/catalog-taxonomy";
+
+const PRODUCT_TYPE_OPTIONS = [
+  ...new Set(Object.values(CATALOG_PRODUCT_TYPES).flatMap((types) => [...types])),
+];
 
 type ProductWithRelations = Product & {
   skinTypes: { skinTypeId: string }[];
@@ -451,9 +456,16 @@ export function ProductForm({
               <Input
                 id="productType"
                 name="productType"
+                list="product-type-options"
                 defaultValue={product?.productType ?? ""}
+                placeholder="e.g. Serum, Water Cleanser"
                 className={fieldClass}
               />
+              <datalist id="product-type-options">
+                {PRODUCT_TYPE_OPTIONS.map((type) => (
+                  <option key={type} value={type} />
+                ))}
+              </datalist>
             </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Volume" htmlFor="volume">

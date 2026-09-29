@@ -11,21 +11,23 @@ import {
   X,
 } from "lucide-react";
 import { brand } from "@/lib/constants";
+import { CATALOG_PRODUCT_TYPES } from "@/lib/catalog-taxonomy";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/use-translation";
-import { navLabel, productTypeLabel } from "@/lib/i18n/nav";
+import {
+  concernLabel,
+  navLabel,
+  productTypeLabel,
+} from "@/lib/i18n/nav";
 import type { NavigationData } from "@/types";
 
 const PROMO_HREFS = new Set(["/best-sellers", "/new-in", "/offers"]);
-const CATEGORY_HREFS = new Set([
-  "/makeup",
-  "/skincare",
-  "/haircare",
-  "/body",
-]);
+const LIFESTYLE_SLUGS = ["haircare", "makeup", "body"] as const;
 
 type Panel =
-  | { kind: "category"; href: string; slug: string; label: string }
+  | { kind: "discover"; label: string }
+  | { kind: "skincare"; label: string }
+  | { kind: "lifestyle"; label: string }
   | { kind: "brands"; label: string };
 
 type Props = {
@@ -44,7 +46,6 @@ export function MobileNavDrawer({
   const { dict, locale } = useTranslation();
   const [panel, setPanel] = useState<Panel | null>(null);
 
-  const categoryNav = brand.nav.filter((item) => !PROMO_HREFS.has(item.href));
   const promoNav = brand.nav.filter((item) => PROMO_HREFS.has(item.href));
 
   useEffect(() => {
@@ -54,10 +55,54 @@ export function MobileNavDrawer({
   const skinTypeName = (skinType: NavigationData["skinTypes"][number]) =>
     locale === "el" ? skinType.nameEl : skinType.name;
 
-  const categoryPanel =
-    panel?.kind === "category"
-      ? navigation.categories.find((c) => c.slug === panel.slug)
-      : undefined;
+  const skincare = navigation.categories.find((c) => c.slug === "skincare");
+  const skincareTypes =
+    skincare?.productTypes ?? [...CATALOG_PRODUCT_TYPES.skincare];
+
+  const discoverLinks = [
+    { href: "/best-sellers", label: dict.nav.bestSellers },
+    { href: "/skin-type", label: dict.nav.discoverSetsRoutines },
+    { href: "/best-sellers", label: dict.nav.discoverBestOf },
+    { href: "/new-in", label: dict.nav.discoverViral },
+    { href: "/skin-type", label: dict.nav.discoverTenStep },
+    {
+      href: `/skincare?type=${encodeURIComponent("Sunscreen")}`,
+      label: dict.nav.discoverSunscreen,
+    },
+    { href: "/offers", label: dict.nav.discoverExclusives },
+    { href: "/offers", label: dict.nav.discoverSaleOffers },
+    { href: "/skincare", label: dict.nav.discoverClean },
+    { href: "/skincare", label: dict.nav.discoverVegan },
+    { href: "/faq", label: dict.nav.discoverAbout },
+  ];
+
+  const rootItems: {
+    key: string;
+    label: string;
+    panel?: Panel;
+    href?: string;
+  }[] = [
+    {
+      key: "discover",
+      label: dict.nav.discover,
+      panel: { kind: "discover", label: dict.nav.discover },
+    },
+    {
+      key: "skincare",
+      label: dict.nav.skincare,
+      panel: { kind: "skincare", label: dict.nav.skincare },
+    },
+    {
+      key: "lifestyle",
+      label: dict.nav.hairBodyMakeup,
+      panel: { kind: "lifestyle", label: dict.nav.hairBodyMakeup },
+    },
+    {
+      key: "brands",
+      label: dict.nav.brands,
+      panel: { kind: "brands", label: dict.nav.brands },
+    },
+  ];
 
   return (
     <div className="fixed inset-0 z-[60]" role="dialog" aria-modal>
@@ -108,82 +153,45 @@ export function MobileNavDrawer({
         </div>
 
         <div className="relative min-h-0 flex-1">
-          {/* Root menu */}
           <nav
             className={cn(
               "absolute inset-0 flex flex-col overflow-y-auto px-5 pb-8 pt-3 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
-              panel ? "-translate-x-[18%] opacity-0 pointer-events-none" : "translate-x-0 opacity-100"
+              panel
+                ? "-translate-x-[18%] opacity-0 pointer-events-none"
+                : "translate-x-0 opacity-100"
             )}
             aria-hidden={Boolean(panel)}
           >
             <ul className="flex flex-col">
-              {categoryNav.map((item, index) => {
-                const active = isActive(item.href);
-                const slug = item.href.slice(1);
-                const hasPanel =
-                  (CATEGORY_HREFS.has(item.href) &&
-                    navigation.categories.some((c) => c.slug === slug)) ||
-                  item.href === "/brands";
-                const label = navLabel(dict, item.href, item.label);
-
-                return (
-                  <li
-                    key={item.href}
-                    className={cn(
-                      "border-b border-oak/20",
-                      visible && !panel && "animate-menu-item"
-                    )}
-                    style={
-                      visible && !panel
-                        ? { animationDelay: `${60 + index * 35}ms` }
-                        : undefined
-                    }
+              {rootItems.map((item, index) => (
+                <li
+                  key={item.key}
+                  className={cn(
+                    "border-b border-oak/20",
+                    visible && !panel && "animate-menu-item"
+                  )}
+                  style={
+                    visible && !panel
+                      ? { animationDelay: `${60 + index * 35}ms` }
+                      : undefined
+                  }
+                >
+                  <button
+                    type="button"
+                    onClick={() => item.panel && setPanel(item.panel)}
+                    className="flex w-full items-center justify-between gap-3 py-3.5 text-left text-ink/80 transition-colors hover:text-ink"
                   >
-                    {hasPanel ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (item.href === "/brands") {
-                            setPanel({ kind: "brands", label });
-                          } else {
-                            setPanel({
-                              kind: "category",
-                              href: item.href,
-                              slug,
-                              label,
-                            });
-                          }
-                        }}
-                        className={cn(
-                          "flex w-full items-center justify-between gap-3 py-3.5 text-left transition-colors",
-                          active ? "text-ink" : "text-ink/80 hover:text-ink"
-                        )}
-                      >
-                        <span className="font-serif text-[1.85rem] leading-[1.05] tracking-tight sm:text-[2rem]">
-                          {label}
-                        </span>
-                        <ChevronRight
-                          className="h-4 w-4 shrink-0 text-sage"
-                          strokeWidth={1.5}
-                          aria-hidden
-                        />
-                      </button>
-                    ) : (
-                      <Link
-                        href={item.href}
-                        onClick={onClose}
-                        aria-current={active ? "page" : undefined}
-                        className={cn(
-                          "block py-3.5 font-serif text-[1.85rem] leading-[1.05] tracking-tight transition-colors sm:text-[2rem]",
-                          active ? "text-ink" : "text-ink/80 hover:text-ink"
-                        )}
-                      >
-                        {label}
-                      </Link>
-                    )}
-                  </li>
-                );
-              })}
+                    <span className="font-serif text-[1.85rem] leading-[1.05] tracking-tight sm:text-[2rem]">
+                      {item.label}
+                    </span>
+                    <ChevronRight
+                      className="h-4 w-4 shrink-0 text-sage"
+                      strokeWidth={1.5}
+                      aria-hidden
+                    />
+                  </button>
+                </li>
+              ))}
             </ul>
 
             <div className="mt-8 space-y-3.5 border-t border-oak/25 pt-7">
@@ -204,6 +212,15 @@ export function MobileNavDrawer({
                   </Link>
                 );
               })}
+              <Link
+                href="/skin-type"
+                onClick={onClose}
+                className="block font-serif text-[1.35rem] leading-none tracking-tight text-coral transition-colors hover:opacity-80"
+              >
+                {locale === "el"
+                  ? dict.home.heroQuizCta
+                  : dict.nav.findForMySkin}
+              </Link>
             </div>
 
             <div className="mt-auto grid grid-cols-2 gap-4 border-t border-oak/25 pt-5">
@@ -212,7 +229,11 @@ export function MobileNavDrawer({
                 onClick={onClose}
                 className="flex items-center gap-2.5 text-[13px] text-ink-muted transition-colors hover:text-ink"
               >
-                <User className="h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden />
+                <User
+                  className="h-4 w-4 shrink-0"
+                  strokeWidth={1.5}
+                  aria-hidden
+                />
                 {dict.nav.account}
               </Link>
               <Link
@@ -220,24 +241,37 @@ export function MobileNavDrawer({
                 onClick={onClose}
                 className="flex items-center justify-end gap-2.5 text-[13px] text-ink-muted transition-colors hover:text-ink"
               >
-                <Heart className="h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden />
+                <Heart
+                  className="h-4 w-4 shrink-0"
+                  strokeWidth={1.5}
+                  aria-hidden
+                />
                 {dict.nav.wishlist}
               </Link>
             </div>
           </nav>
 
-          {/* Subcategory panel */}
           <nav
             className={cn(
               "absolute inset-0 flex flex-col overflow-y-auto px-5 pb-8 pt-2 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
-              panel ? "translate-x-0 opacity-100" : "translate-x-full opacity-0 pointer-events-none"
+              panel
+                ? "translate-x-0 opacity-100"
+                : "translate-x-full opacity-0 pointer-events-none"
             )}
             aria-hidden={!panel}
           >
             {panel ? (
               <>
                 <Link
-                  href={panel.kind === "brands" ? "/brands" : panel.href}
+                  href={
+                    panel.kind === "skincare"
+                      ? "/skincare"
+                      : panel.kind === "brands"
+                        ? "/brands"
+                        : panel.kind === "discover"
+                          ? "/best-sellers"
+                          : "/makeup"
+                  }
                   onClick={onClose}
                   className="group mb-8 flex items-baseline justify-between gap-3 border-b border-oak/25 pb-5"
                 >
@@ -251,49 +285,89 @@ export function MobileNavDrawer({
                   />
                 </Link>
 
-                {panel.kind === "category" && categoryPanel ? (
+                {panel.kind === "discover" ? (
+                  <div className="space-y-1">
+                    {discoverLinks.map((item) => (
+                      <PanelLink
+                        key={`${item.href}-${item.label}`}
+                        href={item.href}
+                        onNavigate={onClose}
+                      >
+                        {item.label}
+                      </PanelLink>
+                    ))}
+                  </div>
+                ) : null}
+
+                {panel.kind === "skincare" ? (
                   <div className="space-y-7">
-                    {categoryPanel.productTypes.length > 0 ? (
-                      <PanelSection title={dict.nav.menuByType}>
-                        {categoryPanel.productTypes.map((type) => (
-                          <PanelLink
-                            key={type}
-                            href={`/${panel.slug}?type=${encodeURIComponent(type)}`}
-                            onNavigate={onClose}
-                          >
-                            {productTypeLabel(dict, type)}
-                          </PanelLink>
-                        ))}
-                      </PanelSection>
-                    ) : null}
+                    <PanelSection title={dict.nav.menuByType}>
+                      {skincareTypes.map((type) => (
+                        <PanelLink
+                          key={type}
+                          href={`/skincare?type=${encodeURIComponent(type)}`}
+                          onNavigate={onClose}
+                        >
+                          {productTypeLabel(dict, type)}
+                        </PanelLink>
+                      ))}
+                    </PanelSection>
 
-                    {categoryPanel.brands.length > 0 ? (
-                      <PanelSection title={dict.nav.menuByBrand}>
-                        {categoryPanel.brands.map((b) => (
-                          <PanelLink
-                            key={b.slug}
-                            href={`/${panel.slug}?brand=${b.slug}`}
-                            onNavigate={onClose}
-                          >
-                            {b.name}
-                          </PanelLink>
-                        ))}
-                      </PanelSection>
-                    ) : null}
+                    <PanelSection title={dict.nav.menuByConcern}>
+                      {navigation.concerns.map((concern) => (
+                        <PanelLink
+                          key={concern.slug}
+                          href={`/skincare?concern=${concern.slug}`}
+                          onNavigate={onClose}
+                        >
+                          {concernLabel(dict, concern.slug, concern.name)}
+                        </PanelLink>
+                      ))}
+                      {navigation.skinTypes.map((skinType) => (
+                        <PanelLink
+                          key={skinType.slug}
+                          href={`/skincare?skinType=${skinType.slug}`}
+                          onNavigate={onClose}
+                        >
+                          {skinTypeName(skinType)}
+                        </PanelLink>
+                      ))}
+                    </PanelSection>
+                  </div>
+                ) : null}
 
-                    {panel.slug === "skincare" || panel.slug === "makeup" ? (
-                      <PanelSection title={dict.nav.menuBySkin}>
-                        {navigation.skinTypes.map((skinType) => (
+                {panel.kind === "lifestyle" ? (
+                  <div className="space-y-8">
+                    {LIFESTYLE_SLUGS.map((slug) => {
+                      const panelCat = navigation.categories.find(
+                        (c) => c.slug === slug
+                      );
+                      const types =
+                        panelCat?.productTypes ??
+                        [...CATALOG_PRODUCT_TYPES[slug]];
+                      return (
+                        <PanelSection
+                          key={slug}
+                          title={navLabel(dict, `/${slug}`, slug)}
+                        >
                           <PanelLink
-                            key={skinType.slug}
-                            href={`/${panel.slug}?skinType=${skinType.slug}`}
+                            href={`/${slug}`}
                             onNavigate={onClose}
                           >
-                            {skinTypeName(skinType)}
+                            {dict.nav.menuShopAll}
                           </PanelLink>
-                        ))}
-                      </PanelSection>
-                    ) : null}
+                          {types.map((type) => (
+                            <PanelLink
+                              key={type}
+                              href={`/${slug}?type=${encodeURIComponent(type)}`}
+                              onNavigate={onClose}
+                            >
+                              {productTypeLabel(dict, type)}
+                            </PanelLink>
+                          ))}
+                        </PanelSection>
+                      );
+                    })}
                   </div>
                 ) : null}
 

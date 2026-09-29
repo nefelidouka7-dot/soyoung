@@ -3,9 +3,13 @@ import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { ProductCard } from "@/features/products/components/product-card";
 import { ProductGrid } from "@/features/products/components/product-grid";
+import { KBeautyJourney } from "@/components/home/k-beauty-journey";
+import { RealReviews } from "@/components/home/real-reviews";
+import { FollowUs } from "@/components/home/follow-us";
 import {
   findProducts,
   findFeaturedBrands,
+  findFeaturedReviews,
   findSkinTypes,
 } from "@/server/repositories/product.repository";
 import { brand } from "@/lib/constants";
@@ -26,15 +30,17 @@ export default async function HomePage() {
   let soYoungChoice = bestSellers;
   let featuredBrands: Awaited<ReturnType<typeof findFeaturedBrands>> = [];
   let skinTypes: Awaited<ReturnType<typeof findSkinTypes>> = [];
+  let featuredReviews: Awaited<ReturnType<typeof findFeaturedReviews>> = [];
 
   try {
-    [bestSellers, newIn, soYoungChoice, featuredBrands, skinTypes] =
+    [bestSellers, newIn, soYoungChoice, featuredBrands, skinTypes, featuredReviews] =
       await Promise.all([
         findProducts({ bestSeller: true, pageSize: 8 }),
         findProducts({ sort: "newest", pageSize: 8 }),
         findProducts({ featured: true, pageSize: 8 }),
         findFeaturedBrands(6),
         findSkinTypes(),
+        findFeaturedReviews(3),
       ]);
   } catch (error) {
     console.error("[home] Catalog query failed — check DATABASE_URL / Neon:", error);
@@ -42,24 +48,34 @@ export default async function HomePage() {
 
   const categories = [
     {
-      name: dict.home.catSkincare,
-      href: "/skincare",
+      name: dict.home.routineCleansers,
+      href: `/skincare?type=${encodeURIComponent("Water Cleanser")}`,
       image: "/images/category-skincare.jpg",
     },
     {
-      name: dict.home.catMakeup,
-      href: "/makeup",
+      name: dict.home.routineToners,
+      href: `/skincare?type=${encodeURIComponent("Toner")}`,
+      image: "/images/category-skincare.jpg",
+    },
+    {
+      name: dict.home.routineEssence,
+      href: `/skincare?type=${encodeURIComponent("Essence")}`,
+      image: "/images/category-skincare.jpg",
+    },
+    {
+      name: dict.home.routineMoisturizers,
+      href: `/skincare?type=${encodeURIComponent("Moisturizer")}`,
       image: "/images/category-makeup.jpg",
     },
     {
-      name: dict.home.catHaircare,
-      href: "/haircare",
-      image: "/images/category-haircare.jpg",
+      name: dict.home.routineSunscreen,
+      href: `/skincare?type=${encodeURIComponent("Sunscreen")}`,
+      image: "/images/category-body.jpg",
     },
     {
-      name: dict.home.catBody,
-      href: "/body",
-      image: "/images/category-body.jpg",
+      name: dict.home.routineMasks,
+      href: `/skincare?type=${encodeURIComponent("Sheet Mask")}`,
+      image: "/images/category-haircare.jpg",
     },
   ];
 
@@ -78,6 +94,18 @@ export default async function HomePage() {
     soYoungChoice.products.length > 0
       ? soYoungChoice.products
       : bestSellers.products;
+
+  const homeReviews = featuredReviews.map((review) => ({
+    id: review.id,
+    rating: review.rating,
+    title: review.title,
+    comment: review.comment,
+    brand: review.product.brand.name,
+    productName: review.product.name,
+    productSlug: review.product.slug,
+    productImage:
+      review.product.images[0]?.url ?? "/images/placeholder-product.svg",
+  }));
 
   return (
     <>
@@ -142,47 +170,22 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {choiceProducts.length > 0 ? (
-        <section className="container-page py-20 lg:py-28">
-          <div className="flex flex-wrap items-end justify-between gap-6">
-            <div className="max-w-md">
-              <p className="text-[10px] uppercase tracking-[0.22em] text-sage">
-                So Young
-              </p>
-              <h2 className="mt-3 font-serif text-[2rem] leading-tight text-ink sm:text-[2.35rem]">
-                {dict.home.soYoungChoice}
-              </h2>
-              <p className="mt-3 text-[15px] leading-[1.7] text-ink-muted">
-                {dict.home.soYoungChoiceSubhead}
-              </p>
-            </div>
-            <Link
-              href="/skincare?sort=recommended"
-              className="text-[11px] uppercase tracking-[0.16em] text-ink-muted underline decoration-oak/50 underline-offset-[5px] transition-colors hover:text-ink hover:decoration-ink/40"
-            >
-              {dict.home.viewAll}
-            </Link>
-          </div>
-          <div className="mt-10 sm:mt-12">
-            <ProductGrid>
-              {choiceProducts.map((p) => (
-                <ProductCard key={p.id} product={p} />
-              ))}
-            </ProductGrid>
-          </div>
-        </section>
-      ) : null}
+      <KBeautyJourney
+        bestSellers={bestSellers.products}
+        newIn={newIn.products}
+        choice={choiceProducts}
+      />
 
       <section className="container-page py-20 lg:py-28">
-        <div className="flex max-w-xl flex-col gap-3">
-          <h2 className="font-serif text-[2rem] leading-tight text-ink sm:text-[2.35rem]">
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="font-serif text-[1.85rem] leading-tight tracking-tight text-ink sm:text-[2.35rem]">
             {dict.home.shopByCategory}
           </h2>
-          <p className="text-[15px] leading-[1.7] text-ink-muted">
+          <p className="mt-3 text-[15px] leading-[1.7] text-ink-muted">
             {dict.home.categorySubhead}
           </p>
         </div>
-        <div className="mt-12 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
+        <div className="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-6 lg:gap-3">
           {categories.map((cat) => (
             <Link
               key={cat.href}
@@ -193,43 +196,22 @@ export default async function HomePage() {
                 src={cat.image}
                 alt={cat.name}
                 fill
-                className="object-cover transition-transform duration-[900ms] ease-out group-hover:scale-[1.04]"
-                sizes="(max-width:768px) 50vw, 25vw"
+                className="object-cover transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04]"
+                sizes="(max-width:640px) 50vw, (max-width:1024px) 33vw, 16vw"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-ink/50 via-ink/[0.08] to-transparent" />
-              <span className="absolute inset-x-0 bottom-0 p-4 font-serif text-[1.65rem] leading-none text-bg sm:p-5 sm:text-[1.85rem]">
-                {cat.name}
-              </span>
+              <div className="absolute inset-0 bg-gradient-to-t from-ink/60 via-ink/15 to-transparent transition-opacity duration-500 ease-out group-hover:opacity-90" />
+              <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-3 sm:p-4 lg:p-3">
+                <span className="font-serif text-[1.15rem] leading-none text-bg transition-opacity duration-500 ease-out sm:text-[1.35rem] lg:text-[1.1rem] group-hover:opacity-90">
+                  {cat.name}
+                </span>
+                <ArrowRight
+                  className="mb-0.5 h-3.5 w-3.5 shrink-0 text-bg/55 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-1 group-hover:text-bg"
+                  strokeWidth={1.75}
+                  aria-hidden
+                />
+              </div>
             </Link>
           ))}
-        </div>
-      </section>
-
-      <section id="best-sellers" className="bg-bg-muted/80 py-20 lg:py-28">
-        <div className="container-page">
-          <div className="flex flex-wrap items-end justify-between gap-6">
-            <div className="max-w-md">
-              <h2 className="font-serif text-[2rem] leading-tight text-ink sm:text-[2.35rem]">
-                {dict.home.bestSellers}
-              </h2>
-              <p className="mt-3 text-[15px] leading-[1.7] text-ink-muted">
-                {dict.home.bestSellersSubhead}
-              </p>
-            </div>
-            <Link
-              href="/best-sellers"
-              className="text-[11px] uppercase tracking-[0.16em] text-ink-muted underline decoration-oak/50 underline-offset-[5px] transition-colors hover:text-ink hover:decoration-ink/40"
-            >
-              {dict.home.viewAll}
-            </Link>
-          </div>
-          <div className="mt-10 sm:mt-12">
-            <ProductGrid>
-              {bestSellers.products.map((p) => (
-                <ProductCard key={p.id} product={p} />
-              ))}
-            </ProductGrid>
-          </div>
         </div>
       </section>
 
@@ -327,33 +309,16 @@ export default async function HomePage() {
         </ul>
       </section>
 
-      <section className="border-t border-oak/20 bg-bg-muted/80">
-        <div className="container-page grid items-center gap-12 py-20 lg:grid-cols-2 lg:gap-20 lg:py-28">
-          <div>
-            <h2 className="max-w-[16ch] font-serif text-[2rem] leading-[1.1] text-ink sm:text-[2.5rem]">
-              {dict.home.promoHeadline}
-            </h2>
-            <p className="mt-5 max-w-[34ch] text-[15px] leading-[1.7] text-ink-muted">
-              {dict.home.promoBody}
-            </p>
-            <Link
-              href="/skincare"
-              className="mt-10 inline-flex h-11 items-center bg-coral px-7 text-[11px] uppercase tracking-[0.14em] font-bold text-white transition-colors hover:bg-coral-dark"
-            >
-              {dict.home.exploreSkincare}
-            </Link>
-          </div>
-          <div className="relative aspect-[4/5] overflow-hidden bg-bg sm:aspect-[5/4]">
-            <Image
-              src="/images/promo.jpg"
-              alt=""
-              fill
-              className="object-cover"
-              sizes="(max-width:1024px) 100vw, 50vw"
-            />
-          </div>
-        </div>
-      </section>
+      <RealReviews
+        headline={dict.home.reviewsHeadline}
+        shopLabel={dict.home.reviewsShop}
+        reviews={homeReviews}
+      />
+
+      <FollowUs
+        headline={dict.home.followUsHeadline}
+        cta={dict.home.followUsCta}
+      />
     </>
   );
 }

@@ -6,6 +6,7 @@ export const LOCALES: Locale[] = ["el", "en"];
 export type Dictionary = {
   nav: {
     newIn: string;
+    new: string;
     makeup: string;
     skincare: string;
     haircare: string;
@@ -13,6 +14,9 @@ export type Dictionary = {
     brands: string;
     offers: string;
     bestSellers: string;
+    shopAll: string;
+    discover: string;
+    menuStartHere: string;
     findForMySkin: string;
     findForMySkinShort: string;
     search: string;
@@ -25,13 +29,28 @@ export type Dictionary = {
     menuByType: string;
     menuByBrand: string;
     menuBySkin: string;
+    menuByConcern: string;
     menuShopAll: string;
     menuAllBrands: string;
     menuFeaturedBrands: string;
     menuNewArrivals: string;
+    hairBodyMakeup: string;
+    menuFeaturedSkincare: string;
+    discoverSetsRoutines: string;
+    discoverBestOf: string;
+    discoverViral: string;
+    discoverTenStep: string;
+    discoverSunscreen: string;
+    discoverExclusives: string;
+    discoverSaleOffers: string;
+    discoverClean: string;
+    discoverVegan: string;
+    discoverAbout: string;
   };
   /** Greek labels for the English `Product.productType` values. */
   productTypes: Record<string, string>;
+  /** Greek labels for Concern.slug values. */
+  concerns: Record<string, string>;
   footer: {
     tagline: string;
     newsletter: string;
@@ -216,6 +235,12 @@ export type Dictionary = {
     exploreSkincare: string;
     shopByCategory: string;
     categorySubhead: string;
+    routineCleansers: string;
+    routineToners: string;
+    routineEssence: string;
+    routineMoisturizers: string;
+    routineSunscreen: string;
+    routineMasks: string;
     soYoungChoice: string;
     soYoungChoiceSubhead: string;
     bestSellers: string;
@@ -239,6 +264,14 @@ export type Dictionary = {
     catMakeup: string;
     catHaircare: string;
     catBody: string;
+    journeyHeadline: string;
+    journeyBestSellers: string;
+    journeyNew: string;
+    journeyChoice: string;
+    reviewsHeadline: string;
+    reviewsShop: string;
+    followUsHeadline: string;
+    followUsCta: string;
   };
   listing: {
     home: string;

@@ -1,4 +1,5 @@
 import type { Dictionary } from "@/lib/i18n/types";
+import { CATEGORY_ORDER } from "@/lib/catalog-taxonomy";
 
 const NAV_BY_HREF: Record<string, keyof Dictionary["nav"]> = {
   "/new-in": "newIn",
@@ -21,11 +22,14 @@ export function productTypeLabel(dict: Dictionary, productType: string) {
   return dict.productTypes[productType] ?? productType;
 }
 
-const CATEGORY_SLUGS = ["makeup", "skincare", "haircare", "body"] as const;
-type CategorySlug = (typeof CATEGORY_SLUGS)[number];
+export function concernLabel(dict: Dictionary, slug: string, fallback: string) {
+  return dict.concerns[slug] ?? fallback;
+}
+
+type CategorySlug = (typeof CATEGORY_ORDER)[number];
 
 function isCategorySlug(slug: string): slug is CategorySlug {
-  return (CATEGORY_SLUGS as readonly string[]).includes(slug);
+  return (CATEGORY_ORDER as readonly string[]).includes(slug);
 }
 
 /** Top-level category titles live in nav; DB stores English only. */

@@ -1,14 +1,17 @@
 import { cache } from "react";
 import { prisma } from "@/db/prisma";
+import { mergeProductTypes } from "@/lib/catalog-taxonomy";
 
 export type NavBrand = { name: string; slug: string };
 
 export type NavSkinType = { name: string; nameEl: string; slug: string };
 
+export type NavConcern = { name: string; slug: string };
+
 export type NavCategoryPanel = {
   slug: string;
   image: string | null;
-  /** Product types present in the category, most stocked first. */
+  /** Fixed Soko-style taxonomy + any extra live catalog types. */
   productTypes: string[];
   /** Brands with active products in the category, most stocked first. */
   brands: NavBrand[];
@@ -19,24 +22,27 @@ export type NavigationData = {
   brands: NavBrand[];
   featuredBrands: NavBrand[];
   skinTypes: NavSkinType[];
+  concerns: NavConcern[];
 };
 
-const COLUMN_LIMIT = 8;
+const BRAND_COLUMN_LIMIT = 8;
 
 const EMPTY_NAVIGATION: NavigationData = {
   categories: [],
   brands: [],
   featuredBrands: [],
   skinTypes: [],
+  concerns: [],
 };
 
 /**
- * Menu contents are derived from the catalog instead of a hardcoded list, so a
- * new product type or brand shows up in the nav without a code change.
+ * Product-type columns follow the fixed taxonomy (Soko Glam–style), so the
+ * menu stays complete even before every slot has stock. Brands still come
+ * from the live catalog.
  */
 export const getNavigationData = cache(async (): Promise<NavigationData> => {
   try {
-    const [categories, brands, skinTypes, typeGroups, brandGroups] =
+    const [categories, brands, skinTypes, concerns, typeGroups, brandGroups] =
       await Promise.all([
         prisma.category.findMany({
           where: { active: true },
@@ -52,6 +58,11 @@ export const getNavigationData = cache(async (): Promise<NavigationData> => {
           where: { active: true },
           orderBy: { sortOrder: "asc" },
           select: { name: true, nameEl: true, slug: true },
+        }),
+        prisma.concern.findMany({
+          where: { active: true },
+          orderBy: { name: "asc" },
+          select: { name: true, slug: true },
         }),
         prisma.product.groupBy({
           by: ["categoryId", "productType"],
@@ -104,7 +115,15 @@ export const getNavigationData = cache(async (): Promise<NavigationData> => {
       if (!counts) return [];
       return [...counts.entries()]
         .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-        .slice(0, COLUMN_LIMIT)
+        .slice(0, BRAND_COLUMN_LIMIT)
+        .map(([key]) => key);
+    }
+
+    function liveTypes(slug: string) {
+      const counts = typeCounts.get(slug);
+      if (!counts) return [];
+      return [...counts.entries()]
+        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
         .map(([key]) => key);
     }
 
@@ -114,7 +133,7 @@ export const getNavigationData = cache(async (): Promise<NavigationData> => {
         .map((category) => ({
           slug: category.slug,
           image: category.image,
-          productTypes: mostStocked(typeCounts.get(category.slug)),
+          productTypes: mergeProductTypes(category.slug, liveTypes(category.slug)),
           brands: mostStocked(brandCounts.get(category.slug))
             .map((id) => brandById.get(id))
             .filter((b): b is NonNullable<typeof b> => Boolean(b))
@@ -125,6 +144,7 @@ export const getNavigationData = cache(async (): Promise<NavigationData> => {
         .filter((b) => b.featured)
         .map((b) => ({ name: b.name, slug: b.slug })),
       skinTypes,
+      concerns,
     };
   } catch (error) {
     console.error("[navigation] Failed to load catalog navigation:", error);
