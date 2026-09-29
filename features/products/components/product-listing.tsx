@@ -8,9 +8,12 @@ import {
   findProducts,
   getFilterFacets,
   findCategoryBySlug,
+  findConcernBySlug,
+  findSkinTypeBySlug,
 } from "@/server/repositories/product.repository";
 import { EmptyState } from "@/components/ui/empty-state";
-import { getServerDictionary } from "@/lib/i18n/server";
+import { getLocale, getServerDictionary } from "@/lib/i18n/server";
+import { resolveSkinIntent } from "@/lib/skin-intent";
 import { interpolate } from "@/lib/i18n";
 import {
   categoryDescription,
@@ -82,8 +85,11 @@ export default async function CategoryListingPage({
   const q = typeof sp.q === "string" ? sp.q : undefined;
 
   const dict = await getServerDictionary();
+  const locale = await getLocale();
 
   let category: Awaited<ReturnType<typeof findCategoryBySlug>> = null;
+  let concernRow: Awaited<ReturnType<typeof findConcernBySlug>> = null;
+  let skinRow: Awaited<ReturnType<typeof findSkinTypeBySlug>> = null;
   let result: Awaited<ReturnType<typeof findProducts>> = {
     total: 0,
     page: 1,
@@ -101,7 +107,7 @@ export default async function CategoryListingPage({
 
   try {
     category = categorySlug ? await findCategoryBySlug(categorySlug) : null;
-    [result, facets] = await Promise.all([
+    [result, facets, concernRow, skinRow] = await Promise.all([
       findProducts({
         categorySlug,
         brandSlugs,
@@ -116,10 +122,18 @@ export default async function CategoryListingPage({
         pageSize: 24,
       }),
       getFilterFacets(categorySlug),
+      concernSlugs.length === 1 ? findConcernBySlug(concernSlugs[0]) : null,
+      skinTypeSlugs.length === 1 ? findSkinTypeBySlug(skinTypeSlugs[0]) : null,
     ]);
   } catch (error) {
     console.error("[listing] Catalog query failed — check DATABASE_URL / Neon:", error);
   }
+
+  const intent = resolveSkinIntent(
+    locale,
+    concernSlugs.length === 1 ? concernRow : null,
+    concernSlugs.length === 1 ? null : skinRow
+  );
 
   function t(
     pick: (d: Dictionary) => string,
@@ -129,7 +143,7 @@ export default async function CategoryListingPage({
     return vars ? interpolate(value, vars) : value;
   }
 
-  const title = categoryLabel(
+  const categoryTitle = categoryLabel(
     dict,
     categorySlug,
     category?.name ??
@@ -140,11 +154,21 @@ export default async function CategoryListingPage({
           : dict.listing.shop)
   );
 
-  const description = categoryDescription(
-    dict,
-    categorySlug,
-    category?.description
-  );
+  const title = intent?.title ?? categoryTitle;
+
+  const description =
+    intent?.body ??
+    categoryDescription(dict, categorySlug, category?.description);
+
+  const eyebrow = intent
+    ? intent.kind === "goal"
+      ? locale === "el"
+        ? "Για αυτό που ζητάει η επιδερμίδα σου"
+        : "For what your skin is asking for"
+      : locale === "el"
+        ? "Για τον τύπο της επιδερμίδας σου"
+        : "For your skin type"
+    : null;
 
   const heroImage =
     category?.image ??
@@ -194,11 +218,33 @@ export default async function CategoryListingPage({
               <li className="text-oak" aria-hidden>
                 /
               </li>
-              <li className="text-ink">{title}</li>
+              {intent ? (
+                <>
+                  <li>
+                    <Link
+                      href={categorySlug ? `/${categorySlug}` : "/skincare"}
+                      className="transition-colors hover:text-ink"
+                    >
+                      {categoryTitle}
+                    </Link>
+                  </li>
+                  <li className="text-oak" aria-hidden>
+                    /
+                  </li>
+                  <li className="text-ink">{title}</li>
+                </>
+              ) : (
+                <li className="text-ink">{title}</li>
+              )}
             </ol>
           </nav>
 
           <div className="mt-7 max-w-2xl sm:mt-9">
+            {eyebrow ? (
+              <p className="animate-soft-enter mb-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-coral">
+                {eyebrow}
+              </p>
+            ) : null}
             <h1 className="animate-rise font-serif text-[clamp(2.35rem,8vw,3.75rem)] leading-[0.98] tracking-[-0.02em] text-ink">
               {title}
             </h1>
@@ -222,8 +268,20 @@ export default async function CategoryListingPage({
         >
           {result.products.length === 0 ? (
             <EmptyState
-              title={dict.listing.noProductsTitle}
-              description={dict.listing.noProductsDescription}
+              title={
+                intent
+                  ? locale === "el"
+                    ? "Δεν έχουμε ακόμα αρκετά για αυτή την ανάγκη"
+                    : "We do not have enough for this need yet"
+                  : dict.listing.noProductsTitle
+              }
+              description={
+                intent
+                  ? locale === "el"
+                    ? "Η επιλογή υπάρχει. Τα προϊόντα που της ταιριάζουν συμπληρώνονται. Δες όλη την περιποίηση στο μεταξύ."
+                    : "The need is clear. The products that match it are still being added. Browse all skincare in the meantime."
+                  : dict.listing.noProductsDescription
+              }
               action={{
                 label: dict.listing.clearFilters,
                 href: categorySlug ? `/${categorySlug}` : "/",

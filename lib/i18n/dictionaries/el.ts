@@ -63,6 +63,7 @@ export const el: Dictionary = {
     Moisturizer: "Ενυδάτωση",
     "Facial Oil": "Έλαιο προσώπου",
     Sunscreen: "Αντηλιακά",
+    "Skincare Set": "Σετ περιποίησης",
     "Makeup with SPF": "Μακιγιάζ με SPF",
     "Primer & Face": "Primer & πρόσωπο",
     "Eye & Brow": "Μάτια & φρύδια",

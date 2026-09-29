@@ -16,6 +16,7 @@ import {
   DesktopMegaMenu,
   type MegaPanel,
 } from "@/components/layout/desktop-mega-menu";
+import { menuText, navBar } from "@/lib/storefront-menu";
 
 const MENU_ANIM_MS = 320;
 const MEGA_OPEN_MS = 40;
@@ -25,7 +26,7 @@ type DesktopNavItem =
   | { id: string; label: string; panel: MegaPanel };
 
 export function SiteHeader({ navigation }: { navigation: NavigationData }) {
-  const { dict } = useTranslation();
+  const { dict, locale } = useTranslation();
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -64,21 +65,14 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
   useEffect(() => clearMegaTimers, [clearMegaTimers]);
 
   const desktopNav: DesktopNavItem[] = [
-    { id: "shop-all", label: dict.nav.shopAll, panel: "shop-all" },
-    { id: "discover", label: dict.nav.discover, panel: "discover" },
-    { id: "new", label: dict.nav.new, href: "/new-in" },
-    { id: "skincare", label: dict.nav.skincare, panel: "skincare" },
-    {
-      id: "lifestyle",
-      label: dict.nav.hairBodyMakeup,
-      panel: "lifestyle",
-    },
-    {
-      id: "best-sellers",
-      label: dict.nav.bestSellers,
-      href: "/best-sellers",
-    },
-    { id: "brands", label: dict.nav.brands, panel: "brands" },
+    { id: "home", label: menuText(locale, navBar.home), href: navBar.home.href },
+    { id: "highlights", label: menuText(locale, navBar.highlights), panel: "highlights" },
+    { id: "sets", label: menuText(locale, navBar.sets), href: navBar.sets.href },
+    { id: "skincare", label: menuText(locale, navBar.face), panel: "skincare" },
+    { id: "makeup", label: menuText(locale, navBar.makeup), panel: "makeup" },
+    { id: "brands", label: menuText(locale, navBar.brands), panel: "brands" },
+    { id: "quiz", label: menuText(locale, navBar.quiz), href: navBar.quiz.href },
+    { id: "care", label: menuText(locale, navBar.care), panel: "care" },
   ];
 
   useEffect(() => {

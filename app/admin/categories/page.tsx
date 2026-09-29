@@ -34,7 +34,7 @@ export default async function AdminCategoriesPage({
     <div>
       <AdminPageHeader
         title="Categories"
-        description="Catalog taxonomy with nesting."
+        description="Όνομα και κείμενο κάθε κατηγορίας στο κατάστημα. Οι στόχοι επιδερμίδας αλλάζουν από το Skin goals."
       />
 
       <div className="grid gap-6 lg:grid-cols-2">

@@ -32,6 +32,7 @@ export const CATALOG_PRODUCT_TYPES: Record<TopCategorySlug, readonly string[]> =
     "Moisturizer",
     "Facial Oil",
     "Sunscreen",
+    "Skincare Set",
   ],
   makeup: [
     "Makeup with SPF",

@@ -13,6 +13,7 @@ import {
   Star,
   Warehouse,
   Settings,
+  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -39,6 +40,7 @@ const groups: NavGroup[] = [
     links: [
       { href: "/admin/products", label: "Products", icon: Package },
       { href: "/admin/categories", label: "Categories", icon: FolderTree },
+      { href: "/admin/skin", label: "Skin goals", icon: Sparkles },
       { href: "/admin/brands", label: "Brands", icon: Tags },
       { href: "/admin/inventory", label: "Inventory", icon: Warehouse },
     ],

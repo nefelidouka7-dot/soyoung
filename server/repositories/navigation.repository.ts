@@ -6,7 +6,12 @@ export type NavBrand = { name: string; slug: string };
 
 export type NavSkinType = { name: string; nameEl: string; slug: string };
 
-export type NavConcern = { name: string; slug: string };
+export type NavConcern = {
+  name: string;
+  nameEl: string;
+  slug: string;
+  sortOrder: number;
+};
 
 export type NavCategoryPanel = {
   slug: string;
@@ -61,8 +66,8 @@ export const getNavigationData = cache(async (): Promise<NavigationData> => {
         }),
         prisma.concern.findMany({
           where: { active: true },
-          orderBy: { name: "asc" },
-          select: { name: true, slug: true },
+          orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+          select: { name: true, nameEl: true, slug: true, sortOrder: true },
         }),
         prisma.product.groupBy({
           by: ["categoryId", "productType"],

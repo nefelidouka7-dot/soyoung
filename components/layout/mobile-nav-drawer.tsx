@@ -3,19 +3,23 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, Heart, User, X } from "lucide-react";
-import { CATALOG_PRODUCT_TYPES } from "@/lib/catalog-taxonomy";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/use-translation";
 import {
-  concernLabel,
-  navLabel,
-  productTypeLabel,
-} from "@/lib/i18n/nav";
+  goalMenuLinks,
+  highlightsLinks,
+  ingredientLinks,
+  makeupGroups,
+  menuText,
+  navBar,
+  skinTypeMenuLinks,
+  skincareGroups,
+  type MenuLink,
+} from "@/lib/storefront-menu";
 import type { NavigationData } from "@/types";
+import type { Locale } from "@/lib/i18n/types";
 
-const LIFESTYLE_SLUGS = ["haircare", "makeup", "body"] as const;
-
-type PanelId = "shop-all" | "discover" | "skincare" | "lifestyle" | "brands";
+type PanelId = "highlights" | "skincare" | "makeup" | "brands" | "care";
 
 type Props = {
   navigation: NavigationData;
@@ -37,64 +41,32 @@ export function MobileNavDrawer({
     if (!visible) setPanel(null);
   }, [visible]);
 
-  const skinTypeName = (skinType: NavigationData["skinTypes"][number]) =>
-    locale === "el" ? skinType.nameEl : skinType.name;
-
-  const skincare = navigation.categories.find((c) => c.slug === "skincare");
-  const skincareTypes =
-    skincare?.productTypes ?? [...CATALOG_PRODUCT_TYPES.skincare];
-
-  const shopAllLinks = [
-    { href: "/skincare", label: dict.nav.skincare },
-    { href: "/makeup", label: dict.nav.makeup },
-    { href: "/haircare", label: dict.nav.haircare },
-    { href: "/body", label: dict.nav.body },
-  ];
-
-  const discoverLinks = [
-    { href: "/best-sellers", label: dict.nav.bestSellers },
-    { href: "/skin-type", label: dict.nav.discoverSetsRoutines },
-    { href: "/best-sellers", label: dict.nav.discoverBestOf },
-    { href: "/new-in", label: dict.nav.discoverViral },
-    { href: "/skin-type", label: dict.nav.discoverTenStep },
-    {
-      href: `/skincare?type=${encodeURIComponent("Sunscreen")}`,
-      label: dict.nav.discoverSunscreen,
-    },
-    { href: "/offers", label: dict.nav.discoverExclusives },
-    { href: "/offers", label: dict.nav.discoverSaleOffers },
-    { href: "/skincare", label: dict.nav.discoverClean },
-    { href: "/skincare", label: dict.nav.discoverVegan },
-    { href: "/faq", label: dict.nav.discoverAbout },
-  ];
-
+  const goals = goalMenuLinks(navigation.concerns);
+  const skinTypes = skinTypeMenuLinks(navigation.skinTypes);
   const panelTitle: Record<PanelId, string> = {
-    "shop-all": dict.nav.shopAll,
-    discover: dict.nav.discover,
-    skincare: dict.nav.skincare,
-    lifestyle: dict.nav.hairBodyMakeup,
-    brands: dict.nav.brands,
+    highlights: menuText(locale, navBar.highlights),
+    skincare: menuText(locale, navBar.face),
+    makeup: menuText(locale, navBar.makeup),
+    brands: menuText(locale, navBar.brands),
+    care: menuText(locale, navBar.care),
   };
 
   const rootItems: Array<
     | { id: string; label: string; panel: PanelId }
     | { id: string; label: string; href: string }
   > = [
-    { id: "shop-all", label: dict.nav.shopAll, panel: "shop-all" },
-    { id: "discover", label: dict.nav.discover, panel: "discover" },
-    { id: "new", label: dict.nav.new, href: "/new-in" },
-    { id: "skincare", label: dict.nav.skincare, panel: "skincare" },
+    { id: "home", label: menuText(locale, navBar.home), href: navBar.home.href },
     {
-      id: "lifestyle",
-      label: dict.nav.hairBodyMakeup,
-      panel: "lifestyle",
+      id: "highlights",
+      label: menuText(locale, navBar.highlights),
+      panel: "highlights",
     },
-    {
-      id: "best-sellers",
-      label: dict.nav.bestSellers,
-      href: "/best-sellers",
-    },
-    { id: "brands", label: dict.nav.brands, panel: "brands" },
+    { id: "sets", label: menuText(locale, navBar.sets), href: navBar.sets.href },
+    { id: "skincare", label: menuText(locale, navBar.face), panel: "skincare" },
+    { id: "makeup", label: menuText(locale, navBar.makeup), panel: "makeup" },
+    { id: "brands", label: menuText(locale, navBar.brands), panel: "brands" },
+    { id: "quiz", label: menuText(locale, navBar.quiz), href: navBar.quiz.href },
+    { id: "care", label: menuText(locale, navBar.care), panel: "care" },
   ];
 
   return (
@@ -154,7 +126,6 @@ export function MobileNavDrawer({
         </div>
 
         <div className="relative min-h-0 flex-1 overflow-hidden">
-          {/* Root — same order as desktop */}
           <nav
             className={cn(
               "absolute inset-0 overflow-y-auto transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
@@ -230,7 +201,6 @@ export function MobileNavDrawer({
             </div>
           </nav>
 
-          {/* Submenu panel */}
           <nav
             className={cn(
               "absolute inset-0 overflow-y-auto bg-bg transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
@@ -238,130 +208,46 @@ export function MobileNavDrawer({
             )}
             aria-hidden={!panel}
           >
-            {panel === "shop-all" ? (
-              <SubList>
-                <SubHeading>{dict.nav.menuStartHere}</SubHeading>
-                {shopAllLinks.map((item) => (
-                  <SubLink
-                    key={item.href}
-                    href={item.href}
-                    onNavigate={onClose}
-                  >
-                    {item.label}
-                  </SubLink>
-                ))}
-              </SubList>
+            {panel === "highlights" ? (
+              <LinkGroup links={highlightsLinks} locale={locale} onClose={onClose} />
             ) : null}
-
-            {panel === "discover" ? (
-              <SubList>
-                {discoverLinks.map((item) => (
-                  <SubLink
-                    key={`${item.href}-${item.label}`}
-                    href={item.href}
-                    onNavigate={onClose}
-                  >
-                    {item.label}
-                  </SubLink>
-                ))}
-              </SubList>
-            ) : null}
-
             {panel === "skincare" ? (
-              <SubList>
-                <SubHeading>{dict.nav.menuByType}</SubHeading>
-                {skincareTypes.map((type) => (
-                  <SubLink
-                    key={type}
-                    href={`/skincare?type=${encodeURIComponent(type)}`}
-                    onNavigate={onClose}
-                  >
-                    {productTypeLabel(dict, type)}
-                  </SubLink>
-                ))}
-                <SubHeading className="mt-4">{dict.nav.menuByConcern}</SubHeading>
-                {navigation.concerns.map((concern) => (
-                  <SubLink
-                    key={concern.slug}
-                    href={`/skincare?concern=${concern.slug}`}
-                    onNavigate={onClose}
-                  >
-                    {concernLabel(dict, concern.slug, concern.name)}
-                  </SubLink>
-                ))}
-                {navigation.skinTypes.map((skinType) => (
-                  <SubLink
-                    key={skinType.slug}
-                    href={`/skincare?skinType=${skinType.slug}`}
-                    onNavigate={onClose}
-                  >
-                    {skinTypeName(skinType)}
-                  </SubLink>
-                ))}
-                <SubLink href="/skincare" onNavigate={onClose} emphasize>
-                  {dict.nav.menuShopAll}
-                </SubLink>
-              </SubList>
+              <LinkGroup links={skincareGroups} locale={locale} onClose={onClose} />
             ) : null}
-
-            {panel === "lifestyle" ? (
-              <SubList>
-                {LIFESTYLE_SLUGS.map((slug) => {
-                  const panelCat = navigation.categories.find(
-                    (c) => c.slug === slug
-                  );
-                  const types =
-                    panelCat?.productTypes ?? [...CATALOG_PRODUCT_TYPES[slug]];
-                  return (
-                    <div key={slug} className="pb-2">
-                      <SubHeading>
-                        {navLabel(dict, `/${slug}`, slug)}
-                      </SubHeading>
-                      <SubLink href={`/${slug}`} onNavigate={onClose}>
-                        {dict.nav.menuShopAll}
-                      </SubLink>
-                      {types.map((type) => (
-                        <SubLink
-                          key={type}
-                          href={`/${slug}?type=${encodeURIComponent(type)}`}
-                          onNavigate={onClose}
-                        >
-                          {productTypeLabel(dict, type)}
-                        </SubLink>
-                      ))}
-                    </div>
-                  );
-                })}
-              </SubList>
+            {panel === "makeup" ? (
+              <LinkGroup links={makeupGroups} locale={locale} onClose={onClose} />
             ) : null}
-
             {panel === "brands" ? (
-              <SubList>
-                {navigation.featuredBrands.length > 0 ? (
-                  <>
-                    <SubHeading>{dict.nav.menuFeaturedBrands}</SubHeading>
-                    {navigation.featuredBrands.map((b) => (
-                      <SubLink
-                        key={b.slug}
-                        href={`/brands/${b.slug}`}
-                        onNavigate={onClose}
-                      >
-                        {b.name}
-                      </SubLink>
-                    ))}
-                  </>
-                ) : null}
-                <SubHeading className="mt-2">{dict.nav.menuAllBrands}</SubHeading>
-                {navigation.brands.map((b) => (
-                  <SubLink
-                    key={b.slug}
-                    href={`/brands/${b.slug}`}
-                    onNavigate={onClose}
-                  >
+              <ul className="px-3 pb-10 pt-2">
+                <GroupLabel>{dict.nav.menuFeaturedBrands}</GroupLabel>
+                {navigation.featuredBrands.map((b) => (
+                  <SubLink key={b.slug} href={`/brands/${b.slug}`} onClose={onClose}>
                     {b.name}
                   </SubLink>
                 ))}
-              </SubList>
+                <GroupLabel className="mt-2">{dict.nav.menuAllBrands}</GroupLabel>
+                {navigation.brands.map((b) => (
+                  <SubLink key={`all-${b.slug}`} href={`/brands/${b.slug}`} onClose={onClose}>
+                    {b.name}
+                  </SubLink>
+                ))}
+              </ul>
+            ) : null}
+            {panel === "care" ? (
+              <ul className="px-3 pb-10 pt-2">
+                <GroupLabel>{locale === "el" ? "Στόχοι επιδερμίδας" : "Skin goals"}</GroupLabel>
+                {goals.map((link) => (
+                  <MenuSubLink key={link.en} link={link} locale={locale} onClose={onClose} />
+                ))}
+                <GroupLabel>{locale === "el" ? "Τύπος δέρματος" : "Skin type"}</GroupLabel>
+                {skinTypes.map((link) => (
+                  <MenuSubLink key={link.en} link={link} locale={locale} onClose={onClose} />
+                ))}
+                <GroupLabel>{locale === "el" ? "Ενεργά συστατικά" : "Key ingredients"}</GroupLabel>
+                {ingredientLinks.map((link) => (
+                  <MenuSubLink key={link.en} link={link} locale={locale} onClose={onClose} />
+                ))}
+              </ul>
             ) : null}
           </nav>
         </div>
@@ -370,11 +256,41 @@ export function MobileNavDrawer({
   );
 }
 
-function SubList({ children }: { children: React.ReactNode }) {
-  return <ul className="px-3 pb-10 pt-2">{children}</ul>;
+function LinkGroup({
+  links,
+  locale,
+  onClose,
+}: {
+  links: MenuLink[];
+  locale: Locale;
+  onClose: () => void;
+}) {
+  return (
+    <ul className="px-3 pb-10 pt-2">
+      {links.map((link) => (
+        <MenuSubLink key={`${link.href}-${link.en}`} link={link} locale={locale} onClose={onClose} />
+      ))}
+    </ul>
+  );
 }
 
-function SubHeading({
+function MenuSubLink({
+  link,
+  locale,
+  onClose,
+}: {
+  link: MenuLink;
+  locale: Locale;
+  onClose: () => void;
+}) {
+  return (
+    <SubLink href={link.href} onClose={onClose}>
+      {menuText(locale, link)}
+    </SubLink>
+  );
+}
+
+function GroupLabel({
   children,
   className,
 }: {
@@ -396,23 +312,18 @@ function SubHeading({
 function SubLink({
   href,
   children,
-  onNavigate,
-  emphasize,
+  onClose,
 }: {
   href: string;
   children: React.ReactNode;
-  onNavigate: () => void;
-  emphasize?: boolean;
+  onClose: () => void;
 }) {
   return (
     <li>
       <Link
         href={href}
-        onClick={onNavigate}
-        className={cn(
-          "block rounded-sm px-3 py-2.5 text-[15px] leading-snug text-ink/80 transition-colors duration-300 hover:bg-oak-soft/50 hover:text-ink",
-          emphasize && "mt-2 font-medium text-coral"
-        )}
+        onClick={onClose}
+        className="block rounded-sm px-3 py-2.5 text-[15px] leading-snug text-ink/80 transition-colors duration-300 hover:bg-oak-soft/50 hover:text-ink"
       >
         {children}
       </Link>

@@ -60,13 +60,14 @@ function buildWhere(params: ProductListParams): Prisma.ProductWhereInput {
     and.push({ compareAtPrice: { not: null } });
   }
   if (params.q) {
-    and.push({
-      OR: [
-        { name: { contains: params.q, mode: "insensitive" } },
-        { brand: { name: { contains: params.q, mode: "insensitive" } } },
-        { tags: { has: params.q.toLowerCase() } },
-      ],
-    });
+      and.push({
+        OR: [
+          { name: { contains: params.q, mode: "insensitive" } },
+          { brand: { name: { contains: params.q, mode: "insensitive" } } },
+          { ingredients: { contains: params.q, mode: "insensitive" } },
+          { tags: { has: params.q.toLowerCase() } },
+        ],
+      });
   }
   if (params.featured) and.push({ featured: true });
   if (params.bestSeller) and.push({ bestSeller: true });
@@ -226,6 +227,10 @@ export async function findSkinTypes() {
 
 export async function findSkinTypeBySlug(slug: string) {
   return prisma.skinType.findFirst({ where: { slug, active: true } });
+}
+
+export async function findConcernBySlug(slug: string) {
+  return prisma.concern.findFirst({ where: { slug, active: true } });
 }
 
 export async function getFilterFacets(categorySlug?: string) {

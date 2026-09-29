@@ -48,6 +48,9 @@ export function CategoryForm({
             defaultValue={category?.name ?? ""}
             className={fieldClass}
           />
+          <p className="mt-1 text-xs text-ink-muted">
+            Τίτλος της κατηγορίας στη σελίδα και στο μενού.
+          </p>
         </div>
         <div>
           <Label htmlFor="slug">Slug</Label>
@@ -68,6 +71,9 @@ export function CategoryForm({
             defaultValue={category?.description ?? ""}
             className="mt-1.5 border-oak/50 bg-white"
           />
+          <p className="mt-1 text-xs text-ink-muted">
+            Η παράγραφος κάτω από τον τίτλο, στη σελίδα της κατηγορίας.
+          </p>
         </div>
         <div>
           <Label htmlFor="image">Image URL</Label>
