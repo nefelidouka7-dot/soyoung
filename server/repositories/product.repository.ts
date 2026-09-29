@@ -1,4 +1,5 @@
 import { prisma } from "@/db/prisma";
+import { ingredientBySlug } from "@/lib/ingredients";
 import type { Prisma, ProductStatus } from "@prisma/client";
 
 export type ProductListParams = {
@@ -12,6 +13,7 @@ export type ProductListParams = {
   inStock?: boolean;
   onSale?: boolean;
   q?: string;
+  ingredient?: string;
   sort?: "recommended" | "newest" | "price-asc" | "price-desc";
   page?: number;
   pageSize?: number;
@@ -58,6 +60,15 @@ function buildWhere(params: ProductListParams): Prisma.ProductWhereInput {
   if (params.inStock) and.push({ stock: { gt: 0 } });
   if (params.onSale) {
     and.push({ compareAtPrice: { not: null } });
+  }
+  if (params.ingredient) {
+    const terms = ingredientBySlug(params.ingredient)?.terms ?? [params.ingredient];
+    and.push({
+      OR: terms.flatMap((term) => [
+        { name: { contains: term, mode: "insensitive" as const } },
+        { ingredients: { contains: term, mode: "insensitive" as const } },
+      ]),
+    });
   }
   if (params.q) {
       and.push({
@@ -246,7 +257,7 @@ export async function getFilterFacets(categorySlug?: string) {
       : {}),
   };
 
-  const [brands, skinTypes, products] = await Promise.all([
+  const [brands, skinTypes, concerns, products] = await Promise.all([
     prisma.brand.findMany({
       where: { active: true, products: { some: where } },
       orderBy: { name: "asc" },
@@ -255,6 +266,11 @@ export async function getFilterFacets(categorySlug?: string) {
     prisma.skinType.findMany({
       where: { active: true },
       orderBy: { sortOrder: "asc" },
+      select: { id: true, name: true, nameEl: true, slug: true },
+    }),
+    prisma.concern.findMany({
+      where: { active: true },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
       select: { id: true, name: true, nameEl: true, slug: true },
     }),
     prisma.product.findMany({
@@ -270,7 +286,7 @@ export async function getFilterFacets(categorySlug?: string) {
   const minPrice = prices.length ? Math.min(...prices) : 0;
   const maxPrice = prices.length ? Math.max(...prices) : 100;
 
-  return { brands, skinTypes, productTypes: types, minPrice, maxPrice };
+  return { brands, skinTypes, concerns, productTypes: types, minPrice, maxPrice };
 }
 
 export async function updateProductStatus(id: string, status: ProductStatus) {

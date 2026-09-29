@@ -358,6 +358,8 @@ export const el: Dictionary = {
     title: "Φίλτρα",
     brand: "Μάρκα",
     skinType: "Τύπος επιδερμίδας",
+    concern: "Στόχοι επιδερμίδας",
+    ingredient: "Ενεργά συστατικά",
     productType: "Τύπος προϊόντος",
     availability: "Διαθεσιμότητα",
     inStock: "Διαθέσιμα",

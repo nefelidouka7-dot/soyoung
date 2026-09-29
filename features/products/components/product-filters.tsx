@@ -14,12 +14,19 @@ import { Check, SlidersHorizontal, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/use-translation";
 import { productTypeLabel } from "@/lib/i18n/nav";
+import { INGREDIENTS, ingredientBySlug, ingredientLabel } from "@/lib/ingredients";
 import { ListingNavigationContext } from "@/features/products/components/listing-navigation";
 import type { Dictionary } from "@/lib/i18n/types";
 
 type Facets = {
   brands: Array<{ id: string; name: string; slug: string }>;
   skinTypes: Array<{
+    id: string;
+    name: string;
+    nameEl: string;
+    slug: string;
+  }>;
+  concerns: Array<{
     id: string;
     name: string;
     nameEl: string;
@@ -33,7 +40,9 @@ type Facets = {
 type FilterDraft = {
   brand: string[];
   skinType: string[];
+  concern: string[];
   type: string[];
+  ingredient: string | null;
   available: boolean;
   offers: boolean;
 };
@@ -52,7 +61,9 @@ function draftFromSearchParams(searchParams: URLSearchParams): FilterDraft {
   return {
     brand: splitParam(searchParams.get("brand")),
     skinType: splitParam(searchParams.get("skinType")),
+    concern: splitParam(searchParams.get("concern")),
     type: splitParam(searchParams.get("type")),
+    ingredient: searchParams.get("ingredient"),
     available: searchParams.get("available") === "1",
     offers: searchParams.get("offers") === "1",
   };
@@ -62,7 +73,9 @@ function draftCount(draft: FilterDraft, includeOffers: boolean) {
   return (
     draft.brand.length +
     draft.skinType.length +
+    draft.concern.length +
     draft.type.length +
+    (draft.ingredient ? 1 : 0) +
     (draft.available ? 1 : 0) +
     (includeOffers && draft.offers ? 1 : 0)
   );
@@ -74,12 +87,14 @@ function urlFromDraft(
   draft: FilterDraft
 ) {
   const params = new URLSearchParams(searchParams.toString());
-  for (const key of ["brand", "skinType", "type", "available", "offers", "page"]) {
+  for (const key of ["brand", "skinType", "concern", "type", "ingredient", "available", "offers", "page"]) {
     params.delete(key);
   }
   if (draft.brand.length) params.set("brand", draft.brand.join(","));
   if (draft.skinType.length) params.set("skinType", draft.skinType.join(","));
+  if (draft.concern.length) params.set("concern", draft.concern.join(","));
   if (draft.type.length) params.set("type", draft.type.join(","));
+  if (draft.ingredient) params.set("ingredient", draft.ingredient);
   if (draft.available) params.set("available", "1");
   if (draft.offers) params.set("offers", "1");
   const qs = params.toString();
@@ -130,7 +145,7 @@ function useFilterParams() {
     return () => window.clearTimeout(timeout);
   }, [pending]);
 
-  function toggle(key: "brand" | "skinType" | "type", value: string) {
+  function toggle(key: "brand" | "skinType" | "concern" | "type", value: string) {
     const params = new URLSearchParams(searchParams.toString());
     const current = splitParam(params.get(key));
     const next = toggleValue(current, value);
@@ -150,7 +165,7 @@ function useFilterParams() {
     push(qs ? `${pathname}?${qs}` : pathname);
   }
 
-  function selected(key: "brand" | "skinType" | "type") {
+  function selected(key: "brand" | "skinType" | "concern" | "type") {
     return splitParam(searchParams.get(key));
   }
 
@@ -207,19 +222,23 @@ export function ProductFilters({
 
   const brandSelected = selected("brand");
   const skinSelected = selected("skinType");
+  const concernSelected = selected("concern");
   const typeSelected = selected("type");
   const inStock = searchParams.get("available") === "1";
   const onSale = searchParams.get("offers") === "1";
+  const ingredientSlug = searchParams.get("ingredient");
 
   const liveDraft: FilterDraft = useMemo(
     () => ({
       brand: brandSelected,
       skinType: skinSelected,
+      concern: concernSelected,
       type: typeSelected,
+      ingredient: ingredientSlug,
       available: inStock,
       offers: onSale,
     }),
-    [brandSelected, skinSelected, typeSelected, inStock, onSale]
+    [brandSelected, skinSelected, concernSelected, typeSelected, ingredientSlug, inStock, onSale]
   );
 
   const activeCount = draftCount(liveDraft, showOffersFilter);
@@ -239,6 +258,16 @@ export function ProductFilters({
           key: "skinType",
           value: slug,
           label: locale === "el" ? skin.nameEl : skin.name,
+        });
+      }
+    }
+    for (const slug of concernSelected) {
+      const concern = facets.concerns.find((c) => c.slug === slug);
+      if (concern) {
+        chips.push({
+          key: "concern",
+          value: slug,
+          label: locale === "el" ? concern.nameEl || concern.name : concern.name,
         });
       }
     }
@@ -263,16 +292,26 @@ export function ProductFilters({
         label: dict.filters.onSale,
       });
     }
+    if (ingredientSlug && ingredientBySlug(ingredientSlug)) {
+      chips.push({
+        key: "ingredient",
+        value: ingredientSlug,
+        label: ingredientLabel(locale, ingredientSlug),
+      });
+    }
     return chips;
   }, [
     brandSelected,
     skinSelected,
+    concernSelected,
     typeSelected,
     inStock,
     onSale,
+    ingredientSlug,
     showOffersFilter,
     facets.brands,
     facets.skinTypes,
+    facets.concerns,
     dict,
     locale,
   ]);
@@ -323,11 +362,19 @@ export function ProductFilters({
   }
 
   function removeChip(key: string, value: string) {
+    if (key === "ingredient") {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("ingredient");
+      params.delete("page");
+      const qs = params.toString();
+      push(qs ? `${pathname}?${qs}` : pathname);
+      return;
+    }
     if (key === "available" || key === "offers") {
       setFlag(key, false);
       return;
     }
-    toggle(key as "brand" | "skinType" | "type", value);
+    toggle(key as "brand" | "skinType" | "concern" | "type", value);
   }
 
   const desktopContent = (
@@ -338,6 +385,14 @@ export function ProductFilters({
       showOffersFilter={showOffersFilter}
       draft={liveDraft}
       onToggle={(key, value) => toggle(key, value)}
+      onIngredient={(slug) => {
+        const params = new URLSearchParams(searchParams.toString());
+        if (params.get("ingredient") === slug) params.delete("ingredient");
+        else params.set("ingredient", slug);
+        params.delete("page");
+        const qs = params.toString();
+        push(qs ? `${pathname}?${qs}` : pathname);
+      }}
       onFlag={(key, on) => setFlag(key, on)}
     />
   );
@@ -353,6 +408,12 @@ export function ProductFilters({
         setDraft((prev) => ({
           ...prev,
           [key]: toggleValue(prev[key], value),
+        }))
+      }
+      onIngredient={(slug) =>
+        setDraft((prev) => ({
+          ...prev,
+          ingredient: prev.ingredient === slug ? null : slug,
         }))
       }
       onFlag={(key, on) =>
@@ -513,7 +574,9 @@ export function ProductFilters({
                     setDraft({
                       brand: [],
                       skinType: [],
+                      concern: [],
                       type: [],
+                      ingredient: null,
                       available: false,
                       offers: false,
                     })
@@ -545,6 +608,7 @@ function FilterFields({
   showOffersFilter,
   draft,
   onToggle,
+  onIngredient,
   onFlag,
 }: {
   facets: Facets;
@@ -552,7 +616,8 @@ function FilterFields({
   locale: string;
   showOffersFilter: boolean;
   draft: FilterDraft;
-  onToggle: (key: "brand" | "skinType" | "type", value: string) => void;
+  onToggle: (key: "brand" | "skinType" | "concern" | "type", value: string) => void;
+  onIngredient: (slug: string) => void;
   onFlag: (key: "available" | "offers", on: boolean) => void;
 }) {
   return (
@@ -575,6 +640,30 @@ function FilterFields({
             label={locale === "el" ? s.nameEl : s.name}
             checked={draft.skinType.includes(s.slug)}
             onChange={() => onToggle("skinType", s.slug)}
+          />
+        ))}
+      </FilterGroup>
+
+      {facets.concerns.length > 0 ? (
+        <FilterGroup title={dict.filters.concern}>
+          {facets.concerns.map((c) => (
+            <CheckRow
+              key={c.id}
+              label={locale === "el" ? c.nameEl || c.name : c.name}
+              checked={draft.concern.includes(c.slug)}
+              onChange={() => onToggle("concern", c.slug)}
+            />
+          ))}
+        </FilterGroup>
+      ) : null}
+
+      <FilterGroup title={dict.filters.ingredient}>
+        {INGREDIENTS.map((item) => (
+          <CheckRow
+            key={item.slug}
+            label={locale === "el" ? item.el.title : item.en.title}
+            checked={draft.ingredient === item.slug}
+            onChange={() => onIngredient(item.slug)}
           />
         ))}
       </FilterGroup>

@@ -294,6 +294,8 @@ export type Dictionary = {
     title: string;
     brand: string;
     skinType: string;
+    concern: string;
+    ingredient: string;
     productType: string;
     availability: string;
     inStock: string;

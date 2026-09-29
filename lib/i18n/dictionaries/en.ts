@@ -301,6 +301,8 @@ export const en: Dictionary = {
     title: "Filters",
     brand: "Brand",
     skinType: "Skin type",
+    concern: "Skin goals",
+    ingredient: "Key ingredients",
     productType: "Product type",
     availability: "Availability",
     inStock: "In stock",

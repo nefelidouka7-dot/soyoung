@@ -13,6 +13,7 @@ import {
 } from "@/server/repositories/product.repository";
 import { EmptyState } from "@/components/ui/empty-state";
 import { getLocale, getServerDictionary } from "@/lib/i18n/server";
+import { ingredientBySlug } from "@/lib/ingredients";
 import { resolveSkinIntent } from "@/lib/skin-intent";
 import { interpolate } from "@/lib/i18n";
 import {
@@ -83,6 +84,8 @@ export default async function CategoryListingPage({
   const onSale = sp.offers === "1" || sp.offers === "true";
   const inStock = sp.available === "1" || sp.available === "true";
   const q = typeof sp.q === "string" ? sp.q : undefined;
+  const ingredientSlug =
+    typeof sp.ingredient === "string" ? sp.ingredient : undefined;
 
   const dict = await getServerDictionary();
   const locale = await getLocale();
@@ -100,6 +103,7 @@ export default async function CategoryListingPage({
   let facets: Awaited<ReturnType<typeof getFilterFacets>> = {
     brands: [],
     skinTypes: [],
+    concerns: [],
     productTypes: [],
     minPrice: 0,
     maxPrice: 100,
@@ -119,6 +123,7 @@ export default async function CategoryListingPage({
         onSale,
         inStock,
         q,
+        ingredient: ingredientSlug,
         pageSize: 24,
       }),
       getFilterFacets(categorySlug),
@@ -134,6 +139,16 @@ export default async function CategoryListingPage({
     concernSlugs.length === 1 ? concernRow : null,
     concernSlugs.length === 1 ? null : skinRow
   );
+  const ingredient = ingredientBySlug(ingredientSlug);
+  const ingredientCopy = ingredient
+    ? locale === "el"
+      ? ingredient.el
+      : ingredient.en
+    : null;
+
+  const focus = intent ?? (ingredientCopy
+    ? { kind: "ingredient" as const, ...ingredientCopy }
+    : null);
 
   function t(
     pick: (d: Dictionary) => string,
@@ -154,20 +169,24 @@ export default async function CategoryListingPage({
           : dict.listing.shop)
   );
 
-  const title = intent?.title ?? categoryTitle;
+  const title = focus?.title ?? categoryTitle;
 
   const description =
-    intent?.body ??
+    focus?.body ??
     categoryDescription(dict, categorySlug, category?.description);
 
-  const eyebrow = intent
-    ? intent.kind === "goal"
+  const eyebrow = focus
+    ? focus.kind === "goal"
       ? locale === "el"
         ? "Για αυτό που ζητάει η επιδερμίδα σου"
         : "For what your skin is asking for"
-      : locale === "el"
-        ? "Για τον τύπο της επιδερμίδας σου"
-        : "For your skin type"
+      : focus.kind === "ingredient"
+        ? locale === "el"
+          ? "Ενεργό συστατικό"
+          : "Key ingredient"
+        : locale === "el"
+          ? "Για τον τύπο της επιδερμίδας σου"
+          : "For your skin type"
     : null;
 
   const heroImage =
@@ -218,7 +237,7 @@ export default async function CategoryListingPage({
               <li className="text-oak" aria-hidden>
                 /
               </li>
-              {intent ? (
+              {focus ? (
                 <>
                   <li>
                     <Link
@@ -269,17 +288,17 @@ export default async function CategoryListingPage({
           {result.products.length === 0 ? (
             <EmptyState
               title={
-                intent
+                focus
                   ? locale === "el"
-                    ? "Δεν έχουμε ακόμα αρκετά για αυτή την ανάγκη"
-                    : "We do not have enough for this need yet"
+                    ? "Δεν έχουμε ακόμα αρκετά για αυτή την επιλογή"
+                    : "We do not have enough for this choice yet"
                   : dict.listing.noProductsTitle
               }
               description={
-                intent
+                focus
                   ? locale === "el"
                     ? "Η επιλογή υπάρχει. Τα προϊόντα που της ταιριάζουν συμπληρώνονται. Δες όλη την περιποίηση στο μεταξύ."
-                    : "The need is clear. The products that match it are still being added. Browse all skincare in the meantime."
+                    : "The choice is clear. The products that match it are still being added. Browse all skincare in the meantime."
                   : dict.listing.noProductsDescription
               }
               action={{
@@ -305,6 +324,12 @@ export default async function CategoryListingPage({
                       ...(typeof sp.brand === "string" ? { brand: sp.brand } : {}),
                       ...(typeof sp.skinType === "string"
                         ? { skinType: sp.skinType }
+                        : {}),
+                      ...(typeof sp.concern === "string"
+                        ? { concern: sp.concern }
+                        : {}),
+                      ...(typeof sp.ingredient === "string"
+                        ? { ingredient: sp.ingredient }
                         : {}),
                       sort,
                       page: String(p),

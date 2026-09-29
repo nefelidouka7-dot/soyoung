@@ -1,4 +1,5 @@
 import type { Locale } from "@/lib/i18n/types";
+import { INGREDIENTS } from "@/lib/ingredients";
 import { skinIntentCopy } from "@/lib/skin-intent";
 
 export type MenuLink = {
@@ -154,32 +155,11 @@ export function skinTypeMenuLinks(
   }));
 }
 
-export const ingredientLinks: MenuLink[] = [
-  {
-    href: "/skincare?q=hyaluronic",
-    el: "Υαλουρονικό οξύ",
-    en: "Hyaluronic acid",
-  },
-  {
-    href: "/skincare?q=niacinamide",
-    el: "Νιασιναμίδη",
-    en: "Niacinamide",
-  },
-  {
-    href: "/skincare?q=centella",
-    el: "Centella / Cica",
-    en: "Centella / Cica",
-  },
-  { href: "/skincare?q=retinol", el: "Ρετινόλη", en: "Retinol" },
-  {
-    href: "/skincare?q=snail",
-    el: "Snail mucin",
-    en: "Snail mucin",
-  },
-  { href: "/skincare?q=vitamin%20c", el: "Βιταμίνη C", en: "Vitamin C" },
-  { href: "/skincare?q=acid", el: "AHA / BHA / PHA", en: "AHA / BHA / PHA" },
-  { href: "/skincare?q=ceramide", el: "Κεραμίδια", en: "Ceramides" },
-];
+export const ingredientLinks: MenuLink[] = INGREDIENTS.map((item) => ({
+  href: `/skincare?ingredient=${item.slug}`,
+  el: item.el.title,
+  en: item.en.title,
+}));
 
 export const navBar = {
   home: { href: "/", el: "Αρχική", en: "Home" },
