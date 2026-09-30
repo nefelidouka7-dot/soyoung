@@ -403,6 +403,30 @@ export type Dictionary = {
     chooseAnother: string;
     notFound: string;
     startAgain: string;
+    stepType: string;
+    stepAge: string;
+    stepGoal: string;
+    ageHeadline: string;
+    ageSubhead: string;
+    goalHeadline: string;
+    goalSubhead: string;
+    resultKicker: string;
+    resultNote: string;
+    back: string;
+    ages: {
+      under20: string;
+      a20: string;
+      a30: string;
+      a40: string;
+      a50: string;
+    };
+    goals: {
+      hydration: string;
+      antiAging: string;
+      brightening: string;
+      blemishes: string;
+      redness: string;
+    };
   };
   brands: {
     title: string;
