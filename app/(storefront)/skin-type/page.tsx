@@ -9,7 +9,6 @@ import {
 } from "@/server/repositories/product.repository";
 import { brand } from "@/lib/constants";
 import { getLocale, getServerDictionary } from "@/lib/i18n/server";
-import type { Dictionary } from "@/lib/i18n/types";
 
 const AGES = [
   { id: "under-20", key: "under20" },
@@ -116,11 +115,6 @@ export default async function SkinTypePage({
             {dict.skinType.resultNote}
           </p>
         </div>
-        <StepBar
-          dict={dict}
-          current={3}
-          backHref={`/skin-type?type=${selected.slug}&age=${age.id}`}
-        />
         <div className="mt-8 sm:mt-10">
           <ProductGrid>
             {products.products.map((p) => (
@@ -144,11 +138,8 @@ export default async function SkinTypePage({
   if (selected && age) {
     return (
       <QuizStep
-        dict={dict}
-        step={3}
         title={dict.skinType.goalHeadline}
         subhead={dict.skinType.goalSubhead}
-        backHref={`/skin-type?type=${selected.slug}`}
       >
         {GOALS.map((item) => (
           <Choice
@@ -164,11 +155,8 @@ export default async function SkinTypePage({
   if (selected) {
     return (
       <QuizStep
-        dict={dict}
-        step={2}
         title={dict.skinType.ageHeadline}
         subhead={dict.skinType.ageSubhead}
-        backHref="/skin-type"
       >
         {AGES.map((item) => (
           <Choice
@@ -183,8 +171,6 @@ export default async function SkinTypePage({
 
   return (
     <QuizStep
-      dict={dict}
-      step={1}
       title={dict.skinType.headline}
       subhead={dict.skinType.subhead}
     >
@@ -213,99 +199,13 @@ function QuizWash() {
   );
 }
 
-function BackLink({
-  href,
-  children,
-  className,
-}: {
-  href: string;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className={`inline-flex items-center gap-1.5 whitespace-nowrap text-[13px] text-ink-muted transition-colors hover:text-ink ${className ?? ""}`}
-    >
-      <span aria-hidden>←</span>
-      {children}
-    </Link>
-  );
-}
-
-function StepBar({
-  dict,
-  current,
-  backHref,
-}: {
-  dict: Dictionary;
-  current: 1 | 2 | 3;
-  backHref?: string;
-}) {
-  return (
-    <div className="relative mx-auto mt-8 w-full max-w-xs sm:mt-10 sm:max-w-sm">
-      {backHref ? (
-        <BackLink href={backHref} className="absolute right-full top-0 mr-8">
-          {dict.skinType.back}
-        </BackLink>
-      ) : null}
-      <Steps dict={dict} current={current} />
-    </div>
-  );
-}
-
-function Steps({ dict, current }: { dict: Dictionary; current: 1 | 2 | 3 }) {
-  const steps = [
-    dict.skinType.stepType,
-    dict.skinType.stepAge,
-    dict.skinType.stepGoal,
-  ];
-  return (
-    <div className="w-full">
-      <ol className="grid grid-cols-3">
-        {steps.map((step, index) => {
-          const n = index + 1;
-          const active = n === current;
-          const done = n < current;
-          return (
-            <li
-              key={step}
-              className={
-                active
-                  ? "text-center font-serif text-[1.05rem] leading-none text-ink"
-                  : done
-                    ? "text-center font-serif text-[1.05rem] leading-none text-ink/70"
-                    : "text-center font-serif text-[1.05rem] leading-none text-ink/30"
-              }
-            >
-              {step}
-            </li>
-          );
-        })}
-      </ol>
-      <div className="mt-4 h-px w-full bg-oak" aria-hidden>
-        <div
-          className="h-px bg-coral transition-[width] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
-          style={{ width: `${(current / steps.length) * 100}%` }}
-        />
-      </div>
-    </div>
-  );
-}
-
 function QuizStep({
-  dict,
-  step,
   title,
   subhead,
-  backHref,
   children,
 }: {
-  dict: Dictionary;
-  step: 1 | 2 | 3;
   title: string;
   subhead: string;
-  backHref?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -320,7 +220,6 @@ function QuizStep({
           {subhead}
         </p>
       </div>
-      <StepBar dict={dict} current={step} backHref={backHref} />
       <div className="mx-auto mt-12 grid max-w-3xl gap-3 sm:grid-cols-2">{children}</div>
       </div>
     </div>
