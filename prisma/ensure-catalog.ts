@@ -30,7 +30,9 @@ async function main() {
   console.log("[ensure-catalog] Pushing schema…");
   runPrisma(["db", "push", "--skip-generate"]);
 
-  const prisma = new PrismaClient();
+  const prisma = new PrismaClient({
+    datasources: { db: { url } },
+  });
   try {
     const count = await prisma.product.count();
     if (count > 0) {

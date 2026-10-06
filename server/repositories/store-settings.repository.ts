@@ -1,5 +1,6 @@
 import { prisma } from "@/db/prisma";
 import {
+  DEFAULT_STORE_SETTINGS,
   parseStoreSettings,
   STORE_SETTING_KEY,
   type StoreSettings,
@@ -13,10 +14,15 @@ export {
 } from "@/lib/store-settings";
 
 export async function getStoreSettings(): Promise<StoreSettings> {
-  const row = await prisma.siteSetting.findUnique({
-    where: { key: STORE_SETTING_KEY },
-  });
-  return parseStoreSettings(row?.value);
+  try {
+    const row = await prisma.siteSetting.findUnique({
+      where: { key: STORE_SETTING_KEY },
+    });
+    return parseStoreSettings(row?.value);
+  } catch (error) {
+    console.error("[store-settings] Failed to load — using defaults:", error);
+    return DEFAULT_STORE_SETTINGS;
+  }
 }
 
 export async function saveStoreSettings(

@@ -8,7 +8,9 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient() {
+  const url = resolveDatabaseUrl();
   return new PrismaClient({
+    ...(url ? { datasources: { db: { url } } } : {}),
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
   });
 }
