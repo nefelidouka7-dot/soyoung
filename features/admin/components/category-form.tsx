@@ -35,12 +35,12 @@ export function CategoryForm({
       className="space-y-4 rounded-xl border border-ink/[0.08] bg-white p-4 shadow-[0_1px_2px_rgba(28,25,23,0.04)] sm:p-5"
     >
       <h3 className="text-sm font-semibold tracking-tight text-ink">
-        {category ? "Edit category" : "New category"}
+        {category ? "Επεξεργασία κατηγορίας" : "Νέα κατηγορία"}
       </h3>
       {state.error ? <p className="text-sm text-coral">{state.error}</p> : null}
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <Label htmlFor="name">Name</Label>
+          <Label htmlFor="name">Όνομα</Label>
           <Input
             id="name"
             name="name"
@@ -58,12 +58,12 @@ export function CategoryForm({
             id="slug"
             name="slug"
             defaultValue={category?.slug ?? ""}
-            placeholder="auto"
+            placeholder="αυτόματο"
             className={fieldClass}
           />
         </div>
         <div className="sm:col-span-2">
-          <Label htmlFor="description">Description</Label>
+          <Label htmlFor="description">Περιγραφή</Label>
           <Textarea
             id="description"
             name="description"
@@ -76,7 +76,7 @@ export function CategoryForm({
           </p>
         </div>
         <div>
-          <Label htmlFor="image">Image URL</Label>
+          <Label htmlFor="image">URL εικόνας</Label>
           <Input
             id="image"
             name="image"
@@ -85,14 +85,14 @@ export function CategoryForm({
           />
         </div>
         <div>
-          <Label htmlFor="parentId">Parent</Label>
+          <Label htmlFor="parentId">Γονική</Label>
           <select
             id="parentId"
             name="parentId"
             defaultValue={category?.parentId ?? ""}
             className={`${fieldClass} flex w-full border px-3`}
           >
-            <option value="">None (top-level)</option>
+            <option value="">Καμία (κορυφαία)</option>
             {parents
               .filter((p) => p.id !== category?.id)
               .map((p) => (
@@ -103,7 +103,7 @@ export function CategoryForm({
           </select>
         </div>
         <div>
-          <Label htmlFor="sortOrder">Sort order</Label>
+          <Label htmlFor="sortOrder">Σειρά</Label>
           <Input
             id="sortOrder"
             name="sortOrder"
@@ -141,10 +141,10 @@ export function CategoryForm({
           defaultChecked={category?.active ?? true}
           className="accent-sage"
         />
-        Active
+        Ενεργή
       </label>
       <Button type="submit" size="sm" disabled={pending}>
-        {pending ? "Saving…" : category ? "Update category" : "Create category"}
+        {pending ? "Αποθήκευση…" : category ? "Ενημέρωση κατηγορίας" : "Δημιουργία κατηγορίας"}
       </Button>
     </form>
   );

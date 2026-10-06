@@ -52,7 +52,7 @@ export default async function AdminOrderDetailPage({
     <div>
       <AdminPageHeader
         title={order.orderNumber}
-        description={`Placed ${formatAdminDate(order.createdAt)}`}
+        description={`Καταχωρήθηκε ${formatAdminDate(order.createdAt)}`}
         breadcrumb={
           <AdminBreadcrumb
             items={[
@@ -80,7 +80,7 @@ export default async function AdminOrderDetailPage({
 
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
-          <AdminPanel title="Items">
+          <AdminPanel title="Προϊόντα">
             <ul className="divide-y divide-oak/20">
               {order.items.map((item) => (
                 <li
@@ -123,7 +123,7 @@ export default async function AdminOrderDetailPage({
             </div>
           </AdminPanel>
 
-          <AdminPanel title="Timeline">
+          <AdminPanel title="Ιστορικό">
             <ol className="space-y-3">
               {order.timeline.map((t) => (
                 <li key={t.id} className="flex gap-3 text-sm">
@@ -140,14 +140,14 @@ export default async function AdminOrderDetailPage({
                 </li>
               ))}
               {order.timeline.length === 0 ? (
-                <li className="text-sm text-ink-muted">No timeline events yet.</li>
+                <li className="text-sm text-ink-muted">Δεν υπάρχουν γεγονότα ακόμα.</li>
               ) : null}
             </ol>
           </AdminPanel>
         </div>
 
         <div className="space-y-4">
-          <AdminPanel title="Update status">
+          <AdminPanel title="Αλλαγή status">
             <form action={updateWithId} className="space-y-3">
               <div>
                 <Label htmlFor="status">Status</Label>
@@ -173,12 +173,12 @@ export default async function AdminOrderDetailPage({
                 />
               </div>
               <Button type="submit" size="sm" className="w-full">
-                Save status
+                Αποθήκευση status
               </Button>
             </form>
           </AdminPanel>
 
-          <AdminPanel title="Customer">
+          <AdminPanel title="Πελάτης">
             <p className="text-sm">{order.email}</p>
             {order.phone ? (
               <p className="text-sm text-ink-muted">{order.phone}</p>
@@ -193,7 +193,7 @@ export default async function AdminOrderDetailPage({
             ) : null}
           </AdminPanel>
 
-          <AdminPanel title="Shipping address">
+          <AdminPanel title="Διεύθυνση αποστολής">
             {order.shippingLine1 ? (
               <address className="not-italic text-sm leading-relaxed text-ink-muted">
                 {order.shippingName ? <p className="text-ink">{order.shippingName}</p> : null}
@@ -212,7 +212,7 @@ export default async function AdminOrderDetailPage({
                 {order.shippingPhone ? <p>{order.shippingPhone}</p> : null}
               </address>
             ) : (
-              <p className="text-sm text-ink-muted">No shipping address.</p>
+              <p className="text-sm text-ink-muted">Δεν υπάρχει διεύθυνση αποστολής.</p>
             )}
           </AdminPanel>
         </div>

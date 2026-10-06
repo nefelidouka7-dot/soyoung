@@ -1,13 +1,11 @@
 import {
-  COD_FEE,
   shippingFeeFor,
-  STORE_PICKUP,
   type PaymentMethod,
   type ShippingMethod,
 } from "@/lib/checkout-options";
 import type { Coupon, Prisma } from "@prisma/client";
-import { FREE_SHIPPING_THRESHOLD } from "@/lib/utils";
 import { prisma } from "@/db/prisma";
+import { getStoreSettings } from "@/server/repositories/store-settings.repository";
 
 export type CheckoutLineInput = {
   productId: string;
@@ -200,13 +198,15 @@ export async function computeCartTotals(
     };
   }
 
+  const store = await getStoreSettings();
   const afterDiscount = subtotal - discountAmount;
   const shippingAmount = shippingFeeFor(
     shippingMethod,
     afterDiscount,
-    FREE_SHIPPING_THRESHOLD
+    store.freeShippingThreshold,
+    store.standardShippingFee
   );
-  const paymentFee = paymentMethod === "cod" ? COD_FEE : 0;
+  const paymentFee = paymentMethod === "cod" ? store.codFee : 0;
   const total = Math.max(0, afterDiscount + shippingAmount + paymentFee);
 
   return {
@@ -263,21 +263,24 @@ export async function createOrderFromCheckout(input: {
   /** When false, order is created without decrementing stock (card pending Viva). */
   commitStock?: boolean;
 }) {
-  const totals = await computeCartTotals(input.items, input.couponCode, {
-    shippingMethod: input.shippingMethod,
-    paymentMethod: input.paymentMethod,
-  });
+  const [totals, store] = await Promise.all([
+    computeCartTotals(input.items, input.couponCode, {
+      shippingMethod: input.shippingMethod,
+      paymentMethod: input.paymentMethod,
+    }),
+    getStoreSettings(),
+  ]);
   const commitStock = input.commitStock ?? Boolean(input.markPaid);
 
   const shipping =
     input.shippingMethod === "pickup"
       ? {
           ...input.shipping,
-          line1: STORE_PICKUP.line1,
-          line2: STORE_PICKUP.line2,
-          city: STORE_PICKUP.city,
-          postalCode: STORE_PICKUP.postalCode,
-          country: STORE_PICKUP.country,
+          line1: store.pickup.line1,
+          line2: store.pickup.line2 ?? undefined,
+          city: store.pickup.city,
+          postalCode: store.pickup.postalCode,
+          country: store.pickup.country,
         }
       : input.shipping;
 

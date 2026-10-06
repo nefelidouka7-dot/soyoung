@@ -59,13 +59,13 @@ export async function createCategory(
 ): Promise<CategoryActionState> {
   await requireAdmin();
   const parsed = parseCategory(formData);
-  if (!parsed.success) return { error: "Please check the category fields." };
+  if (!parsed.success) return { error: "Έλεγξε τα πεδία της κατηγορίας." };
 
   try {
     await prisma.category.create({ data: toCategoryData(parsed.data) });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-      return { error: "A category with this slug already exists." };
+      return { error: "Υπάρχει ήδη κατηγορία με αυτό το slug." };
     }
     throw e;
   }
@@ -80,18 +80,18 @@ export async function updateCategory(
 ): Promise<CategoryActionState> {
   await requireAdmin();
   const parsed = parseCategory(formData);
-  if (!parsed.success) return { error: "Please check the category fields." };
+  if (!parsed.success) return { error: "Έλεγξε τα πεδία της κατηγορίας." };
 
   const data = toCategoryData(parsed.data);
   if (data.parentId === id) {
-    return { error: "A category cannot be its own parent." };
+    return { error: "Μια κατηγορία δεν μπορεί να είναι γονική του εαυτού της." };
   }
 
   try {
     await prisma.category.update({ where: { id }, data });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-      return { error: "A category with this slug already exists." };
+      return { error: "Υπάρχει ήδη κατηγορία με αυτό το slug." };
     }
     throw e;
   }
@@ -106,7 +106,7 @@ export async function deleteCategory(id: string) {
     prisma.category.count({ where: { parentId: id } }),
   ]);
   if (products > 0 || children > 0) {
-    throw new Error("Cannot delete a category with products or children.");
+    throw new Error("Δεν γίνεται διαγραφή κατηγορίας που έχει προϊόντα ή υποκατηγορίες.");
   }
   await prisma.category.delete({ where: { id } });
   revalidatePath("/admin/categories");

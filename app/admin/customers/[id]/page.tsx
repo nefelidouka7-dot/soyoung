@@ -51,7 +51,7 @@ export default async function AdminCustomerDetailPage({
       <div className="mb-5 flex flex-wrap items-center gap-2">
         <StatusBadge tone="neutral">{customer.role}</StatusBadge>
         <StatusBadge tone={customer.active ? "success" : "danger"}>
-          {customer.active ? "Active" : "Inactive"}
+          {customer.active ? "Ενεργός" : "Ανενεργός"}
         </StatusBadge>
         {customer.phone ? (
           <span className="text-sm text-ink-muted">{customer.phone}</span>
@@ -59,7 +59,7 @@ export default async function AdminCustomerDetailPage({
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <AdminPanel title="Orders" flush>
+        <AdminPanel title="Παραγγελίες" flush>
           <ul className="divide-y divide-oak/20">
             {customer.orders.map((o) => (
               <li key={o.id}>
@@ -86,13 +86,13 @@ export default async function AdminCustomerDetailPage({
             ))}
             {customer.orders.length === 0 ? (
               <li className="px-4 py-8 text-center text-sm text-ink-muted sm:px-5">
-                No orders.
+                Δεν υπάρχουν παραγγελίες.
               </li>
             ) : null}
           </ul>
         </AdminPanel>
 
-        <AdminPanel title="Addresses">
+        <AdminPanel title="Διευθύνσεις">
           <ul className="space-y-3">
             {customer.addresses.map((a) => (
               <li
@@ -115,7 +115,7 @@ export default async function AdminCustomerDetailPage({
               </li>
             ))}
             {customer.addresses.length === 0 ? (
-              <li className="text-sm text-ink-muted">No saved addresses.</li>
+              <li className="text-sm text-ink-muted">Δεν υπάρχουν αποθηκευμένες διευθύνσεις.</li>
             ) : null}
           </ul>
         </AdminPanel>

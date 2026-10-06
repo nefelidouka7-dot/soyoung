@@ -14,6 +14,7 @@ import {
   Warehouse,
   Settings,
   Sparkles,
+  Images,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -32,32 +33,40 @@ type NavGroup = {
 
 const groups: NavGroup[] = [
   {
-    label: "Overview",
-    links: [{ href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true }],
+    label: "Επισκόπηση",
+    links: [
+      {
+        href: "/admin",
+        label: "Πίνακας ελέγχου",
+        icon: LayoutDashboard,
+        exact: true,
+      },
+    ],
   },
   {
-    label: "Catalog",
+    label: "Κατάλογος",
     links: [
-      { href: "/admin/products", label: "Products", icon: Package },
-      { href: "/admin/categories", label: "Categories", icon: FolderTree },
-      { href: "/admin/skin", label: "Skin goals", icon: Sparkles },
+      { href: "/admin/products", label: "Προϊόντα", icon: Package },
+      { href: "/admin/categories", label: "Κατηγορίες", icon: FolderTree },
+      { href: "/admin/skin", label: "Στόχοι επιδερμίδας", icon: Sparkles },
       { href: "/admin/brands", label: "Brands", icon: Tags },
-      { href: "/admin/inventory", label: "Inventory", icon: Warehouse },
+      { href: "/admin/inventory", label: "Απόθεμα", icon: Warehouse },
     ],
   },
   {
-    label: "Commerce",
+    label: "Πωλήσεις",
     links: [
-      { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
-      { href: "/admin/customers", label: "Customers", icon: Users },
-      { href: "/admin/discounts", label: "Discounts", icon: TicketPercent },
+      { href: "/admin/orders", label: "Παραγγελίες", icon: ShoppingBag },
+      { href: "/admin/customers", label: "Πελάτες", icon: Users },
+      { href: "/admin/discounts", label: "Εκπτώσεις", icon: TicketPercent },
     ],
   },
   {
-    label: "Content",
+    label: "Περιεχόμενο",
     links: [
-      { href: "/admin/reviews", label: "Reviews", icon: Star },
-      { href: "/admin/settings", label: "Settings", icon: Settings },
+      { href: "/admin/hero", label: "Slides αρχικής", icon: Images },
+      { href: "/admin/reviews", label: "Αξιολογήσεις", icon: Star },
+      { href: "/admin/settings", label: "Ρυθμίσεις", icon: Settings },
     ],
   },
 ];
@@ -80,7 +89,7 @@ export function AdminNav({
   const pathname = usePathname();
 
   return (
-    <nav aria-label="Admin" className="flex-1 overflow-y-auto px-3 py-5">
+    <nav aria-label="Διαχείριση" className="flex-1 overflow-y-auto px-3 py-5">
       <div className="space-y-6">
         {groups.map((group) => (
           <div key={group.label}>
@@ -148,5 +157,5 @@ export function adminPageContext(pathname: string): {
       if (isActive(pathname, link)) return { section: group.label, title: link.label };
     }
   }
-  return { section: "Admin", title: "Admin" };
+  return { section: "Admin", title: "Διαχείριση" };
 }

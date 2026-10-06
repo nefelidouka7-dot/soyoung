@@ -41,11 +41,11 @@ export default async function EditProductPage({
     <div>
       <AdminPageHeader
         title={product.name}
-        description="Edit product details, stock, and media."
+        description="Επεξεργασία στοιχείων, stock και media."
         breadcrumb={
           <AdminBreadcrumb
             items={[
-              { href: "/admin/products", label: "Products" },
+              { href: "/admin/products", label: "Προϊόντα" },
               { label: product.name },
             ]}
           />

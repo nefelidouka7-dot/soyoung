@@ -33,22 +33,22 @@ export default async function AdminCategoriesPage({
   return (
     <div>
       <AdminPageHeader
-        title="Categories"
-        description="Όνομα και κείμενο κάθε κατηγορίας στο κατάστημα. Οι στόχοι επιδερμίδας αλλάζουν από το Skin goals."
+        title="Κατηγορίες"
+        description="Όνομα και κείμενο κάθε κατηγορίας στο κατάστημα. Οι στόχοι επιδερμίδας αλλάζουν από Στόχοι επιδερμίδας."
       />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <AdminPanel
-          title="All categories"
-          description={`${categories.length} total`}
+          title="Όλες οι κατηγορίες"
+          description={`${categories.length} συνολικά`}
           flush
         >
           <AdminTable minWidth="0" bare>
             <AdminTableHead>
               <tr>
-                <AdminTh>Category</AdminTh>
-                <AdminTh>Parent</AdminTh>
-                <AdminTh>Sort</AdminTh>
+                <AdminTh>Κατηγορία</AdminTh>
+                <AdminTh>Γονική</AdminTh>
+                <AdminTh>Σειρά</AdminTh>
                 <AdminTh>Status</AdminTh>
                 <AdminTh />
               </tr>
@@ -73,7 +73,7 @@ export default async function AdminCategoriesPage({
                   <AdminTd className="tabular-nums">{c.sortOrder}</AdminTd>
                   <AdminTd>
                     <StatusBadge tone={c.active ? "success" : "neutral"}>
-                      {c.active ? "Active" : "Inactive"}
+                      {c.active ? "Ενεργή" : "Ανενεργή"}
                     </StatusBadge>
                   </AdminTd>
                   <AdminTd className="text-right">
@@ -92,7 +92,7 @@ export default async function AdminCategoriesPage({
                           type="submit"
                           className="text-xs font-medium text-coral hover:underline"
                         >
-                          Delete
+                          Διαγραφή
                         </button>
                       </form>
                     ) : null}
@@ -100,7 +100,7 @@ export default async function AdminCategoriesPage({
                 </tr>
               ))}
               {categories.length === 0 ? (
-                <AdminEmpty colSpan={5}>No categories yet.</AdminEmpty>
+                <AdminEmpty colSpan={5}>Δεν υπάρχουν κατηγορίες ακόμα.</AdminEmpty>
               ) : null}
             </tbody>
           </AdminTable>

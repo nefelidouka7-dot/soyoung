@@ -7,13 +7,15 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useUIStore } from "@/lib/ui-store";
 import { useCartStore } from "@/features/cart/store";
-import { FREE_SHIPPING_THRESHOLD, formatPrice } from "@/lib/utils";
+import { formatPrice } from "@/lib/utils";
+import { useCommerceSettings } from "@/lib/commerce-settings";
 import { useTranslation } from "@/lib/i18n/use-translation";
 
 const ANIM_MS = 320;
 
 export function CartDrawer() {
   const { dict, t } = useTranslation();
+  const { freeShippingThreshold } = useCommerceSettings();
   const open = useUIStore((s) => s.cartOpen);
   const close = useUIStore((s) => s.closeCart);
   const items = useCartStore((s) => s.items);
@@ -58,8 +60,8 @@ export function CartDrawer() {
     return () => window.removeEventListener("keydown", onKey);
   }, [open, close]);
 
-  const remaining = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
-  const progress = Math.min(100, (subtotal / FREE_SHIPPING_THRESHOLD) * 100);
+  const remaining = Math.max(0, freeShippingThreshold - subtotal);
+  const progress = Math.min(100, (subtotal / freeShippingThreshold) * 100);
 
   if (!mounted) return null;
 
@@ -98,7 +100,7 @@ export function CartDrawer() {
             <>
               <div className="flex justify-between text-xs text-ink-muted">
                 <span>
-                  {formatPrice(subtotal)} / {formatPrice(FREE_SHIPPING_THRESHOLD)}
+                  {formatPrice(subtotal)} / {formatPrice(freeShippingThreshold)}
                 </span>
                 <span>{dict.cart.freeShipping}</span>
               </div>
@@ -228,9 +230,15 @@ export function CartDrawer() {
               <span>{dict.cart.subtotal}</span>
               <span className="font-medium">{formatPrice(subtotal)}</span>
             </div>
-            <p className="mt-1 text-xs text-ink-muted">
-              {dict.cart.shippingAtCheckout}
-            </p>
+            {remaining > 0 ? (
+              <p className="mt-1 text-xs text-ink-muted">
+                {dict.cart.shippingAtCheckout}
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-sage-dark">
+                {dict.checkout.freeShipping}
+              </p>
+            )}
             <Link
               href="/checkout"
               onClick={close}

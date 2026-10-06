@@ -8,7 +8,7 @@ function Block({ className }: { className: string }) {
 
 export default function AdminLoading() {
   return (
-    <div className="space-y-6" aria-busy="true" aria-label="Loading">
+    <div className="space-y-6" aria-busy="true" aria-label="Φόρτωση">
       <div className="space-y-2.5 pb-2">
         <div className="h-3.5 w-40 animate-pulse rounded-md bg-ink/[0.06]" />
         <div className="h-7 w-64 animate-pulse rounded-md bg-ink/[0.08]" />

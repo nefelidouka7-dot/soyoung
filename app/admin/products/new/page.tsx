@@ -20,18 +20,22 @@ export default async function NewProductPage() {
   return (
     <div>
       <AdminPageHeader
-        title="New product"
-        description="Create a catalog item."
+        title="Προσθήκη προϊόντος"
+        description="Όνομα, brand, τιμή — και είσαι έτοιμος. Τα υπόλοιπα είναι προαιρετικά."
         breadcrumb={
           <AdminBreadcrumb
             items={[
-              { href: "/admin/products", label: "Products" },
-              { label: "New" },
+              { href: "/admin/products", label: "Προϊόντα" },
+              { label: "Νέο" },
             ]}
           />
         }
       />
-      <ProductForm brands={brands} categories={categories} skinTypes={skinTypes} />
+      <ProductForm
+        brands={brands}
+        categories={categories}
+        skinTypes={skinTypes}
+      />
     </div>
   );
 }

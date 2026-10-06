@@ -4,13 +4,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Menu, Search, ShoppingBag, User } from "lucide-react";
-import { cn, FREE_SHIPPING_THRESHOLD, formatPrice } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
+import { useCommerceSettings } from "@/lib/commerce-settings";
 import { interpolate } from "@/lib/i18n";
 import { useCartStore } from "@/features/cart/store";
 import { useUIStore } from "@/lib/ui-store";
 import { useTranslation } from "@/lib/i18n/use-translation";
 import type { NavigationData } from "@/types";
 import { SiteLogo } from "@/components/layout/site-logo";
+import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 import { MobileNavDrawer } from "@/components/layout/mobile-nav-drawer";
 import {
   DesktopMegaMenu,
@@ -27,6 +29,7 @@ type DesktopNavItem =
 
 export function SiteHeader({ navigation }: { navigation: NavigationData }) {
   const { dict, locale } = useTranslation();
+  const { freeShippingThreshold } = useCommerceSettings();
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -153,7 +156,7 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
     return pathname === href || pathname.startsWith(`${href}/`);
   }
 
-  const freeShippingFrom = formatPrice(FREE_SHIPPING_THRESHOLD).replace(
+  const freeShippingFrom = formatPrice(freeShippingThreshold).replace(
     /[.,]00$/,
     ""
   );
@@ -165,9 +168,14 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
     <>
       <div className="sticky top-0 z-50">
         <div className="bg-ink text-white">
-          <p className="container-page py-2 text-center text-[10px] uppercase tracking-[0.16em] sm:text-[11px] sm:tracking-[0.18em]">
-            {announcement}
-          </p>
+          <div className="container-page relative flex items-center justify-center py-2">
+            <p className="text-center text-[10px] uppercase tracking-[0.16em] sm:text-[11px] sm:tracking-[0.18em]">
+              {announcement}
+            </p>
+            <div className="absolute inset-y-0 right-0 hidden items-center xl:flex">
+              <LocaleSwitcher variant="onDark" />
+            </div>
+          </div>
         </div>
 
         {/* Hover zone: only nav + mega panel — leaving closes immediately */}
@@ -216,7 +224,8 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
 
               <SiteLogo priority className="justify-self-center" />
 
-              <div className="flex items-center justify-end gap-0.5">
+              <div className="flex items-center justify-end gap-1.5 sm:gap-2">
+                <LocaleSwitcher className="hidden sm:inline-flex xl:hidden" />
                 <button
                   type="button"
                   onClick={() => {

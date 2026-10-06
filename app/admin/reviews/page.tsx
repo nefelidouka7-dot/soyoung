@@ -37,20 +37,20 @@ export default async function AdminReviewsPage({
   return (
     <div>
       <AdminPageHeader
-        title="Reviews"
-        description="Moderate customer reviews before they go live."
+        title="Αξιολογήσεις"
+        description="Έγκρινε τις αξιολογήσεις πελατών πριν εμφανιστούν στο shop."
       />
 
       <form>
         <AdminToolbar>
           <AdminSelect name="status" defaultValue={status ?? ""}>
-            <option value="">All statuses</option>
-            <option value="PENDING">Pending</option>
-            <option value="APPROVED">Approved</option>
-            <option value="HIDDEN">Hidden</option>
+            <option value="">Όλα τα statuses</option>
+            <option value="PENDING">Εκκρεμεί</option>
+            <option value="APPROVED">Εγκεκριμένο</option>
+            <option value="HIDDEN">Κρυφό</option>
           </AdminSelect>
           <Button type="submit" size="sm" variant="secondary">
-            Filter
+            Φίλτρο
           </Button>
         </AdminToolbar>
       </form>
@@ -94,14 +94,14 @@ export default async function AdminReviewsPage({
               {r.status !== "APPROVED" ? (
                 <form action={approveReview.bind(null, r.id)}>
                   <Button type="submit" size="sm" variant="secondary">
-                    Approve
+                    Έγκριση
                   </Button>
                 </form>
               ) : null}
               {r.status !== "HIDDEN" ? (
                 <form action={hideReview.bind(null, r.id)}>
                   <Button type="submit" size="sm" variant="secondary">
-                    Hide
+                    Απόκρυψη
                   </Button>
                 </form>
               ) : null}
@@ -112,13 +112,13 @@ export default async function AdminReviewsPage({
                   variant="ghost"
                   className="text-coral"
                 >
-                  Delete
+                  Διαγραφή
                 </Button>
               </form>
             </div>
           </article>
         ))}
-        {reviews.length === 0 ? <AdminEmpty>No reviews.</AdminEmpty> : null}
+        {reviews.length === 0 ? <AdminEmpty>Δεν υπάρχουν αξιολογήσεις.</AdminEmpty> : null}
       </div>
     </div>
   );

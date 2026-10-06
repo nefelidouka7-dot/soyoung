@@ -68,6 +68,11 @@ enum VariantType {
   DEFAULT
 }
 
+enum HeroSlideType {
+  CAMPAIGN
+  PRODUCT
+}
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
@@ -259,6 +264,7 @@ model Product {
   orderItems OrderItem[]
   reviews    Review[]
   inventory  InventoryLedger[]
+  heroSlides HeroSlide[]
 
   @@index([slug])
   @@index([status])
@@ -566,6 +572,44 @@ model InventoryLedger {
 
   @@index([productId])
   @@index([createdAt])
+}
+
+model HeroSlide {
+  id        String        @id @default(cuid())
+  type      HeroSlideType @default(CAMPAIGN)
+  active    Boolean       @default(true)
+  sortOrder Int           @default(0)
+
+  imageUrl   String
+  imageAltEn String?
+  imageAltEl String?
+
+  eyebrowEn         String?
+  eyebrowEl         String?
+  headlineEn        String
+  headlineEl        String
+  headlineAccentEn  String?
+  headlineAccentEl  String?
+  subheadEn         String?
+  subheadEl         String?
+
+  ctaPrimaryLabelEn   String?
+  ctaPrimaryLabelEl   String?
+  ctaPrimaryHref      String?
+  ctaSecondaryLabelEn String?
+  ctaSecondaryLabelEl String?
+  ctaSecondaryHref    String?
+
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  startsAt  DateTime?
+  endsAt    DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active, sortOrder])
+  @@index([productId])
 }
 
 model SiteSetting {

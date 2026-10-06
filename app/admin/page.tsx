@@ -63,9 +63,9 @@ function change(current: number, previous: number) {
 }
 
 function greeting(hour: number) {
-  if (hour < 12) return "Good morning";
-  if (hour < 18) return "Good afternoon";
-  return "Good evening";
+  if (hour < 12) return "Καλημέρα";
+  if (hour < 18) return "Καλησπέρα";
+  return "Καλησπέρα";
 }
 
 function humanize(status: string) {
@@ -226,28 +226,28 @@ export default async function AdminDashboardPage({
     {
       href: "/admin/orders?status=PENDING",
       icon: ClipboardList,
-      label: "Orders to fulfil",
+      label: "Παραγγελίες προς εκπλήρωση",
       count: pendingOrderCount,
       tone: "amber",
     },
     {
       href: "/admin/inventory",
       icon: Warehouse,
-      label: "Low stock products",
+      label: "Προϊόντα με χαμηλό stock",
       count: lowStock.length - outOfStockCount,
       tone: "amber",
     },
     {
       href: "/admin/inventory",
       icon: PackageX,
-      label: "Out of stock",
+      label: "Εκτός stock",
       count: outOfStockCount,
       tone: "rose",
     },
     {
       href: "/admin/reviews?status=PENDING",
       icon: Star,
-      label: "Reviews to moderate",
+      label: "Αξιολογήσεις προς έλεγχο",
       count: pendingReviewCount,
       tone: "sky",
     },
@@ -255,7 +255,7 @@ export default async function AdminDashboardPage({
   const openTasks = tasks.reduce((s, t) => s + t.count, 0);
 
   const name = session.user.name?.split(" ")[0];
-  const rangeLabel = `last ${range} days`;
+  const rangeLabel = `τελευταίες ${range} ημέρες`;
 
   return (
     <div className="space-y-6">
@@ -270,13 +270,13 @@ export default async function AdminDashboardPage({
           </h1>
           <p className="mt-1 text-sm text-ink-muted">
             {openTasks > 0
-              ? `You have ${openTasks} open task${openTasks === 1 ? "" : "s"} across orders, stock and reviews.`
-              : "Everything is up to date. Here's how the store is performing."}
+              ? `Έχεις ${openTasks} ανοιχτ${openTasks === 1 ? "ή εργασία" : "ές εργασίες"} σε παραγγελίες, stock και αξιολογήσεις.`
+              : "Όλα είναι εντάξει. Έτσι κινείται το shop."}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <nav
-            aria-label="Date range"
+            aria-label="Εύρος ημερομηνιών"
             className="inline-flex rounded-lg border border-ink/[0.08] bg-white p-0.5 shadow-[0_1px_2px_rgba(28,25,23,0.04)]"
           >
             {RANGES.map((r) => (
@@ -301,47 +301,47 @@ export default async function AdminDashboardPage({
             className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-ink px-3.5 text-[13px] font-semibold text-white shadow-[0_1px_2px_rgba(28,25,23,0.2)] transition-colors hover:bg-ink/90"
           >
             <Plus className="h-4 w-4" aria-hidden />
-            New product
+            Νέο προϊόν
           </Link>
         </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <AdminStat
-          label="Revenue"
+          label="Έσοδα"
           value={formatPrice(revenue)}
           icon={Euro}
           delta={change(revenue, prevRevenue)}
-          hint={`vs previous ${range} days`}
+          hint={`σε σχέση με προηγούμενες ${range} ημέρες`}
           href="/admin/orders"
         />
         <AdminStat
-          label="Orders"
+          label="Παραγγελίες"
           value={String(orderCount)}
           icon={ShoppingBag}
           delta={change(orderCount, prevOrderCount)}
-          hint={`vs previous ${range} days`}
+          hint={`σε σχέση με προηγούμενες ${range} ημέρες`}
           href="/admin/orders"
         />
         <AdminStat
-          label="Average order value"
+          label="Μέση αξία παραγγελίας"
           value={formatPrice(aov)}
           icon={ReceiptText}
           delta={change(aov, prevAov)}
-          hint={`vs previous ${range} days`}
+          hint={`σε σχέση με προηγούμενες ${range} ημέρες`}
         />
         <AdminStat
-          label="New customers"
+          label="Νέοι πελάτες"
           value={String(newCustomers)}
           icon={UserPlus}
           delta={change(newCustomers, prevNewCustomers)}
-          hint={`vs previous ${range} days`}
+          hint={`σε σχέση με προηγούμενες ${range} ημέρες`}
           href="/admin/customers"
         />
       </div>
 
       <div className="grid gap-4 xl:grid-cols-3">
-        <AdminPanel className="xl:col-span-2" title="Revenue" description={`Paid orders, ${rangeLabel}`}>
+        <AdminPanel className="xl:col-span-2" title="Έσοδα" description={`Πληρωμένες παραγγελίες, ${rangeLabel}`}>
           <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
             <div className="flex items-baseline gap-3">
               <p className="text-3xl font-semibold tracking-tight tabular-nums text-ink">
@@ -352,18 +352,18 @@ export default async function AdminDashboardPage({
             <div className="flex items-center gap-4 text-xs text-ink-muted">
               <span className="inline-flex items-center gap-1.5">
                 <span className="h-0.5 w-4 rounded-full bg-coral-dark" aria-hidden />
-                This period
+                Αυτή η περίοδος
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <span className="w-4 border-t-[1.5px] border-dashed border-ink/30" aria-hidden />
-                Previous period
+                Προηγούμενη περίοδος
               </span>
             </div>
           </div>
           <RevenueChart points={chartPoints} />
         </AdminPanel>
 
-        <AdminPanel title="Needs attention" description="Tasks waiting on you">
+        <AdminPanel title="Χρειάζεται προσοχή" description="Εργασίες που σε περιμένουν">
           <ul className="-mx-2 space-y-1">
             {tasks.map((t) => {
               const Icon = t.icon;
@@ -398,7 +398,7 @@ export default async function AdminDashboardPage({
                         {t.label}
                       </span>
                       <span className="block text-xs text-ink-muted">
-                        {done ? "All clear" : "Needs review"}
+                        {done ? "Όλα καθαρά" : "Θέλει έλεγχο"}
                       </span>
                     </span>
                     {done ? (
@@ -422,9 +422,9 @@ export default async function AdminDashboardPage({
 
           <div className="mt-5 border-t border-ink/[0.07] pt-5">
             <div className="mb-3 flex items-baseline justify-between">
-              <p className="text-[13px] font-semibold text-ink">Orders by status</p>
+              <p className="text-[13px] font-semibold text-ink">Παραγγελίες ανά status</p>
               <p className="text-xs tabular-nums text-ink-muted">
-                {statusTotal} total
+                {statusTotal} συνολικά
               </p>
             </div>
             <div className="flex h-2 gap-0.5 overflow-hidden rounded-full bg-ink/[0.05]">
@@ -462,18 +462,18 @@ export default async function AdminDashboardPage({
       <div className="grid gap-4 xl:grid-cols-3">
         <AdminPanel
           className="xl:col-span-2"
-          title="Recent orders"
-          description="Latest activity across all statuses"
-          action={<AdminTextLink href="/admin/orders">View all</AdminTextLink>}
+          title="Πρόσφατες παραγγελίες"
+          description="Τελευταία δραστηριότητα σε όλα τα statuses"
+          action={<AdminTextLink href="/admin/orders">Δες όλα</AdminTextLink>}
           flush
         >
           <AdminTable bare minWidth="640px">
             <AdminTableHead>
               <tr>
-                <AdminTh className="pl-5">Order</AdminTh>
-                <AdminTh>Customer</AdminTh>
+                <AdminTh className="pl-5">Παραγγελία</AdminTh>
+                <AdminTh>Πελάτης</AdminTh>
                 <AdminTh>Status</AdminTh>
-                <AdminTh className="pr-5 text-right">Total</AdminTh>
+                <AdminTh className="pr-5 text-right">Σύνολο</AdminTh>
               </tr>
             </AdminTableHead>
             <tbody>
@@ -491,7 +491,7 @@ export default async function AdminDashboardPage({
                       <p className="mt-0.5 text-xs text-ink-muted">
                         {formatDistanceToNowStrict(o.createdAt, { addSuffix: true })}
                         {" · "}
-                        {o._count.items} item{o._count.items === 1 ? "" : "s"}
+                        {o._count.items} προϊόντ{o._count.items === 1 ? "ο" : "α"}
                       </p>
                     </AdminTd>
                     <AdminTd>
@@ -522,7 +522,7 @@ export default async function AdminDashboardPage({
               {recentOrders.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="px-5 py-16 text-center text-sm text-ink-muted">
-                    No orders yet. They&apos;ll show up here as soon as customers check out.
+                    Δεν υπάρχουν παραγγελίες ακόμα. Θα εμφανιστούν εδώ μόλις γίνει checkout.
                   </td>
                 </tr>
               ) : null}
@@ -531,12 +531,12 @@ export default async function AdminDashboardPage({
         </AdminPanel>
 
         <AdminPanel
-          title="Top products"
-          description={`By revenue, ${rangeLabel}`}
-          action={<AdminTextLink href="/admin/products">All</AdminTextLink>}
+          title="Top προϊόντα"
+          description={`Ανά έσοδα, ${rangeLabel}`}
+          action={<AdminTextLink href="/admin/products">Όλα</AdminTextLink>}
         >
           {topProductGroups.length === 0 ? (
-            <EmptyNote icon={ShoppingBag}>No sales in this period.</EmptyNote>
+            <EmptyNote icon={ShoppingBag}>Δεν υπάρχουν πωλήσεις σε αυτή την περίοδο.</EmptyNote>
           ) : (
             <ul className="space-y-4">
               {topProductGroups.map((p) => {
@@ -560,7 +560,7 @@ export default async function AdminDashboardPage({
                           />
                         </div>
                         <span className="shrink-0 text-xs tabular-nums text-ink-muted">
-                          {p._sum.quantity ?? 0} sold
+                          {p._sum.quantity ?? 0} πωλήσεις
                         </span>
                       </div>
                     </div>
@@ -573,13 +573,13 @@ export default async function AdminDashboardPage({
       </div>
 
       <AdminPanel
-        title="Inventory alerts"
-        description="Products at or below their low-stock threshold"
-        action={<AdminTextLink href="/admin/inventory">Manage inventory</AdminTextLink>}
+        title="Ειδοποιήσεις αποθέματος"
+        description="Προϊόντα στο ή κάτω από το όριο χαμηλού stock"
+        action={<AdminTextLink href="/admin/inventory">Διαχείριση αποθέματος</AdminTextLink>}
       >
         {lowStock.length === 0 ? (
           <EmptyNote icon={CheckCircle2} positive>
-            Stock levels look healthy.
+            Τα επίπεδα stock φαίνονται υγιή.
           </EmptyNote>
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -608,7 +608,7 @@ export default async function AdminDashboardPage({
                             out ? "text-rose-600" : "text-amber-700"
                           )}
                         >
-                          {out ? "Out of stock" : `${p.stock} left`}
+                          {out ? "Εκτός stock" : `${p.stock} ακόμη`}
                         </span>
                       </div>
                     </div>

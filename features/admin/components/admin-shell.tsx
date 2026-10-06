@@ -55,7 +55,7 @@ export function AdminShell({ email, logoutAction, badges, children }: Props) {
       >
         <button
           type="button"
-          aria-label="Close menu"
+          aria-label="Κλείσιμο μενού"
           className={cn(
             "absolute inset-0 bg-ink/30 backdrop-blur-sm transition-opacity duration-300",
             open ? "opacity-100" : "opacity-0"
@@ -74,7 +74,7 @@ export function AdminShell({ email, logoutAction, badges, children }: Props) {
               type="button"
               onClick={() => setOpen(false)}
               className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-ink/[0.05] hover:text-ink"
-              aria-label="Close navigation"
+              aria-label="Κλείσιμο πλοήγησης"
             >
               <X className="h-5 w-5" />
             </button>
@@ -91,7 +91,7 @@ export function AdminShell({ email, logoutAction, badges, children }: Props) {
               type="button"
               className="-ml-1.5 inline-flex h-9 w-9 items-center justify-center rounded-lg text-ink transition-colors hover:bg-ink/[0.05] lg:hidden"
               onClick={() => setOpen(true)}
-              aria-label="Open navigation"
+              aria-label="Άνοιγμα πλοήγησης"
             >
               <Menu className="h-5 w-5" />
             </button>
@@ -109,8 +109,8 @@ export function AdminShell({ email, logoutAction, badges, children }: Props) {
               rel="noopener noreferrer"
               className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-ink/[0.1] bg-white px-3 text-[13px] font-medium text-ink/80 shadow-[0_1px_2px_rgba(28,25,23,0.05)] transition-colors hover:border-ink/20 hover:text-ink"
             >
-              <span className="hidden sm:inline">View store</span>
-              <span className="sm:hidden">Store</span>
+              <span className="hidden sm:inline">Δες το shop</span>
+              <span className="sm:hidden">Shop</span>
               <ExternalLink className="h-3.5 w-3.5 opacity-60" aria-hidden />
             </Link>
           </div>
@@ -155,13 +155,13 @@ function SidebarFooter({
         </span>
         <div className="min-w-0 flex-1">
           <p className="truncate text-[13px] font-medium text-ink">{email}</p>
-          <p className="text-xs text-ink-muted">Administrator</p>
+          <p className="text-xs text-ink-muted">Διαχειριστής</p>
         </div>
         <form action={logoutAction}>
           <button
             type="submit"
-            title="Log out"
-            aria-label="Log out"
+            title="Αποσύνδεση"
+            aria-label="Αποσύνδεση"
             className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-ink/[0.06] hover:text-ink"
           >
             <LogOut className="h-4 w-4" aria-hidden />

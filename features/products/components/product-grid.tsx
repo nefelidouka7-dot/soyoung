@@ -14,10 +14,10 @@ export function ProductGrid({
   return (
     <div
       className={cn(
-        "grid grid-cols-2 gap-x-3 gap-y-7 sm:gap-x-4 sm:gap-y-10",
-        variant === "catalog" && "md:grid-cols-3 lg:grid-cols-4 lg:gap-x-6 lg:gap-y-12",
-        variant === "listing" && "md:grid-cols-3 lg:gap-x-6 lg:gap-y-10",
-        variant === "featured" && "md:grid-cols-4 lg:gap-x-6 lg:gap-y-10",
+        "grid grid-cols-2 gap-x-3 gap-y-3 sm:gap-x-4 sm:gap-y-4",
+        variant === "catalog" && "md:grid-cols-3 lg:grid-cols-4 lg:gap-x-5 lg:gap-y-5",
+        variant === "listing" && "md:grid-cols-3 lg:gap-x-5 lg:gap-y-5",
+        variant === "featured" && "md:grid-cols-4 lg:gap-x-5 lg:gap-y-5",
         className
       )}
     >

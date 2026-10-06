@@ -91,6 +91,7 @@ async function main() {
   await prisma.productImage.deleteMany();
   await prisma.productVariant.deleteMany();
   await prisma.inventoryLedger.deleteMany();
+  await prisma.heroSlide.deleteMany();
   await prisma.product.deleteMany();
   await prisma.coupon.deleteMany();
   await prisma.address.deleteMany();
@@ -1214,8 +1215,87 @@ async function main() {
   await prisma.siteSetting.create({
     data: {
       key: "store",
-      value: { name: "SoYoung", currency: "EUR", freeShippingThreshold: 50 },
+      value: {
+        name: "SoYoung",
+        currency: "EUR",
+        freeShippingThreshold: 50,
+        standardShippingFee: 4.9,
+        codFee: 2,
+        pickup: {
+          name: "SoYoung Κοζάνη",
+          line1: "Μακεδονομάχων 21",
+          line2: null,
+          city: "Κοζάνη",
+          postalCode: "50100",
+          country: "GR",
+          phone: "+30 2461 025391",
+        },
+      },
     },
+  });
+
+  await prisma.siteSetting.create({
+    data: {
+      key: "hero.carousel",
+      value: { autoplay: true, intervalSeconds: 6 },
+    },
+  });
+
+  const saleProduct =
+    createdProducts.find((p) => p.compareAtPrice != null) ?? createdProducts[0];
+
+  await prisma.heroSlide.createMany({
+    data: [
+      {
+        type: "CAMPAIGN",
+        active: true,
+        sortOrder: 0,
+        imageUrl: HERO,
+        imageAltEn: "Editorial beauty still life",
+        imageAltEl: "Editorial φωτογραφία ομορφιάς",
+        eyebrowEn: "For every skin type",
+        eyebrowEl: "Για κάθε τύπο επιδερμίδας",
+        headlineEn: "Your Korean routine",
+        headlineEl: "Η κορεάτικη ρουτίνα σου,",
+        headlineAccentEn: "starts here.",
+        headlineAccentEl: "ξεκινά εδώ.",
+        subheadEn: "Discover the routine that feels like you.",
+        subheadEl: "Ανακάλυψε τη ρουτίνα που σου μοιάζει.",
+        ctaPrimaryLabelEn: "Shop now",
+        ctaPrimaryLabelEl: "Shop now",
+        ctaPrimaryHref: "/best-sellers",
+        ctaSecondaryLabelEn: "Skin quiz",
+        ctaSecondaryLabelEl: "Quiz επιδερμίδας",
+        ctaSecondaryHref: "/skin-type",
+      },
+      ...(saleProduct
+        ? [
+            {
+              type: "PRODUCT" as const,
+              active: true,
+              sortOrder: 1,
+              imageUrl: HERO,
+              imageAltEn: saleProduct.name,
+              imageAltEl: saleProduct.name,
+              eyebrowEn: "On sale",
+              eyebrowEl: "Σε έκπτωση",
+              headlineEn: saleProduct.name,
+              headlineEl: saleProduct.name,
+              headlineAccentEn: null,
+              headlineAccentEl: null,
+              subheadEn: "Limited offer — shop it while it lasts.",
+              subheadEl: "Περιορισμένη προσφορά — κάνε την δικιά σου.",
+              ctaPrimaryLabelEn: "Shop now",
+              ctaPrimaryLabelEl: "Shop now",
+              ctaPrimaryHref: `/product/${saleProduct.slug}`,
+              ctaSecondaryLabelEn: null,
+              ctaSecondaryLabelEl: null,
+              ctaSecondaryHref: null,
+              productId: saleProduct.id,
+            },
+          ]
+        : []),
+    ],
   });
 
   console.log(`Seeded ${createdProducts.length} products, admin=${admin.email}, customer=${customer.email}, order=${order.orderNumber}`);

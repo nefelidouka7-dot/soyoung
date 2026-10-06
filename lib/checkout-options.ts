@@ -101,9 +101,10 @@ export function isOfflinePayment(method: PaymentMethod): boolean {
 export function shippingFeeFor(
   shippingMethod: ShippingMethod,
   afterDiscount: number,
-  freeThreshold: number
+  freeThreshold: number,
+  standardFee: number = STANDARD_SHIPPING_FEE
 ): number {
   if (shippingMethod === "pickup") return 0;
   if (afterDiscount >= freeThreshold) return 0;
-  return STANDARD_SHIPPING_FEE;
+  return standardFee;
 }

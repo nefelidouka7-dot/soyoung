@@ -218,6 +218,8 @@ export const en: Dictionary = {
   common: {
     addedToBag: "Added to bag",
     outOfStock: "This item is currently out of stock.",
+    add: "Add",
+    added: "Added",
     quickAdd: "Quick add",
     continueShopping: "Continue shopping",
     loading: "Loading…",
@@ -278,6 +280,10 @@ export const en: Dictionary = {
     reviewsShop: "Shop",
     followUsHeadline: "Follow Us",
     followUsCta: "Follow @soyoung",
+    heroPrevious: "Previous slide",
+    heroNext: "Next slide",
+    heroGoToSlide: "Go to slide",
+    heroOnSale: "Sale",
   },
   listing: {
     home: "Home",

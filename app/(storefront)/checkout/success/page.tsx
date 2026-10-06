@@ -1,9 +1,9 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { prisma } from "@/db/prisma";
-import { STORE_PICKUP } from "@/lib/checkout-options";
 import { getServerDictionary } from "@/lib/i18n/server";
 import { formatPrice } from "@/lib/utils";
+import { getStoreSettings } from "@/server/repositories/store-settings.repository";
 import {
   isVivaConfigured,
   retrieveVivaTransaction,
@@ -21,7 +21,10 @@ export default async function CheckoutSuccessPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const dict = await getServerDictionary();
+  const [dict, store] = await Promise.all([
+    getServerDictionary(),
+    getStoreSettings(),
+  ]);
   const sp = await searchParams;
   const orderNumberParam = typeof sp.order === "string" ? sp.order : null;
   // Viva Smart Checkout appends t (transaction id) + s (order code)
@@ -126,8 +129,8 @@ export default async function CheckoutSuccessPage({
               <p className="border-t border-oak/30 pt-3">
                 {dict.checkout.success.pickupNext}
                 <span className="mt-2 block text-ink">
-                  {STORE_PICKUP.name} · {STORE_PICKUP.line1},{" "}
-                  {STORE_PICKUP.postalCode} {STORE_PICKUP.city}
+                  {store.pickup.name} · {store.pickup.line1},{" "}
+                  {store.pickup.postalCode} {store.pickup.city}
                 </span>
               </p>
             ) : (

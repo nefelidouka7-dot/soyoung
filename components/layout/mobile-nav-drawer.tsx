@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, Heart, User, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/use-translation";
+import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 import {
   goalMenuLinks,
   highlightsLinks,
@@ -181,23 +182,31 @@ export function MobileNavDrawer({
                 );
               })}
             </ul>
-            <div className="mt-6 flex items-center justify-between border-t border-oak/25 px-6 py-5">
-              <Link
-                href="/login"
-                onClick={onClose}
-                className="inline-flex items-center gap-2 text-[12px] uppercase tracking-[0.14em] text-ink-muted transition-colors hover:text-ink"
-              >
-                <User className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden />
-                {dict.nav.account}
-              </Link>
-              <Link
-                href="/wishlist"
-                onClick={onClose}
-                className="inline-flex items-center gap-2 text-[12px] uppercase tracking-[0.14em] text-ink-muted transition-colors hover:text-ink"
-              >
-                <Heart className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden />
-                {dict.nav.wishlist}
-              </Link>
+            <div className="mt-6 space-y-4 border-t border-oak/25 px-6 py-5">
+              <div className="flex items-center justify-between gap-3 sm:hidden">
+                <span className="text-[12px] uppercase tracking-[0.14em] text-ink-muted">
+                  {dict.locale.label}
+                </span>
+                <LocaleSwitcher />
+              </div>
+              <div className="flex items-center justify-between">
+                <Link
+                  href="/login"
+                  onClick={onClose}
+                  className="inline-flex items-center gap-2 text-[12px] uppercase tracking-[0.14em] text-ink-muted transition-colors hover:text-ink"
+                >
+                  <User className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden />
+                  {dict.nav.account}
+                </Link>
+                <Link
+                  href="/wishlist"
+                  onClick={onClose}
+                  className="inline-flex items-center gap-2 text-[12px] uppercase tracking-[0.14em] text-ink-muted transition-colors hover:text-ink"
+                >
+                  <Heart className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden />
+                  {dict.nav.wishlist}
+                </Link>
+              </div>
             </div>
           </nav>
 

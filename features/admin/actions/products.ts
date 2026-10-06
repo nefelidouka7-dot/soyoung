@@ -10,16 +10,16 @@ import { slugify } from "@/lib/utils";
 import { storage } from "@/lib/storage";
 
 const productSchema = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: z.string().min(1, "Το όνομα είναι υποχρεωτικό"),
   slug: z.string().min(1).optional(),
   sku: z.string().optional(),
-  brandId: z.string().min(1, "Brand is required"),
-  categoryId: z.string().min(1, "Category is required"),
+  brandId: z.string().min(1, "Το brand είναι υποχρεωτικό"),
+  categoryId: z.string().min(1, "Η κατηγορία είναι υποχρεωτική"),
   shortDescription: z.string().optional(),
   description: z.string().optional(),
   ingredients: z.string().optional(),
   howToUse: z.string().optional(),
-  price: z.coerce.number().positive("Price must be positive"),
+  price: z.coerce.number().positive("Η τιμή πρέπει να είναι θετική"),
   compareAtPrice: z.coerce.number().positive().optional().or(z.literal("")),
   cost: z.coerce.number().nonnegative().optional().or(z.literal("")),
   stock: z.coerce.number().int().nonnegative().default(0),
@@ -121,6 +121,38 @@ function toProductData(data: z.infer<typeof productSchema>) {
   };
 }
 
+export type UploadProductImageResult = { url?: string; error?: string };
+
+/** Upload one product image immediately (used by the product form gallery). */
+export async function uploadProductImage(
+  formData: FormData
+): Promise<UploadProductImageResult> {
+  await requireAdmin();
+  const entry = formData.get("file");
+  if (!(entry instanceof File) || entry.size === 0) {
+    return { error: "Διάλεξε μια εικόνα." };
+  }
+  if (entry.size > 8 * 1024 * 1024) {
+    return { error: "Η εικόνα είναι πολύ μεγάλη (μέγ. 8MB)." };
+  }
+
+  try {
+    const buffer = Buffer.from(await entry.arrayBuffer());
+    const stored = await storage.upload(
+      buffer,
+      entry.name || "upload.jpg",
+      entry.type || "image/jpeg"
+    );
+    return { url: stored.url };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "";
+    if (msg.includes("Only JPEG") || msg.includes("not a valid image")) {
+      return { error: "Επίτρεπτα μόνο JPEG, PNG, WebP ή GIF." };
+    }
+    return { error: "Αποτυχία ανεβάσματος. Δοκίμασε άλλη εικόνα." };
+  }
+}
+
 async function collectImageUrls(formData: FormData): Promise<string[]> {
   const fromText = String(formData.get("imageUrls") ?? "")
     .split("\n")
@@ -139,7 +171,9 @@ async function collectImageUrls(formData: FormData): Promise<string[]> {
     uploaded.push(stored.url);
   }
 
-  return [...fromText, ...uploaded];
+  // Prefer explicit gallery order from imageUrls; append any leftover file uploads.
+  const seen = new Set(fromText);
+  return [...fromText, ...uploaded.filter((u) => !seen.has(u))];
 }
 
 function collectVariants(formData: FormData) {
@@ -148,6 +182,7 @@ function collectVariants(formData: FormData) {
   const skus = formData.getAll("variantSku").map(String);
   const prices = formData.getAll("variantPrice").map(String);
   const stocks = formData.getAll("variantStock").map(String);
+  const images = formData.getAll("variantImage").map(String);
 
   const rows = [];
   for (let i = 0; i < names.length; i++) {
@@ -157,6 +192,7 @@ function collectVariants(formData: FormData) {
     const type = (types[i] || "SHADE") as VariantType;
     const priceRaw = prices[i]?.trim();
     const stock = Number.parseInt(stocks[i] || "0", 10);
+    const image = images[i]?.trim() || null;
     rows.push({
       name,
       type,
@@ -166,6 +202,7 @@ function collectVariants(formData: FormData) {
           ? new Prisma.Decimal(priceRaw)
           : null,
       stock: Number.isFinite(stock) ? stock : 0,
+      image,
       active: true,
     });
   }
@@ -180,7 +217,7 @@ export async function createProduct(
   const parsed = parseFormData(formData);
   if (!parsed.success) {
     return {
-      error: "Please fix the form errors.",
+      error: "Διόρθωσε τα σφάλματα της φόρμας.",
       fieldErrors: parsed.error.flatten().fieldErrors as Record<
         string,
         string[]
@@ -194,7 +231,7 @@ export async function createProduct(
     imageUrls = await collectImageUrls(formData);
   } catch (e) {
     return {
-      error: e instanceof Error ? e.message : "Invalid image upload.",
+      error: e instanceof Error ? e.message : "Μη έγκυρο upload εικόνας.",
     };
   }
   const variants = collectVariants(formData);
@@ -247,7 +284,7 @@ export async function createProduct(
       e instanceof Prisma.PrismaClientKnownRequestError &&
       e.code === "P2002"
     ) {
-      return { error: "A product with this slug or SKU already exists." };
+      return { error: "Υπάρχει ήδη προϊόν με αυτό το slug ή SKU." };
     }
     throw e;
   }
@@ -264,7 +301,7 @@ export async function updateProduct(
   const parsed = parseFormData(formData);
   if (!parsed.success) {
     return {
-      error: "Please fix the form errors.",
+      error: "Διόρθωσε τα σφάλματα της φόρμας.",
       fieldErrors: parsed.error.flatten().fieldErrors as Record<
         string,
         string[]
@@ -278,7 +315,7 @@ export async function updateProduct(
     imageUrls = await collectImageUrls(formData);
   } catch (e) {
     return {
-      error: e instanceof Error ? e.message : "Invalid image upload.",
+      error: e instanceof Error ? e.message : "Μη έγκυρο upload εικόνας.",
     };
   }
   const variants = collectVariants(formData);
@@ -342,7 +379,7 @@ export async function updateProduct(
       e instanceof Prisma.PrismaClientKnownRequestError &&
       e.code === "P2002"
     ) {
-      return { error: "A product with this slug or SKU already exists." };
+      return { error: "Υπάρχει ήδη προϊόν με αυτό το slug ή SKU." };
     }
     throw e;
   }

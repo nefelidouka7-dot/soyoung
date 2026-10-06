@@ -214,6 +214,8 @@ export type Dictionary = {
   common: {
     addedToBag: string;
     outOfStock: string;
+    add: string;
+    added: string;
     quickAdd: string;
     continueShopping: string;
     loading: string;
@@ -272,6 +274,10 @@ export type Dictionary = {
     reviewsShop: string;
     followUsHeadline: string;
     followUsCta: string;
+    heroPrevious: string;
+    heroNext: string;
+    heroGoToSlide: string;
+    heroOnSale: string;
   };
   listing: {
     home: string;

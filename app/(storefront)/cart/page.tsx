@@ -4,17 +4,19 @@ import Image from "next/image";
 import Link from "next/link";
 import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { useCartStore } from "@/features/cart/store";
-import { formatPrice, FREE_SHIPPING_THRESHOLD, cn } from "@/lib/utils";
+import { formatPrice, cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/use-translation";
+import { useCommerceSettings } from "@/lib/commerce-settings";
 
 export default function CartPage() {
   const { dict, t } = useTranslation();
+  const { freeShippingThreshold } = useCommerceSettings();
   const items = useCartStore((s) => s.items);
   const subtotal = useCartStore((s) => s.subtotal);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
   const removeItem = useCartStore((s) => s.removeItem);
-  const remaining = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
-  const progress = Math.min(100, (subtotal / FREE_SHIPPING_THRESHOLD) * 100);
+  const remaining = Math.max(0, freeShippingThreshold - subtotal);
+  const progress = Math.min(100, (subtotal / freeShippingThreshold) * 100);
   const itemCount = items.reduce((n, i) => n + i.quantity, 0);
 
   if (items.length === 0) {

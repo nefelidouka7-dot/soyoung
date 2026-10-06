@@ -55,20 +55,20 @@ export default async function AdminOrdersPage({
   return (
     <div>
       <AdminPageHeader
-        title="Orders"
-        description={`${orders.length} order${orders.length === 1 ? "" : "s"} in this view.`}
+        title="Παραγγελίες"
+        description={`${orders.length} παραγγελί${orders.length === 1 ? "α" : "ες"} σε αυτή την προβολή.`}
       />
 
       <form>
         <AdminToolbar>
           <Input
             name="q"
-            placeholder="Order # or email…"
+            placeholder="Αρ. παραγγελίας ή email…"
             defaultValue={q ?? ""}
             className="h-10 min-w-[12rem] flex-1 border-oak/45 bg-white sm:max-w-xs"
           />
           <AdminSelect name="status" defaultValue={status ?? ""}>
-            <option value="">All statuses</option>
+            <option value="">Όλα τα statuses</option>
             {[
               "PENDING",
               "PAID",
@@ -84,7 +84,7 @@ export default async function AdminOrdersPage({
             ))}
           </AdminSelect>
           <Button type="submit" size="sm" variant="secondary">
-            Filter
+            Φίλτρο
           </Button>
         </AdminToolbar>
       </form>
@@ -92,11 +92,11 @@ export default async function AdminOrdersPage({
       <AdminTable minWidth="800px">
         <AdminTableHead>
           <tr>
-            <AdminTh>Order</AdminTh>
-            <AdminTh>Customer</AdminTh>
-            <AdminTh>Date</AdminTh>
-            <AdminTh>Total</AdminTh>
-            <AdminTh>Payment</AdminTh>
+            <AdminTh>Παραγγελία</AdminTh>
+            <AdminTh>Πελάτης</AdminTh>
+            <AdminTh>Ημερομηνία</AdminTh>
+            <AdminTh>Σύνολο</AdminTh>
+            <AdminTh>Πληρωμή</AdminTh>
             <AdminTh>Status</AdminTh>
           </tr>
         </AdminTableHead>
@@ -133,7 +133,7 @@ export default async function AdminOrdersPage({
             </tr>
           ))}
           {orders.length === 0 ? (
-            <AdminEmpty colSpan={6}>No orders found.</AdminEmpty>
+            <AdminEmpty colSpan={6}>Δεν βρέθηκαν παραγγελίες.</AdminEmpty>
           ) : null}
         </tbody>
       </AdminTable>

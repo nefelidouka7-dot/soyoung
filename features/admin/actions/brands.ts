@@ -61,13 +61,13 @@ export async function createBrand(
 ): Promise<BrandActionState> {
   await requireAdmin();
   const parsed = parseBrand(formData);
-  if (!parsed.success) return { error: "Please check the brand fields." };
+  if (!parsed.success) return { error: "Έλεγξε τα πεδία του brand." };
 
   try {
     await prisma.brand.create({ data: toBrandData(parsed.data) });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-      return { error: "A brand with this slug already exists." };
+      return { error: "Υπάρχει ήδη brand με αυτό το slug." };
     }
     throw e;
   }
@@ -82,13 +82,13 @@ export async function updateBrand(
 ): Promise<BrandActionState> {
   await requireAdmin();
   const parsed = parseBrand(formData);
-  if (!parsed.success) return { error: "Please check the brand fields." };
+  if (!parsed.success) return { error: "Έλεγξε τα πεδία του brand." };
 
   try {
     await prisma.brand.update({ where: { id }, data: toBrandData(parsed.data) });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-      return { error: "A brand with this slug already exists." };
+      return { error: "Υπάρχει ήδη brand με αυτό το slug." };
     }
     throw e;
   }
@@ -100,7 +100,7 @@ export async function deleteBrand(id: string) {
   await requireAdmin();
   const count = await prisma.product.count({ where: { brandId: id } });
   if (count > 0) {
-    throw new Error("Cannot delete a brand with products.");
+    throw new Error("Δεν γίνεται διαγραφή brand που έχει προϊόντα.");
   }
   await prisma.brand.delete({ where: { id } });
   revalidatePath("/admin/brands");

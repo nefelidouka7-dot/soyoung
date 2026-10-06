@@ -11,15 +11,14 @@ import {
 } from "@/features/checkout/actions";
 import { loginAction, registerAction } from "@/features/auth/actions";
 import {
-  COD_FEE,
   paymentMethodsForShipping,
   shippingFeeFor,
-  STANDARD_SHIPPING_FEE,
   STORE_PICKUP,
   type PaymentMethod,
   type ShippingMethod,
 } from "@/lib/checkout-options";
-import { formatPrice, FREE_SHIPPING_THRESHOLD } from "@/lib/utils";
+import { formatPrice } from "@/lib/utils";
+import { useCommerceSettings } from "@/lib/commerce-settings";
 import { shakeFieldsById, guardRequiredForm } from "@/lib/field-shake";
 import { useTranslation } from "@/lib/i18n/use-translation";
 import { Input } from "@/components/ui/input";
@@ -92,6 +91,12 @@ export function CheckoutWizard({
 }) {
   const router = useRouter();
   const { dict, t, locale } = useTranslation();
+  const {
+    freeShippingThreshold,
+    standardShippingFee,
+    codFee,
+    pickup,
+  } = useCommerceSettings();
   const STEPS = [dict.checkout.summary, dict.checkout.details] as const;
   const items = useCartStore((s) => s.items);
   const clear = useCartStore((s) => s.clear);
@@ -196,9 +201,10 @@ export function CheckoutWizard({
       const shippingAmount = shippingFeeFor(
         method,
         afterDiscount,
-        FREE_SHIPPING_THRESHOLD
+        freeShippingThreshold,
+        standardShippingFee
       );
-      const paymentFee = nextPayment === "cod" ? COD_FEE : 0;
+      const paymentFee = nextPayment === "cod" ? codFee : 0;
       return {
         subtotal,
         discountAmount,
@@ -418,9 +424,10 @@ export function CheckoutWizard({
   const fallbackShipping = shippingFeeFor(
     shippingMethod,
     clientSubtotal,
-    FREE_SHIPPING_THRESHOLD
+    freeShippingThreshold,
+    standardShippingFee
   );
-  const fallbackFee = paymentMethod === "cod" ? COD_FEE : 0;
+  const fallbackFee = paymentMethod === "cod" ? codFee : 0;
   const totals = serverTotals ?? {
     subtotal: clientSubtotal,
     discountAmount: 0,
@@ -432,21 +439,23 @@ export function CheckoutWizard({
   const afterDiscount = Math.max(0, totals.subtotal - totals.discountAmount);
   const remainingForFree = Math.max(
     0,
-    FREE_SHIPPING_THRESHOLD - afterDiscount
+    freeShippingThreshold - afterDiscount
   );
   // Always price the courier option for delivery — never reuse pickup's €0 fee.
   const courierFee = shippingFeeFor(
     "delivery",
     afterDiscount,
-    FREE_SHIPPING_THRESHOLD
+    freeShippingThreshold,
+    standardShippingFee
   );
   const courierPriceLabel =
-    courierFee === 0 ? dict.checkout.free : formatPrice(STANDARD_SHIPPING_FEE);
+    courierFee === 0 ? dict.checkout.free : formatPrice(standardShippingFee);
 
   const resolvedShipping = shippingFeeFor(
     shippingMethod,
     afterDiscount,
-    FREE_SHIPPING_THRESHOLD
+    freeShippingThreshold,
+    standardShippingFee
   );
   const shippingLabel =
     shippingMethod === "pickup"
@@ -892,7 +901,7 @@ export function CheckoutWizard({
                       </p>
                       <p className="text-xs tabular-nums text-ink-muted">
                         {formatPrice(afterDiscount)} /{" "}
-                        {formatPrice(FREE_SHIPPING_THRESHOLD)}
+                        {formatPrice(freeShippingThreshold)}
                       </p>
                     </div>
                     <div className="mt-2.5 h-1 w-full overflow-hidden bg-oak/25">
@@ -901,7 +910,7 @@ export function CheckoutWizard({
                         style={{
                           width: `${Math.min(
                             100,
-                            (afterDiscount / FREE_SHIPPING_THRESHOLD) * 100
+                            (afterDiscount / freeShippingThreshold) * 100
                           )}%`,
                         }}
                       />
@@ -937,14 +946,13 @@ export function CheckoutWizard({
                 {shippingMethod === "pickup" ? (
                   <div className="mt-4 space-y-3 text-sm text-ink-muted">
                     <p>
-                      {STORE_PICKUP.line1}, {STORE_PICKUP.postalCode}{" "}
-                      {STORE_PICKUP.city}
+                      {pickup.line1}, {pickup.postalCode} {pickup.city}
                       {" · "}
                       <a
-                        href={`tel:${STORE_PICKUP.phone.replace(/\s/g, "")}`}
+                        href={`tel:${pickup.phone.replace(/\s/g, "")}`}
                         className="text-ink underline-offset-2 hover:underline"
                       >
-                        {STORE_PICKUP.phone}
+                        {pickup.phone}
                       </a>
                     </p>
                     <div>
@@ -1087,7 +1095,7 @@ export function CheckoutWizard({
                     selected={paymentMethod === "cod"}
                     title={dict.checkout.cashOnDelivery}
                     description={dict.checkout.cashOnDeliveryDesc}
-                    priceLabel={`+${formatPrice(COD_FEE)}`}
+                    priceLabel={`+${formatPrice(codFee)}`}
                     onSelect={() => setPaymentMethod("cod")}
                   />
                 ) : null}

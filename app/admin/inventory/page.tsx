@@ -1,6 +1,5 @@
 import { prisma } from "@/db/prisma";
 import { requireAdmin } from "@/lib/admin";
-import { adjustStock } from "@/features/admin/actions/misc";
 import {
   AdminEmpty,
   AdminPageHeader,
@@ -9,8 +8,8 @@ import {
   AdminTd,
   AdminTh,
   AdminToolbar,
-  StatusBadge,
 } from "@/features/admin/components/admin-ui";
+import { InventoryStockControls } from "@/features/admin/components/inventory-stock-controls";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -35,38 +34,48 @@ export default async function AdminInventoryPage({
         : {}),
     },
     include: { brand: { select: { name: true } } },
-    orderBy: { stock: "asc" },
+    // Stable order so adjusting stock doesn't reshuffle rows mid-edit.
+    orderBy: [{ name: "asc" }],
     take: 100,
   });
 
+  const lowCount = products.filter((p) => p.stock <= p.lowStockThreshold).length;
+
   return (
-    <div>
+    <div className="space-y-6">
       <AdminPageHeader
-        title="Inventory"
-        description="Stock levels and quick adjustments — lowest stock first."
+        title="Απόθεμα"
+        description="Γρήγορες ρυθμίσεις stock. Η σειρά μένει σταθερή (Α–Ω) — τα χαμηλά φαίνονται με κόκκινο."
       />
+
+      {lowCount > 0 ? (
+        <div className="rounded-xl border border-coral/25 bg-coral/[0.06] px-4 py-3 text-sm text-ink">
+          <span className="font-semibold text-coral">{lowCount}</span>
+          {" "}
+          προϊόντ{lowCount === 1 ? "ο είναι" : "α είναι"} στο ή κάτω από το όριο
+          χαμηλού stock.
+        </div>
+      ) : null}
 
       <form>
         <AdminToolbar>
           <Input
             name="q"
-            placeholder="Search product or SKU…"
+            placeholder="Αναζήτηση προϊόντος ή SKU…"
             defaultValue={q ?? ""}
             className="h-10 min-w-[12rem] flex-1 border-oak/45 bg-white sm:max-w-xs"
           />
           <Button type="submit" size="sm" variant="secondary">
-            Search
+            Αναζήτηση
           </Button>
         </AdminToolbar>
       </form>
 
-      <AdminTable minWidth="640px">
+      <AdminTable minWidth="720px">
         <AdminTableHead>
           <tr>
-            <AdminTh>Product</AdminTh>
-            <AdminTh>Stock</AdminTh>
-            <AdminTh>Threshold</AdminTh>
-            <AdminTh>Adjust</AdminTh>
+            <AdminTh>Προϊόν</AdminTh>
+            <AdminTh>Ρύθμιση stock</AdminTh>
           </tr>
         </AdminTableHead>
         <tbody className="divide-y divide-oak/20">
@@ -75,64 +84,28 @@ export default async function AdminInventoryPage({
             return (
               <tr
                 key={p.id}
-                className={low ? "bg-coral/[0.04]" : "transition-colors hover:bg-bg/40"}
+                className={
+                  low ? "bg-coral/[0.04]" : "transition-colors hover:bg-bg/40"
+                }
               >
                 <AdminTd>
-                  <p className="font-medium">{p.name}</p>
+                  <p className="font-medium text-ink">{p.name}</p>
                   <p className="text-xs text-ink-muted">
                     {p.sku ?? "—"} · {p.brand.name}
                   </p>
-                  {low ? (
-                    <span className="mt-1 inline-block">
-                      <StatusBadge tone="danger">Low stock</StatusBadge>
-                    </span>
-                  ) : null}
-                </AdminTd>
-                <AdminTd className="font-medium tabular-nums">{p.stock}</AdminTd>
-                <AdminTd className="tabular-nums text-ink-muted">
-                  {p.lowStockThreshold}
                 </AdminTd>
                 <AdminTd>
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <form action={adjustStock.bind(null, p.id)}>
-                      <input type="hidden" name="delta" value="-1" />
-                      <Button type="submit" size="sm" variant="secondary">
-                        −1
-                      </Button>
-                    </form>
-                    <form action={adjustStock.bind(null, p.id)}>
-                      <input type="hidden" name="delta" value="1" />
-                      <Button type="submit" size="sm" variant="secondary">
-                        +1
-                      </Button>
-                    </form>
-                    <form
-                      action={adjustStock.bind(null, p.id)}
-                      className="flex items-center gap-1"
-                    >
-                      <Input
-                        name="delta"
-                        type="number"
-                        placeholder="±"
-                        className="h-9 w-16 border-oak/45 bg-white px-2 text-sm"
-                        required
-                      />
-                      <Input
-                        name="note"
-                        placeholder="Note"
-                        className="h-9 w-24 border-oak/45 bg-white px-2 text-sm"
-                      />
-                      <Button type="submit" size="sm">
-                        Apply
-                      </Button>
-                    </form>
-                  </div>
+                  <InventoryStockControls
+                    productId={p.id}
+                    initialStock={p.stock}
+                    lowStockThreshold={p.lowStockThreshold}
+                  />
                 </AdminTd>
               </tr>
             );
           })}
           {products.length === 0 ? (
-            <AdminEmpty colSpan={4}>No products found.</AdminEmpty>
+            <AdminEmpty colSpan={2}>Δεν βρέθηκαν προϊόντα.</AdminEmpty>
           ) : null}
         </tbody>
       </AdminTable>

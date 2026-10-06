@@ -49,11 +49,11 @@ export default async function AdminProductsPage({
   return (
     <div>
       <AdminPageHeader
-        title="Products"
-        description={`${products.length} product${products.length === 1 ? "" : "s"}`}
+        title="Προϊόντα"
+        description={`${products.length} προϊόντ${products.length === 1 ? "ο" : "α"}`}
         actions={
           <Link href="/admin/products/new">
-            <Button size="sm">New product</Button>
+            <Button size="sm">Νέο προϊόν</Button>
           </Link>
         }
       />
@@ -62,18 +62,18 @@ export default async function AdminProductsPage({
         <AdminToolbar>
           <Input
             name="q"
-            placeholder="Search name, SKU, slug…"
+            placeholder="Αναζήτηση ονόματος, SKU, slug…"
             defaultValue={q ?? ""}
             className="h-10 min-w-[12rem] flex-1 border-oak/45 bg-white sm:max-w-xs"
           />
           <AdminSelect name="status" defaultValue={status ?? ""}>
-            <option value="">All statuses</option>
+            <option value="">Όλα τα statuses</option>
             <option value="DRAFT">Draft</option>
-            <option value="ACTIVE">Active</option>
+            <option value="ACTIVE">Ενεργό</option>
             <option value="ARCHIVED">Archived</option>
           </AdminSelect>
           <Button type="submit" size="sm" variant="secondary">
-            Filter
+            Φίλτρο
           </Button>
         </AdminToolbar>
       </form>
@@ -81,9 +81,9 @@ export default async function AdminProductsPage({
       <AdminTable>
         <AdminTableHead>
           <tr>
-            <AdminTh>Product</AdminTh>
+            <AdminTh>Προϊόν</AdminTh>
             <AdminTh>Brand</AdminTh>
-            <AdminTh>Price</AdminTh>
+            <AdminTh>Τιμή</AdminTh>
             <AdminTh>Stock</AdminTh>
             <AdminTh>Status</AdminTh>
             <AdminTh />
@@ -119,12 +119,12 @@ export default async function AdminProductsPage({
                 </StatusBadge>
               </AdminTd>
               <AdminTd className="text-right">
-                <AdminTextLink href={`/admin/products/${p.id}`}>Edit</AdminTextLink>
+                <AdminTextLink href={`/admin/products/${p.id}`}>Επεξεργασία</AdminTextLink>
               </AdminTd>
             </tr>
           ))}
           {products.length === 0 ? (
-            <AdminEmpty colSpan={6}>No products found.</AdminEmpty>
+            <AdminEmpty colSpan={6}>Δεν βρέθηκαν προϊόντα.</AdminEmpty>
           ) : null}
         </tbody>
       </AdminTable>

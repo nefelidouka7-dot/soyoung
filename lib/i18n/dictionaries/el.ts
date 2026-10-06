@@ -274,6 +274,8 @@ export const el: Dictionary = {
   common: {
     addedToBag: "Προστέθηκε στο καλάθι",
     outOfStock: "Το προϊόν δεν είναι διαθέσιμο.",
+    add: "Προσθήκη",
+    added: "Προστέθηκε",
     quickAdd: "Γρήγορη προσθήκη",
     continueShopping: "Συνέχεια αγορών",
     loading: "Φόρτωση…",
@@ -335,6 +337,10 @@ export const el: Dictionary = {
     reviewsShop: "Αγόρασε",
     followUsHeadline: "Ακολούθησέ μας",
     followUsCta: "Ακολούθησε @soyoung",
+    heroPrevious: "Προηγούμενο slide",
+    heroNext: "Επόμενο slide",
+    heroGoToSlide: "Μετάβαση στο slide",
+    heroOnSale: "Έκπτωση",
   },
   listing: {
     home: "Αρχική",

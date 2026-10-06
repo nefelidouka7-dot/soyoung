@@ -1,64 +1,70 @@
-import { prisma } from "@/db/prisma";
 import { requireAdmin } from "@/lib/admin";
-import { FREE_SHIPPING_THRESHOLD, STORE_NAME } from "@/lib/utils";
-import { AdminPageHeader, AdminPanel } from "@/features/admin/components/admin-ui";
-import { SettingsForm } from "@/features/admin/components/settings-form";
-import { formatPrice } from "@/lib/utils";
+import { STORE_NAME, formatPrice } from "@/lib/utils";
+import {
+  AdminPageHeader,
+  AdminPanel,
+} from "@/features/admin/components/admin-ui";
+import { StoreSettingsForm } from "@/features/admin/components/settings-form";
+import { getStoreSettings } from "@/server/repositories/store-settings.repository";
 
 export default async function AdminSettingsPage() {
   await requireAdmin();
-
-  const settings = await prisma.siteSetting.findMany({
-    orderBy: { key: "asc" },
-  });
+  const settings = await getStoreSettings();
 
   return (
-    <div>
+    <div className="space-y-8">
       <AdminPageHeader
-        title="Settings"
-        description="Store configuration and site settings."
+        title="Ρυθμίσεις"
+        description="Ό,τι ορίζει τιμές αποστολής, αντικαταβολή και διεύθυνση παραλαβής στο shop."
       />
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-2">
-        <AdminPanel title="Store">
-          <dl className="space-y-2 text-sm">
-            <div className="flex justify-between gap-4">
-              <dt className="text-ink-muted">Store name</dt>
-              <dd className="font-medium">{STORE_NAME}</dd>
-            </div>
-            <div className="flex justify-between gap-4">
-              <dt className="text-ink-muted">Free shipping threshold</dt>
-              <dd className="font-medium">
-                {formatPrice(FREE_SHIPPING_THRESHOLD)}
-              </dd>
-            </div>
-            <p className="pt-2 text-xs text-ink-muted">
-              Store name and free shipping threshold are read from environment
-              variables (<code className="text-ink">NEXT_PUBLIC_STORE_NAME</code>
-              , <code className="text-ink">FREE_SHIPPING_THRESHOLD</code>).
-            </p>
-          </dl>
-        </AdminPanel>
-
-        <AdminPanel title="Saved site settings">
-          {settings.length === 0 ? (
-            <p className="text-sm text-ink-muted">No custom settings yet.</p>
-          ) : (
-            <ul className="divide-y divide-oak/20 text-sm">
-              {settings.map((s) => (
-                <li key={s.id} className="py-2 first:pt-0 last:pb-0">
-                  <p className="font-medium">{s.key}</p>
-                  <pre className="mt-0.5 overflow-x-auto text-xs text-ink-muted">
-                    {JSON.stringify(s.value)}
-                  </pre>
-                </li>
-              ))}
-            </ul>
-          )}
-        </AdminPanel>
+      <div className="rounded-xl border border-oak/30 bg-bg-muted/50 px-4 py-4 sm:px-5">
+        <p className="text-sm font-medium text-ink">Τι αλλάζει εδώ</p>
+        <ul className="mt-2 list-disc space-y-1.5 pl-5 text-sm leading-relaxed text-ink-muted">
+          <li>
+            Το όριο δωρεάν αποστολής φαίνεται στο μαύρο banner πάνω από το menu.
+          </li>
+          <li>
+            Το κόστος courier και η αντικαταβολή υπολογίζονται στο checkout.
+          </li>
+          <li>
+            Η διεύθυνση παραλαβής εμφανίζεται όταν ο πελάτης διαλέγει pickup.
+          </li>
+        </ul>
       </div>
 
-      <SettingsForm />
+      <div className="grid gap-4 sm:grid-cols-3">
+        <SummaryCard
+          label="Δωρεάν αποστολή από"
+          value={formatPrice(settings.freeShippingThreshold)}
+        />
+        <SummaryCard
+          label="Κόστος courier"
+          value={formatPrice(settings.standardShippingFee)}
+        />
+        <SummaryCard
+          label="Αντικαταβολή"
+          value={formatPrice(settings.codFee)}
+        />
+      </div>
+
+      <AdminPanel
+        title="Κατάστημα"
+        description={`${STORE_NAME} · νόμισμα ${settings.currency}`}
+      >
+        <StoreSettingsForm settings={settings} key={JSON.stringify(settings)} />
+      </AdminPanel>
+    </div>
+  );
+}
+
+function SummaryCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-ink/[0.08] bg-white px-4 py-3.5 shadow-[0_1px_2px_rgba(28,25,23,0.04)]">
+      <p className="text-[13px] text-ink-muted">{label}</p>
+      <p className="mt-1 text-xl font-semibold tracking-tight text-ink">
+        {value}
+      </p>
     </div>
   );
 }

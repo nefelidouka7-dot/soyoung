@@ -5,6 +5,10 @@ import { z } from "zod";
 import { ReviewStatus } from "@prisma/client";
 import { prisma } from "@/db/prisma";
 import { requireAdmin } from "@/lib/admin";
+import {
+  getStoreSettings,
+  saveStoreSettings,
+} from "@/server/repositories/store-settings.repository";
 
 export async function approveReview(id: string) {
   await requireAdmin();
@@ -68,7 +72,7 @@ export async function createCoupon(
     expiresAt: formData.get("expiresAt") || undefined,
     active: formData.get("active") === "on" || formData.get("active") === "true",
   });
-  if (!parsed.success) return { error: "Please check the coupon fields." };
+  if (!parsed.success) return { error: "Έλεγξε τα πεδία του coupon." };
 
   const {
     code,
@@ -83,7 +87,7 @@ export async function createCoupon(
   } = parsed.data;
 
   if (type === "PERCENTAGE" && value > 100) {
-    return { error: "Percentage cannot exceed 100." };
+    return { error: "Το ποσοστό δεν μπορεί να ξεπερνά το 100." };
   }
 
   try {
@@ -103,11 +107,11 @@ export async function createCoupon(
       },
     });
   } catch {
-    return { error: "Could not create coupon. Code may already exist." };
+    return { error: "Αποτυχία δημιουργίας coupon. Ο κωδικός ίσως υπάρχει ήδη." };
   }
 
   revalidatePath("/admin/discounts");
-  return { success: `Coupon ${code.trim().toUpperCase()} created.` };
+  return { success: `Το coupon ${code.trim().toUpperCase()} δημιουργήθηκε.` };
 }
 
 export async function toggleCoupon(id: string, active: boolean) {
@@ -122,66 +126,128 @@ export async function deleteCoupon(id: string) {
   revalidatePath("/admin/discounts");
 }
 
-export async function adjustStock(productId: string, formData: FormData) {
+export type StockActionState = {
+  error?: string;
+  success?: string;
+  stock?: number;
+  previousStock?: number;
+  appliedDelta?: number;
+};
+
+export async function adjustStock(
+  productId: string,
+  _prev: StockActionState,
+  formData: FormData
+): Promise<StockActionState> {
   await requireAdmin();
-  const delta = Number(formData.get("delta"));
-  if (!Number.isInteger(delta) || delta === 0) return;
+  const raw = String(formData.get("delta") ?? "").trim();
+  const delta = Number(raw);
+  if (!raw || !Number.isInteger(delta) || delta === 0) {
+    return { error: "Βάλε ακέραιο αριθμό διαφορετικό από το 0 (π.χ. +5 ή −2)." };
+  }
 
   const note = String(formData.get("note") ?? "").trim() || null;
 
-  await prisma.$transaction(async (tx) => {
-    const product = await tx.product.findUnique({ where: { id: productId } });
-    if (!product) throw new Error("Product not found");
-    const next = Math.max(0, product.stock + delta);
-    await tx.product.update({
-      where: { id: productId },
-      data: { stock: next },
-    });
-    await tx.inventoryLedger.create({
-      data: {
-        productId,
-        change: delta,
-        type: delta > 0 ? "RESTOCK" : "ADJUSTMENT",
-        note,
-      },
-    });
-  });
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      const product = await tx.product.findUnique({ where: { id: productId } });
+      if (!product) return { error: "Το προϊόν δεν βρέθηκε." } as const;
 
-  revalidatePath("/admin/inventory");
-  revalidatePath("/admin/products");
+      const previousStock = product.stock;
+      const next = Math.max(0, previousStock + delta);
+      const appliedDelta = next - previousStock;
+
+      if (appliedDelta === 0) {
+        return {
+          error: "Το stock είναι ήδη 0 — δεν μπορεί να μειωθεί άλλο.",
+          stock: previousStock,
+          previousStock,
+        } as const;
+      }
+
+      await tx.product.update({
+        where: { id: productId },
+        data: { stock: next },
+      });
+      await tx.inventoryLedger.create({
+        data: {
+          productId,
+          change: appliedDelta,
+          type: appliedDelta > 0 ? "RESTOCK" : "ADJUSTMENT",
+          note,
+        },
+      });
+
+      const sign = appliedDelta > 0 ? "+" : "";
+      return {
+        success: `${product.name}: ${previousStock} → ${next} (${sign}${appliedDelta})`,
+        stock: next,
+        previousStock,
+        appliedDelta,
+      } as const;
+    });
+
+    if ("error" in result && result.error) {
+      return result;
+    }
+
+    revalidatePath("/admin/inventory");
+    revalidatePath("/admin/products");
+    return result;
+  } catch {
+    return { error: "Κάτι πήγε στραβά. Δοκίμασε ξανά." };
+  }
 }
-
-const settingSchema = z.object({
-  key: z.string().min(1),
-  value: z.string().min(1),
-});
 
 export type SettingActionState = { error?: string; success?: string };
 
-export async function upsertSiteSetting(
+export async function saveStoreCommerceSettings(
   _prev: SettingActionState,
   formData: FormData
 ): Promise<SettingActionState> {
   await requireAdmin();
-  const parsed = settingSchema.safeParse({
-    key: formData.get("key"),
-    value: formData.get("value"),
-  });
-  if (!parsed.success) return { error: "Key and value are required." };
 
-  let value: string | number | boolean | Record<string, unknown> = parsed.data.value;
-  try {
-    value = JSON.parse(parsed.data.value) as typeof value;
-  } catch {
-    // store as plain string
+  const freeShippingThreshold = Number(formData.get("freeShippingThreshold"));
+  const standardShippingFee = Number(formData.get("standardShippingFee"));
+  const codFee = Number(formData.get("codFee"));
+
+  if (
+    ![freeShippingThreshold, standardShippingFee, codFee].every(
+      (n) => Number.isFinite(n) && n >= 0
+    )
+  ) {
+    return { error: "Έλεγξε τα ποσά — πρέπει να είναι αριθμοί ≥ 0." };
   }
 
-  await prisma.siteSetting.upsert({
-    where: { key: parsed.data.key.trim() },
-    create: { key: parsed.data.key.trim(), value },
-    update: { value },
+  const pickup = {
+    name: String(formData.get("pickupName") ?? "").trim(),
+    line1: String(formData.get("pickupLine1") ?? "").trim(),
+    line2: String(formData.get("pickupLine2") ?? "").trim() || null,
+    city: String(formData.get("pickupCity") ?? "").trim(),
+    postalCode: String(formData.get("pickupPostalCode") ?? "").trim(),
+    country: String(formData.get("pickupCountry") ?? "GR").trim() || "GR",
+    phone: String(formData.get("pickupPhone") ?? "").trim(),
+  };
+
+  if (!pickup.name || !pickup.line1 || !pickup.city || !pickup.postalCode || !pickup.phone) {
+    return {
+      error: "Συμπλήρωσε όνομα καταστήματος, διεύθυνση, πόλη, ΤΚ και τηλέφωνο.",
+    };
+  }
+
+  const current = await getStoreSettings();
+
+  await saveStoreSettings({
+    ...current,
+    freeShippingThreshold,
+    standardShippingFee,
+    codFee,
+    pickup,
   });
 
   revalidatePath("/admin/settings");
-  return { success: "Setting saved." };
+  revalidatePath("/");
+  revalidatePath("/cart");
+  revalidatePath("/checkout");
+  return { success: "Οι ρυθμίσεις αποθηκεύτηκαν και ισχύουν στο shop." };
 }

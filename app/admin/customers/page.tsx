@@ -52,20 +52,20 @@ export default async function AdminCustomersPage({
   return (
     <div>
       <AdminPageHeader
-        title="Customers"
-        description={`${customers.length} customer${customers.length === 1 ? "" : "s"}`}
+        title="Πελάτες"
+        description={`${customers.length} πελάτ${customers.length === 1 ? "ης" : "ες"}`}
       />
 
       <form>
         <AdminToolbar>
           <Input
             name="q"
-            placeholder="Search name or email…"
+            placeholder="Αναζήτηση ονόματος ή email…"
             defaultValue={q ?? ""}
             className="h-10 min-w-[12rem] flex-1 border-oak/45 bg-white sm:max-w-xs"
           />
           <Button type="submit" size="sm" variant="secondary">
-            Search
+            Αναζήτηση
           </Button>
         </AdminToolbar>
       </form>
@@ -73,12 +73,12 @@ export default async function AdminCustomersPage({
       <AdminTable minWidth="700px">
         <AdminTableHead>
           <tr>
-            <AdminTh>Customer</AdminTh>
-            <AdminTh>Orders</AdminTh>
-            <AdminTh>Total spent</AdminTh>
-            <AdminTh>Role</AdminTh>
-            <AdminTh>Active</AdminTh>
-            <AdminTh>Joined</AdminTh>
+            <AdminTh>Πελάτης</AdminTh>
+            <AdminTh>Παραγγελίες</AdminTh>
+            <AdminTh>Σύνολο αγορών</AdminTh>
+            <AdminTh>Ρόλος</AdminTh>
+            <AdminTh>Ενεργός</AdminTh>
+            <AdminTh>Εγγραφή</AdminTh>
           </tr>
         </AdminTableHead>
         <tbody className="divide-y divide-oak/20">
@@ -105,7 +105,7 @@ export default async function AdminCustomersPage({
                 </AdminTd>
                 <AdminTd>
                   <StatusBadge tone={c.active ? "success" : "danger"}>
-                    {c.active ? "Yes" : "No"}
+                    {c.active ? "Ναι" : "Όχι"}
                   </StatusBadge>
                 </AdminTd>
                 <AdminTd className="text-ink-muted">
@@ -115,7 +115,7 @@ export default async function AdminCustomersPage({
             );
           })}
           {customers.length === 0 ? (
-            <AdminEmpty colSpan={6}>No customers found.</AdminEmpty>
+            <AdminEmpty colSpan={6}>Δεν βρέθηκαν πελάτες.</AdminEmpty>
           ) : null}
         </tbody>
       </AdminTable>
