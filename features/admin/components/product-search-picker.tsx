@@ -38,13 +38,13 @@ export function ProductSearchPicker({
   const [query, setQuery] = useState("");
 
   const selected = useMemo(
-    () => προϊόντα.find((p) => p.id === value) ?? null,
+    () => products.find((p) => p.id === value) ?? null,
     [products, value]
   );
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return προϊόντα.slice(0, 80);
+    if (!q) return products.slice(0, 80);
     return products
       .filter(
         (p) =>
@@ -247,7 +247,7 @@ export function ProductSearchPicker({
               })
             )}
           </ul>
-          {query.trim() === "" && προϊόντα.length > 80 ? (
+          {query.trim() === "" && products.length > 80 ? (
             <p className="border-t border-oak/25 px-3 py-2 text-[11px] text-ink-muted">
               Εμφάνιση πρώτων 80 — πληκτρολόγησε όνομα ή κωδικό για όλα τα{" "}
               {products.length} προϊόντα.

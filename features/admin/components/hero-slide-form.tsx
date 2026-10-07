@@ -47,7 +47,7 @@ type Draft = {
   ctaSecondaryHref: string;
   imageAltEn: string;
   imageAltEl: string;
-  sortΣειρά: string;
+  sortOrder: string;
   active: boolean;
 };
 
@@ -77,7 +77,7 @@ function initialDraft(slide?: HeroSlide): Draft {
     ctaSecondaryHref: slide?.ctaSecondaryHref ?? "",
     imageAltEn: slide?.imageAltEn ?? "",
     imageAltEl: slide?.imageAltEl ?? "",
-    sortΣειρά: String(slide?.sortΣειρά ?? 0),
+    sortOrder: String(slide?.sortOrder ?? 0),
     active: slide?.active ?? true,
   };
 }
@@ -491,14 +491,14 @@ export function HeroSlideForm({
         >
           <div className="flex flex-wrap items-end gap-4">
             <div className="w-28">
-              <Label htmlFor="sortΣειρά">Σειρά</Label>
+              <Label htmlFor="sortOrder">Σειρά</Label>
               <Input
-                id="sortΣειρά"
-                name="sortΣειρά"
+                id="sortOrder"
+                name="sortOrder"
                 type="number"
                 min={0}
-                value={draft.sortΣειρά}
-                onChange={(e) => patch("sortΣειρά", e.target.value)}
+                value={draft.sortOrder}
+                onChange={(e) => patch("sortOrder", e.target.value)}
                 className={fieldClass}
               />
               <p className="mt-1 text-[11px] text-ink-muted">0 = πρώτο</p>
