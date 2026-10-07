@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/db/prisma";
-import { requireAdmin } from "@/lib/admin";
+import { requireAdmin, decimalToNumber } from "@/lib/admin";
 import {
   AdminBreadcrumb,
   AdminPageHeader,
@@ -37,6 +37,20 @@ export default async function EditProductPage({
 
   if (!product) notFound();
 
+  const serialized = {
+    ...product,
+    price: decimalToNumber(product.price),
+    compareAtPrice:
+      product.compareAtPrice != null
+        ? decimalToNumber(product.compareAtPrice)
+        : null,
+    cost: product.cost != null ? decimalToNumber(product.cost) : null,
+    variants: product.variants.map((v) => ({
+      ...v,
+      price: v.price != null ? decimalToNumber(v.price) : null,
+    })),
+  };
+
   return (
     <div>
       <AdminPageHeader
@@ -52,7 +66,7 @@ export default async function EditProductPage({
         }
       />
       <ProductForm
-        product={product}
+        product={serialized}
         brands={brands}
         categories={categories}
         skinTypes={skinTypes}

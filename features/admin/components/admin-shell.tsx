@@ -117,7 +117,8 @@ export function AdminShell({ email, logoutAction, badges, children }: Props) {
         </header>
 
         <main className="mx-auto w-full max-w-[88rem] flex-1 px-4 py-8 sm:px-6 lg:px-10 lg:py-10">
-          <div className="animate-soft-enter">{children}</div>
+          {/* Avoid transform animations here — they break position:fixed (dnd-kit overlay). */}
+          <div className="animate-admin-enter">{children}</div>
         </main>
       </div>
     </div>

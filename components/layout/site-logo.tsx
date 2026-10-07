@@ -33,8 +33,9 @@ export function SiteLogo({
         alt={STORE_NAME}
         width={width}
         height={height}
-        className="h-6 md:h-7"
-        style={{ width: "auto" }}
+        sizes={`${width}px`}
+        className="h-auto w-auto"
+        style={{ width: "auto", height: "auto" }}
         priority={priority}
       />
     </Link>

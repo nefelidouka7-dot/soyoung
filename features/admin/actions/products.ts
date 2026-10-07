@@ -392,14 +392,20 @@ export async function deleteProduct(id: string) {
   redirect("/admin/products");
 }
 
-export async function duplicateProduct(id: string) {
+export type DuplicateProductResult =
+  | { id: string; name: string }
+  | { error: string };
+
+export async function duplicateProduct(
+  id: string
+): Promise<DuplicateProductResult> {
   await requireAdmin();
   const product = await prisma.product.findUnique({
     where: { id },
     include: { skinTypes: true, images: true, variants: true },
   });
   if (!product) {
-    redirect("/admin/products");
+    return { error: "Το προϊόν δεν βρέθηκε." };
   }
 
   const baseSlug = `${product.slug}-copy`;
@@ -409,51 +415,58 @@ export async function duplicateProduct(id: string) {
     slug = `${baseSlug}-${n++}`;
   }
 
-  const created = await prisma.product.create({
-    data: {
-      name: `${product.name} (Copy)`,
-      slug,
-      sku: product.sku ? `${product.sku}-COPY-${Date.now().toString(36)}` : null,
-      shortDescription: product.shortDescription,
-      description: product.description,
-      ingredients: product.ingredients,
-      howToUse: product.howToUse,
-      productType: product.productType,
-      volume: product.volume,
-      weight: product.weight,
-      price: product.price,
-      compareAtPrice: product.compareAtPrice,
-      cost: product.cost,
-      stock: 0,
-      lowStockThreshold: product.lowStockThreshold,
-      status: "DRAFT",
-      featured: false,
-      bestSeller: false,
-      tags: product.tags,
-      seoTitle: product.seoTitle,
-      seoDescription: product.seoDescription,
-      brandId: product.brandId,
-      categoryId: product.categoryId,
-      skinTypes: product.skinTypes.length
-        ? {
-            create: product.skinTypes.map((st) => ({
-              skinTypeId: st.skinTypeId,
-            })),
-          }
-        : undefined,
-      images: product.images.length
-        ? {
-            create: product.images.map((img, i) => ({
-              url: img.url,
-              alt: img.alt,
-              sortOrder: i,
-              isPrimary: i === 0,
-            })),
-          }
-        : undefined,
-    },
-  });
+  try {
+    const created = await prisma.product.create({
+      data: {
+        name: `${product.name} (Copy)`,
+        slug,
+        sku: product.sku
+          ? `${product.sku}-COPY-${Date.now().toString(36)}`
+          : null,
+        shortDescription: product.shortDescription,
+        description: product.description,
+        ingredients: product.ingredients,
+        howToUse: product.howToUse,
+        productType: product.productType,
+        volume: product.volume,
+        weight: product.weight,
+        price: product.price,
+        compareAtPrice: product.compareAtPrice,
+        cost: product.cost,
+        stock: 0,
+        lowStockThreshold: product.lowStockThreshold,
+        status: "DRAFT",
+        featured: false,
+        bestSeller: false,
+        tags: product.tags,
+        seoTitle: product.seoTitle,
+        seoDescription: product.seoDescription,
+        brandId: product.brandId,
+        categoryId: product.categoryId,
+        skinTypes: product.skinTypes.length
+          ? {
+              create: product.skinTypes.map((st) => ({
+                skinTypeId: st.skinTypeId,
+              })),
+            }
+          : undefined,
+        images: product.images.length
+          ? {
+              create: product.images.map((img, i) => ({
+                url: img.url,
+                alt: img.alt,
+                sortOrder: i,
+                isPrimary: i === 0,
+              })),
+            }
+          : undefined,
+      },
+    });
 
-  revalidatePath("/admin/products");
-  redirect(`/admin/products/${created.id}`);
+    revalidatePath("/admin/products");
+    revalidatePath(`/admin/products/${created.id}`);
+    return { id: created.id, name: created.name };
+  } catch {
+    return { error: "Η αντιγραφή απέτυχε. Δοκίμασε ξανά." };
+  }
 }

@@ -1,8 +1,10 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ChevronDown, Plus } from "lucide-react";
+import { toast } from "sonner";
 import type {
   Brand,
   Category,
@@ -33,10 +35,18 @@ const PRODUCT_TYPE_OPTIONS = [
   ...new Set(Object.values(CATALOG_PRODUCT_TYPES).flatMap((types) => [...types])),
 ];
 
-type ProductWithRelations = Product & {
+type ProductWithRelations = Omit<
+  Product,
+  "price" | "compareAtPrice" | "cost"
+> & {
+  price: number;
+  compareAtPrice: number | null;
+  cost: number | null;
   skinTypes: { skinTypeId: string }[];
   images?: ProductImage[];
-  variants?: ProductVariant[];
+  variants?: Array<
+    Omit<ProductVariant, "price"> & { price: number | null }
+  >;
 };
 
 type VariantRow = {
@@ -553,11 +563,11 @@ export function ProductForm({
                   >
                     Καμία
                   </button>
-                  {galleryUrls.map((url) => {
+                  {galleryUrls.map((url, imgIndex) => {
                     const selected = row.image === url;
                     return (
                       <button
-                        key={url}
+                        key={`${url}-${imgIndex}`}
                         type="button"
                         onClick={() =>
                           setVariants((rows) =>
@@ -801,23 +811,68 @@ export function ProductForm({
 }
 
 export function ProductDangerActions({ productId }: { productId: string }) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [busy, setBusy] = useState<"duplicate" | "delete" | null>(null);
+
+  function handleDuplicate() {
+    setBusy("duplicate");
+    const toastId = toast.loading("Δημιουργία αντιγράφου…");
+    startTransition(async () => {
+      try {
+        const result = await duplicateProduct(productId);
+        if ("error" in result) {
+          toast.error(result.error, { id: toastId });
+          setBusy(null);
+          return;
+        }
+        toast.success(
+          `Δημιουργήθηκε αντίγραφο «${result.name}» ως πρόχειρο (stock 0).`,
+          { id: toastId, duration: 5000 }
+        );
+        router.push(`/admin/products/${result.id}`);
+      } catch {
+        toast.error("Η αντιγραφή απέτυχε. Δοκίμασε ξανά.", { id: toastId });
+        setBusy(null);
+      }
+    });
+  }
+
   return (
-    <div className="mt-2 flex flex-wrap gap-2">
-      <form action={duplicateProduct.bind(null, productId)}>
-        <Button type="submit" variant="secondary" size="sm">
-          Αντιγραφή
-        </Button>
-      </form>
-      <form
-        action={deleteProduct.bind(null, productId)}
-        onSubmit={(e) => {
-          if (!confirm("Διαγραφή αυτού του προϊόντος;")) e.preventDefault();
-        }}
+    <div className="mt-2 flex flex-wrap items-center gap-2">
+      <Button
+        type="button"
+        variant="secondary"
+        size="sm"
+        disabled={pending}
+        onClick={handleDuplicate}
       >
-        <Button type="submit" variant="ghost" size="sm" className="text-coral">
-          Διαγραφή
+        {busy === "duplicate" && pending ? "Αντιγραφή…" : "Αντιγραφή"}
+      </Button>
+      <form action={deleteProduct.bind(null, productId)}>
+        <Button
+          type="submit"
+          variant="ghost"
+          size="sm"
+          className="text-coral"
+          disabled={pending}
+          onClick={(e) => {
+            if (!confirm("Διαγραφή αυτού του προϊόντος;")) {
+              e.preventDefault();
+              return;
+            }
+            setBusy("delete");
+          }}
+        >
+          {busy === "delete" ? "Διαγραφή…" : "Διαγραφή"}
         </Button>
       </form>
+      {busy === "duplicate" && pending ? (
+        <p className="w-full text-xs text-ink-muted">
+          Αντιγράφονται στοιχεία, εικόνες και ρυθμίσεις. Το νέο προϊόν ανοίγει
+          αυτόματα ως πρόχειρο.
+        </p>
+      ) : null}
     </div>
   );
 }

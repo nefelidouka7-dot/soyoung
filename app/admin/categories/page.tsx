@@ -1,117 +1,83 @@
 import { prisma } from "@/db/prisma";
 import { requireAdmin } from "@/lib/admin";
 import {
-  AdminEmpty,
   AdminPageHeader,
   AdminPanel,
-  AdminTable,
-  AdminTableHead,
-  AdminTd,
-  AdminTh,
-  StatusBadge,
 } from "@/features/admin/components/admin-ui";
 import { CategoryForm } from "@/features/admin/components/category-form";
-import { deleteCategory } from "@/features/admin/actions/categories";
+import { CategoryList } from "@/features/admin/components/category-list";
 
 export default async function AdminCategoriesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ edit?: string }>;
+  searchParams: Promise<{ edit?: string; new?: string }>;
 }) {
   await requireAdmin();
-  const { edit } = await searchParams;
+  const { edit, new: newUnder } = await searchParams;
 
   const categories = await prisma.category.findMany({
     include: {
-      parent: true,
       _count: { select: { products: true, children: true } },
     },
     orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
   });
+
   const editing = edit ? categories.find((c) => c.id === edit) : undefined;
+  const parentForNew =
+    newUnder && !editing
+      ? categories.find((c) => c.id === newUnder)
+      : undefined;
+
+  const listItems = categories.map((c) => ({
+    id: c.id,
+    name: c.name,
+    slug: c.slug,
+    active: c.active,
+    parentId: c.parentId,
+    sortOrder: c.sortOrder,
+    productCount: c._count.products,
+    childCount: c._count.children,
+  }));
+
+  const parentOptions = categories.map((c) => ({
+    id: c.id,
+    name: c.name,
+    parentId: c.parentId,
+  }));
 
   return (
-    <div>
+    <div className="space-y-8">
       <AdminPageHeader
         title="Κατηγορίες"
-        description="Όνομα και κείμενο κάθε κατηγορίας στο κατάστημα. Οι στόχοι επιδερμίδας αλλάζουν από Στόχοι επιδερμίδας."
+        description="Το μενού του καταστήματος. Πρόσθεσε κατηγορίες, βάλε υποκατηγορίες μέσα τους, άλλαξε σειρά με drag. (Οι στόχοι επιδερμίδας είναι ξεχωριστή σελίδα.)"
       />
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <AdminPanel
-          title="Όλες οι κατηγορίες"
-          description={`${categories.length} συνολικά`}
-          flush
-        >
-          <AdminTable minWidth="0" bare>
-            <AdminTableHead>
-              <tr>
-                <AdminTh>Κατηγορία</AdminTh>
-                <AdminTh>Γονική</AdminTh>
-                <AdminTh>Σειρά</AdminTh>
-                <AdminTh>Status</AdminTh>
-                <AdminTh />
-              </tr>
-            </AdminTableHead>
-            <tbody className="divide-y divide-oak/20">
-              {categories.map((c) => (
-                <tr key={c.id} className="transition-colors hover:bg-bg/40">
-                  <AdminTd>
-                    <p className="font-medium">
-                      {c.parentId ? (
-                        <span className="mr-1 text-ink-muted">↳</span>
-                      ) : null}
-                      {c.name}
-                    </p>
-                    <p className="text-xs text-ink-muted">
-                      {c.slug} · {c._count.products} products
-                    </p>
-                  </AdminTd>
-                  <AdminTd className="text-ink-muted">
-                    {c.parent?.name ?? "—"}
-                  </AdminTd>
-                  <AdminTd className="tabular-nums">{c.sortOrder}</AdminTd>
-                  <AdminTd>
-                    <StatusBadge tone={c.active ? "success" : "neutral"}>
-                      {c.active ? "Ενεργή" : "Ανενεργή"}
-                    </StatusBadge>
-                  </AdminTd>
-                  <AdminTd className="text-right">
-                    <a
-                      href={`/admin/categories?edit=${c.id}`}
-                      className="mr-2 text-xs font-semibold text-sage-dark hover:underline"
-                    >
-                      Edit
-                    </a>
-                    {c._count.products === 0 && c._count.children === 0 ? (
-                      <form
-                        action={deleteCategory.bind(null, c.id)}
-                        className="inline"
-                      >
-                        <button
-                          type="submit"
-                          className="text-xs font-medium text-coral hover:underline"
-                        >
-                          Διαγραφή
-                        </button>
-                      </form>
-                    ) : null}
-                  </AdminTd>
-                </tr>
-              ))}
-              {categories.length === 0 ? (
-                <AdminEmpty colSpan={5}>Δεν υπάρχουν κατηγορίες ακόμα.</AdminEmpty>
-              ) : null}
-            </tbody>
-          </AdminTable>
-        </AdminPanel>
-
+      {editing ? (
         <CategoryForm
           category={editing}
-          parents={categories}
-          key={editing?.id ?? "new"}
+          parents={parentOptions}
+          key={`edit-${editing.id}`}
         />
-      </div>
+      ) : null}
+
+      <CategoryForm
+        key={parentForNew ? `new-under-${parentForNew.id}` : "new"}
+        parents={parentOptions}
+        defaultParentId={parentForNew?.id}
+        defaultOpen={categories.length === 0 || Boolean(parentForNew)}
+      />
+
+      <AdminPanel
+        className="overflow-visible"
+        title="Δομή κατηγοριών"
+        description={
+          categories.length
+            ? `${categories.length} κατηγορίες · δες το πλαίσιο «Πώς δουλεύει» πάνω από τη λίστα`
+            : "Πρόσθεσε πρώτα μία κορυφαία κατηγορία από πάνω."
+        }
+      >
+        <CategoryList categories={listItems} editingId={editing?.id} />
+      </AdminPanel>
     </div>
   );
 }

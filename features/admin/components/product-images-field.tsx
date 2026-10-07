@@ -26,7 +26,7 @@ export function ProductImagesField({
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const [items, setItems] = useState<GalleryItem[]>(() =>
-    initialUrls.map((url) => ({ key: url, url }))
+    initialUrls.map((url, i) => ({ key: `${url}#${i}`, url }))
   );
 
   const readyUrls = items
@@ -75,7 +75,7 @@ export function ProductImagesField({
               };
             }
             return {
-              key: result.url,
+              key: `${result.url}#${key}`,
               url: result.url,
               uploading: false,
             };
