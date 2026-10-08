@@ -8,6 +8,10 @@ import { prisma } from "@/db/prisma";
 import { requireAdmin } from "@/lib/admin";
 import { slugify } from "@/lib/utils";
 import { storage } from "@/lib/storage";
+import {
+  MAX_PRODUCT_IMAGE_BYTES,
+  MAX_PRODUCT_VIDEO_BYTES,
+} from "@/lib/media-limits";
 
 const productSchema = z.object({
   name: z.string().min(1, "Το όνομα είναι υποχρεωτικό"),
@@ -132,7 +136,7 @@ export async function uploadProductImage(
   if (!(entry instanceof File) || entry.size === 0) {
     return { error: "Διάλεξε μια εικόνα." };
   }
-  if (entry.size > 8 * 1024 * 1024) {
+  if (entry.size > MAX_PRODUCT_IMAGE_BYTES) {
     return { error: "Η εικόνα είναι πολύ μεγάλη (μέγ. 8MB)." };
   }
 
@@ -151,6 +155,49 @@ export async function uploadProductImage(
     }
     return { error: "Αποτυχία ανεβάσματος. Δοκίμασε άλλη εικόνα." };
   }
+}
+
+export type UploadProductVideoResult = { url?: string; error?: string };
+
+/** Upload one vertical product reel (MP4/WebM) to storage. */
+export async function uploadProductVideo(
+  formData: FormData
+): Promise<UploadProductVideoResult> {
+  await requireAdmin();
+  const entry = formData.get("file");
+  if (!(entry instanceof File) || entry.size === 0) {
+    return { error: "Διάλεξε ένα βίντεο." };
+  }
+  if (entry.size > MAX_PRODUCT_VIDEO_BYTES) {
+    return { error: "Το βίντεο είναι πολύ μεγάλο (μέγ. 25MB)." };
+  }
+
+  try {
+    const buffer = Buffer.from(await entry.arrayBuffer());
+    const stored = await storage.upload(
+      buffer,
+      entry.name || "reel.mp4",
+      entry.type || "video/mp4"
+    );
+    return { url: stored.url };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "";
+    if (
+      msg.includes("MP4") ||
+      msg.includes("not a valid video") ||
+      msg.includes("Only JPEG")
+    ) {
+      return { error: "Επίτρεπτα μόνο MP4 ή WebM." };
+    }
+    return { error: "Αποτυχία ανεβάσματος. Δοκίμασε άλλο αρχείο." };
+  }
+}
+
+/** Optional poster frame for the product reel. */
+export async function uploadProductVideoPoster(
+  formData: FormData
+): Promise<UploadProductVideoResult> {
+  return uploadProductImage(formData);
 }
 
 async function collectImageUrls(formData: FormData): Promise<string[]> {
@@ -234,6 +281,9 @@ export async function createProduct(
       error: e instanceof Error ? e.message : "Μη έγκυρο upload εικόνας.",
     };
   }
+  const videoUrl = String(formData.get("videoUrl") ?? "").trim() || null;
+  const videoPosterUrl =
+    String(formData.get("videoPosterUrl") ?? "").trim() || null;
   const variants = collectVariants(formData);
   let productId: string;
   try {
@@ -262,6 +312,8 @@ export async function createProduct(
         bestSeller: data.bestSeller,
         seoTitle: data.seoTitle,
         seoDescription: data.seoDescription,
+        videoUrl,
+        videoPosterUrl: videoUrl ? videoPosterUrl : null,
         publishedAt: data.publishedAt,
         skinTypes: data.skinTypeIds.length
           ? { create: data.skinTypeIds.map((skinTypeId) => ({ skinTypeId })) }
@@ -318,6 +370,9 @@ export async function updateProduct(
       error: e instanceof Error ? e.message : "Μη έγκυρο upload εικόνας.",
     };
   }
+  const videoUrl = String(formData.get("videoUrl") ?? "").trim() || null;
+  const videoPosterUrl =
+    String(formData.get("videoPosterUrl") ?? "").trim() || null;
   const variants = collectVariants(formData);
 
   try {
@@ -351,6 +406,8 @@ export async function updateProduct(
           bestSeller: data.bestSeller,
           seoTitle: data.seoTitle,
           seoDescription: data.seoDescription,
+          videoUrl,
+          videoPosterUrl: videoUrl ? videoPosterUrl : null,
           publishedAt: data.status === "ACTIVE" ? new Date() : null,
           skinTypes: data.skinTypeIds.length
             ? {
@@ -372,6 +429,7 @@ export async function updateProduct(
     });
     revalidatePath("/admin/products");
     revalidatePath(`/admin/products/${id}`);
+    revalidatePath(`/product/${data.slug}`);
     revalidatePath("/skincare");
     return {};
   } catch (e) {
@@ -441,6 +499,8 @@ export async function duplicateProduct(
         tags: product.tags,
         seoTitle: product.seoTitle,
         seoDescription: product.seoDescription,
+        videoUrl: product.videoUrl,
+        videoPosterUrl: product.videoPosterUrl,
         brandId: product.brandId,
         categoryId: product.categoryId,
         skinTypes: product.skinTypes.length

@@ -347,6 +347,8 @@ export type Dictionary = {
     verifiedPurchase: string;
     customer: string;
     openGallery: string;
+    watchReel: string;
+    followOnInstagram: string;
   };
   search: {
     placeholder: string;

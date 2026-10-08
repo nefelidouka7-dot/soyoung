@@ -247,6 +247,10 @@ model Product {
   tags             String[]
   seoTitle         String?
   seoDescription   String?
+  /** Vertical reel/TikTok-style MP4 (or WebM) URL — usually on R2. */
+  videoUrl         String?
+  /** Optional poster frame for the product reel (lazy load until in view). */
+  videoPosterUrl   String?
   brandId          String
   categoryId       String
   publishedAt      DateTime?

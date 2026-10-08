@@ -355,6 +355,8 @@ export const en: Dictionary = {
     verifiedPurchase: "Verified purchase",
     customer: "Customer",
     openGallery: "Open image gallery",
+    watchReel: "Watch the reel",
+    followOnInstagram: "Follow on Instagram",
   },
   search: {
     placeholder: "Search products, brands, categories…",

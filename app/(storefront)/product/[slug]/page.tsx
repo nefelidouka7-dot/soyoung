@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { findProductBySlug } from "@/server/repositories/product.repository";
 import { ProductPurchasePanel } from "@/features/products/components/product-purchase-panel";
 import { ProductAccordion } from "@/features/products/components/product-accordion";
+import { ProductReel } from "@/features/products/components/product-reel";
 import { absoluteUrl, STORE_NAME } from "@/lib/utils";
 import { getLocale, getServerDictionary } from "@/lib/i18n/server";
 
@@ -140,6 +141,18 @@ export default async function ProductPage({ params }: Props) {
           />
         </div>
       </div>
+
+      {product.videoUrl ? (
+        <ProductReel
+          src={product.videoUrl}
+          poster={
+            product.videoPosterUrl ?? product.images[0]?.url ?? null
+          }
+          productName={product.name}
+          title={dict.product.watchReel}
+          followCta={dict.product.followOnInstagram}
+        />
+      ) : null}
 
       <div className="container-page mt-12 grid gap-10 lg:mt-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] lg:gap-16">
         <div>

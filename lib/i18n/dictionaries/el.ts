@@ -412,6 +412,8 @@ export const el: Dictionary = {
     verifiedPurchase: "Επαληθευμένη αγορά",
     customer: "Πελάτης",
     openGallery: "Άνοιγμα γκαλερί",
+    watchReel: "Δες το σε video",
+    followOnInstagram: "Ακολούθησε στο Instagram",
   },
   search: {
     placeholder: "Αναζήτηση προϊόντων, μαρκών, κατηγοριών…",

@@ -23,6 +23,7 @@ import {
   type ProductActionState,
 } from "@/features/admin/actions/products";
 import { ProductImagesField } from "@/features/admin/components/product-images-field";
+import { ProductVideoField } from "@/features/admin/components/product-video-field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -132,6 +133,8 @@ export function ProductForm({
         .map((i) => i.url) ?? []
   );
   const [imagesUploading, setImagesUploading] = useState(false);
+  const [videoUploading, setVideoUploading] = useState(false);
+  const mediaUploading = imagesUploading || videoUploading;
 
   const hasTexts = Boolean(
     product?.shortDescription ||
@@ -161,7 +164,7 @@ export function ProductForm({
       action={action}
       className="space-y-5"
       onSubmit={(e) => {
-        if (imagesUploading) {
+        if (mediaUploading) {
           e.preventDefault();
         }
       }}
@@ -329,6 +332,12 @@ export function ProductForm({
             );
           }}
           onUploadingChange={setImagesUploading}
+        />
+
+        <ProductVideoField
+          initialVideoUrl={product?.videoUrl}
+          initialPosterUrl={product?.videoPosterUrl}
+          onUploadingChange={setVideoUploading}
         />
 
         <div className="flex flex-wrap gap-4">
@@ -772,8 +781,8 @@ export function ProductForm({
       <div className="sticky bottom-0 z-20 -mx-4 border-t border-ink/[0.08] bg-white/95 px-4 py-3 backdrop-blur-sm sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="hidden text-xs text-ink-muted sm:block">
-            {imagesUploading
-              ? "Περίμενε να τελειώσει το ανέβασμα των φωτογραφιών…"
+            {mediaUploading
+              ? "Περίμενε να τελειώσει το ανέβασμα media…"
               : isEdit
                 ? "Οι αλλαγές αποθηκεύονται στο κατάλογο."
                 : status === "ACTIVE"
@@ -788,15 +797,15 @@ export function ProductForm({
             </Link>
             <Button
               type="submit"
-              disabled={pending || imagesUploading}
+              disabled={pending || mediaUploading}
               size="sm"
               className="gap-1.5"
             >
-              {!isEdit && !pending && !imagesUploading ? (
+              {!isEdit && !pending && !mediaUploading ? (
                 <Plus className="h-4 w-4" strokeWidth={2} aria-hidden />
               ) : null}
-              {imagesUploading
-                ? "Ανέβασμα φωτο…"
+              {mediaUploading
+                ? "Ανέβασμα media…"
                 : pending
                   ? "Αποθήκευση…"
                   : isEdit
