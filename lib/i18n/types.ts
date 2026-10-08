@@ -348,6 +348,8 @@ export type Dictionary = {
     customer: string;
     openGallery: string;
     watchReel: string;
+    watchReelEyebrow: string;
+    watchReelSupport: string;
     followOnInstagram: string;
   };
   search: {

@@ -355,8 +355,11 @@ export const en: Dictionary = {
     verifiedPurchase: "Verified purchase",
     customer: "Customer",
     openGallery: "Open image gallery",
-    watchReel: "Watch the reel",
-    followOnInstagram: "Follow on Instagram",
+    watchReel: "See it in motion",
+    watchReelEyebrow: "From Instagram",
+    watchReelSupport:
+      "How it looks, how it spreads, how it sits on skin — in real time, from our routine.",
+    followOnInstagram: "Follow @soyoung",
   },
   search: {
     placeholder: "Search products, brands, categories…",

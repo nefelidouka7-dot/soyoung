@@ -149,7 +149,10 @@ export default async function ProductPage({ params }: Props) {
             product.videoPosterUrl ?? product.images[0]?.url ?? null
           }
           productName={product.name}
+          brandName={product.brand.name}
+          eyebrow={dict.product.watchReelEyebrow}
           title={dict.product.watchReel}
+          support={dict.product.watchReelSupport}
           followCta={dict.product.followOnInstagram}
         />
       ) : null}
