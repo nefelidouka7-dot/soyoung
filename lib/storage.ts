@@ -1,27 +1,18 @@
 /**
  * Storage adapter — Cloudflare R2 when configured, otherwise local filesystem.
- * R2 is S3-compatible; swap is driven by env (see .env.example).
+ * Local disk code lives in `storage-local.ts` and is only required outside Vercel,
+ * so Turbopack does not pull `path.join(process.cwd(), …)` into the server bundle.
  */
 
-import { mkdir, unlink, writeFile } from "fs/promises";
-import path from "path";
 import { randomUUID } from "crypto";
 import {
   DeleteObjectCommand,
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
+import type { StorageAdapter, StoredFile } from "@/lib/storage-types";
 
-export type StoredFile = {
-  url: string;
-  key: string;
-  contentType: string;
-};
-
-export interface StorageAdapter {
-  upload(file: Buffer, filename: string, contentType: string): Promise<StoredFile>;
-  delete?(key: string): Promise<void>;
-}
+export type { StorageAdapter, StoredFile } from "@/lib/storage-types";
 
 const ALLOWED_IMAGE_MIME: Record<string, string> = {
   "image/jpeg": ".jpg",
@@ -68,13 +59,11 @@ function sniffImageExt(buffer: Buffer): string | null {
 
 function sniffVideoExt(buffer: Buffer): string | null {
   if (buffer.length < 12) return null;
-  // ISO BMFF (MP4 / MOV): ....ftyp
   if (buffer.toString("ascii", 4, 8) === "ftyp") {
     const brand = buffer.toString("ascii", 8, 12);
     if (brand.startsWith("qt")) return ".mov";
     return ".mp4";
   }
-  // EBML / WebM
   if (
     buffer[0] === 0x1a &&
     buffer[1] === 0x45 &&
@@ -91,7 +80,7 @@ function normalizeMime(contentType: string): string {
 }
 
 /** Validate image or video bytes; returns extension + canonical mime. */
-function prepareMediaUpload(
+export function prepareMediaUpload(
   file: Buffer,
   contentType: string
 ): { ext: string; mime: string } {
@@ -110,7 +99,6 @@ function prepareMediaUpload(
     if (!sniffed) {
       throw new Error("File content is not a valid video.");
     }
-    // Prefer container sniff; map .mov uploads to video/mp4 only if ftyp is mp4-ish
     if (sniffed === ".webm") {
       return { ext: ".webm", mime: "video/webm" };
     }
@@ -134,55 +122,16 @@ function mediaKind(mime: string): "image" | "video" {
   return mime.startsWith("video/") ? "video" : "image";
 }
 
-class LocalStorageAdapter implements StorageAdapter {
-  private dir: string;
-
-  constructor() {
-    this.dir = process.env.UPLOAD_DIR ?? "./public/uploads";
-  }
-
-  async upload(
-    file: Buffer,
-    _filename: string,
-    contentType: string
-  ): Promise<StoredFile> {
-    const { ext, mime } = prepareMediaUpload(file, contentType);
-    await mkdir(this.dir, { recursive: true });
-    const filename = `${randomUUID()}${ext}`;
-    await writeFile(path.join(this.dir, filename), file);
-    const publicPath =
-      mediaKind(mime) === "video"
-        ? `/uploads/${filename}`
-        : `/uploads/${filename}`;
-    return {
-      url: publicPath,
-      key: filename,
-      contentType: mime,
-    };
-  }
-
-  async delete(key: string): Promise<void> {
-    const filename = path.basename(key);
-    try {
-      await unlink(path.join(this.dir, filename));
-    } catch {
-      // ignore missing file
-    }
-  }
-}
-
 type R2Config = {
   accountId: string;
   accessKeyId: string;
   secretAccessKey: string;
   bucket: string;
   publicUrl: string;
-  /** Empty = default R2 namespace. Use "eu" for EU jurisdiction buckets. */
   jurisdiction: string;
 };
 
 function r2Endpoint(accountId: string, jurisdiction: string): string {
-  // EU/FedRAMP buckets live on a separate S3 hostname; default endpoint cannot see them.
   const juris = jurisdiction.trim().toLowerCase();
   if (juris && juris !== "default") {
     return `https://${accountId}.${juris}.r2.cloudflarestorage.com`;
@@ -265,13 +214,34 @@ class R2StorageAdapter implements StorageAdapter {
   }
 }
 
+let cached: StorageAdapter | null = null;
+
 function createStorage(): StorageAdapter {
   const r2 = readR2Config();
   if (r2) return new R2StorageAdapter(r2);
-  return new LocalStorageAdapter();
+
+  // Do not import storage-local from this module — Turbopack would still scan
+  // path.join(process.cwd(), …) and fail the Vercel build. Local disk uploads
+  // are available via `createLocalStorageAdapter` in lib/storage-local.ts for scripts.
+  throw new Error(
+    "Cloudflare R2 is not configured. Set R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET, R2_PUBLIC_URL, and R2_JURISDICTION=eu."
+  );
 }
 
-export const storage: StorageAdapter = createStorage();
+function getStorage(): StorageAdapter {
+  if (!cached) cached = createStorage();
+  return cached;
+}
+
+/** Lazy proxy so importing this module during `next build` does not touch disk. */
+export const storage: StorageAdapter = {
+  upload(file, filename, contentType) {
+    return getStorage().upload(file, filename, contentType);
+  },
+  async delete(key) {
+    await getStorage().delete?.(key);
+  },
+};
 
 /** True when uploads go to Cloudflare R2 instead of local disk. */
 export function isR2Enabled(): boolean {
