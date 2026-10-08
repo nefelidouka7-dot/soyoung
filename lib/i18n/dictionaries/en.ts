@@ -355,7 +355,7 @@ export const en: Dictionary = {
     verifiedPurchase: "Verified purchase",
     customer: "Customer",
     openGallery: "Open image gallery",
-    watchReel: "See it in motion",
+    watchReel: "Get to know it better",
     watchReelEyebrow: "From Instagram",
     watchReelSupport:
       "How it looks, how it spreads, how it sits on skin — in real time, from our routine.",

@@ -412,7 +412,7 @@ export const el: Dictionary = {
     verifiedPurchase: "Επαληθευμένη αγορά",
     customer: "Πελάτης",
     openGallery: "Άνοιγμα γκαλερί",
-    watchReel: "Δες το σε κίνηση",
+    watchReel: "Γνώρισέ το καλύτερα",
     watchReelEyebrow: "Από το Instagram",
     watchReelSupport:
       "Πώς φαίνεται, πώς απλώνεται, πώς κάθεται στην επιδερμίδα — σε πραγματικό χρόνο, από τη δική μας ρουτίνα.",
