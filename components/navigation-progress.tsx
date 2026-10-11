@@ -32,10 +32,16 @@ function NavigationProgressInner() {
   const { dict } = useTranslation();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [mounted, setMounted] = useState(false);
   const [active, setActive] = useState(false);
   const [progress, setProgress] = useState(0);
   const [visible, setVisible] = useState(false);
   const fromFingerprintRef = useRef<string>("");
+
+  // Client-only: avoids hydration mismatch from locale/dict timing.
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Finish only once the destination UI has replaced the previous page
   useEffect(() => {
@@ -148,6 +154,8 @@ function NavigationProgressInner() {
     }, 280);
     return () => window.clearInterval(id);
   }, [active]);
+
+  if (!mounted) return null;
 
   return (
     <>

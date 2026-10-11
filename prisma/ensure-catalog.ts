@@ -38,6 +38,9 @@ async function backfillSecurityColumns(url: string) {
     await prisma.$executeRawUnsafe(
       `ALTER TABLE "Order" ALTER COLUMN "accessToken" SET NOT NULL`
     );
+    await prisma.$executeRawUnsafe(
+      `ALTER TABLE "Order" ALTER COLUMN "accessToken" SET DEFAULT md5(random()::text || clock_timestamp()::text)`
+    );
     await prisma.$executeRawUnsafe(`
       DO $$ BEGIN
         IF NOT EXISTS (

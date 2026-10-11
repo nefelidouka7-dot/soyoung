@@ -1,3 +1,4 @@
+import { createHash, randomBytes } from "node:crypto";
 import {
   shippingFeeFor,
   type PaymentMethod,
@@ -6,6 +7,11 @@ import {
 import type { Coupon, Prisma } from "@prisma/client";
 import { prisma } from "@/db/prisma";
 import { getStoreSettings } from "@/server/repositories/store-settings.repository";
+
+/** Opaque capability token for the checkout success page. */
+function newOrderAccessToken() {
+  return createHash("sha256").update(randomBytes(32)).digest("hex").slice(0, 32);
+}
 
 export type CheckoutLineInput = {
   productId: string;
@@ -224,7 +230,7 @@ export async function computeCartTotals(
 /** Short sequential numbers (SY-1001) — easy to say, type, and search. */
 async function allocateOrderNumber(tx: Prisma.TransactionClient) {
   const count = await tx.order.count();
-  let n = 1001 + count;
+  const n = 1001 + count;
 
   for (let i = 0; i < 50; i++) {
     const orderNumber = `SY-${n + i}`;
@@ -368,6 +374,7 @@ export async function createOrderFromCheckout(input: {
     const order = await tx.order.create({
       data: {
         orderNumber,
+        accessToken: newOrderAccessToken(),
         ...(input.userId
           ? { user: { connect: { id: input.userId } } }
           : {}),
