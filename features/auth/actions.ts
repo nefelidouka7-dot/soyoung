@@ -9,6 +9,11 @@ import { signIn, signOut } from "@/lib/auth";
 import { AuthError } from "next-auth";
 import { sendPasswordResetEmail } from "@/emails/send";
 import { clientIpFromHeaders, rateLimit } from "@/lib/rate-limit";
+import { safeCallbackUrl } from "@/lib/safe-callback-url";
+import {
+  createPasswordResetToken,
+  hashPasswordResetToken,
+} from "@/lib/password-reset-token";
 
 export type AuthErrorCode =
   | "invalidCredentials"
@@ -26,11 +31,6 @@ const registerSchema = z.object({
   firstName: z.string().min(1),
   lastName: z.string().min(1),
 });
-
-function safeCallbackUrl(value: string): string {
-  if (!value.startsWith("/") || value.startsWith("//")) return "/account";
-  return value;
-}
 
 function isFailedSignInUrl(url: string): boolean {
   return (
@@ -109,7 +109,10 @@ export async function loginAction(
   const h = await headers();
   const ip = clientIpFromHeaders(h);
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  if (!rateLimit(`login:${ip}:${email}`, 10, 60_000).ok) {
+  if (
+    !rateLimit(`login:${ip}`, 20, 15 * 60_000).ok ||
+    !rateLimit(`login:${ip}:${email}`, 10, 60_000).ok
+  ) {
     return { error: "tooManyRequests" };
   }
 
@@ -159,13 +162,13 @@ export async function requestPasswordResetAction(formData: FormData) {
   const user = await prisma.user.findUnique({ where: { email } });
   if (user) {
     await prisma.passwordResetToken.deleteMany({ where: { email } });
-    const token = crypto.randomUUID();
+    const { raw, hash } = createPasswordResetToken();
     const expires = new Date(Date.now() + 1000 * 60 * 60);
     await prisma.passwordResetToken.create({
-      data: { email, token, expires },
+      data: { email, token: hash, expires },
     });
     const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-    const resetUrl = `${base.replace(/\/$/, "")}/reset-password?token=${token}`;
+    const resetUrl = `${base.replace(/\/$/, "")}/reset-password?token=${encodeURIComponent(raw)}`;
     try {
       await sendPasswordResetEmail(email, resetUrl);
     } catch {
@@ -190,8 +193,9 @@ export async function resetPasswordAction(formData: FormData) {
   if (password.length < 8) return { error: "passwordTooShort" as const };
   if (password !== confirm) return { error: "passwordMismatch" as const };
 
+  const tokenHash = hashPasswordResetToken(token);
   const record = await prisma.passwordResetToken.findUnique({
-    where: { token },
+    where: { token: tokenHash },
   });
   if (!record || record.expires < new Date()) {
     return { error: "invalidToken" as const };
@@ -201,7 +205,7 @@ export async function resetPasswordAction(formData: FormData) {
   await prisma.$transaction([
     prisma.user.update({
       where: { email: record.email },
-      data: { passwordHash },
+      data: { passwordHash, passwordChangedAt: new Date() },
     }),
     prisma.passwordResetToken.deleteMany({ where: { email: record.email } }),
   ]);

@@ -6,6 +6,7 @@ import { ProductPurchasePanel } from "@/features/products/components/product-pur
 import { ProductAccordion } from "@/features/products/components/product-accordion";
 import { ProductReel } from "@/features/products/components/product-reel";
 import { absoluteUrl, STORE_NAME } from "@/lib/utils";
+import { serializeJsonLd } from "@/lib/json-ld";
 import { getLocale, getServerDictionary } from "@/lib/i18n/server";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -80,7 +81,7 @@ export default async function ProductPage({ params }: Props) {
     <div className="pb-16 lg:pb-24">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
       />
 
       <div className="border-b border-oak/30 bg-bg-muted/50">

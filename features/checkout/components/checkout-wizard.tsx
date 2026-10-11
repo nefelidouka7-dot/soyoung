@@ -407,7 +407,10 @@ export function CheckoutWizard({
     }
 
     clear();
-    router.push(`/checkout/success?order=${res.orderNumber}`);
+    const token = res.accessToken
+      ? `&token=${encodeURIComponent(res.accessToken)}`
+      : "";
+    router.push(`/checkout/success?order=${res.orderNumber}${token}`);
   }
 
   if (items.length === 0) {

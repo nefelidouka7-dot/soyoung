@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { prisma } from "@/db/prisma";
 import { getServerDictionary } from "@/lib/i18n/server";
@@ -7,6 +8,7 @@ import { getStoreSettings } from "@/server/repositories/store-settings.repositor
 import {
   isVivaConfigured,
   retrieveVivaTransaction,
+  vivaAmountMatchesPayment,
 } from "@/lib/payments";
 import { markOrderPaidByProviderId } from "@/server/services/checkout.service";
 import { sendOrderConfirmationEmail } from "@/emails/send";
@@ -15,6 +17,16 @@ export async function generateMetadata(): Promise<Metadata> {
   const dict = await getServerDictionary();
   return { title: dict.checkout.success.title };
 }
+
+type OrderWithRelations = NonNullable<
+  Awaited<
+    ReturnType<
+      typeof prisma.order.findFirst<{
+        include: { payment: true; items: true };
+      }>
+    >
+  >
+>;
 
 export default async function CheckoutSuccessPage({
   searchParams,
@@ -27,30 +39,27 @@ export default async function CheckoutSuccessPage({
   ]);
   const sp = await searchParams;
   const orderNumberParam = typeof sp.order === "string" ? sp.order : null;
+  const accessToken = typeof sp.token === "string" ? sp.token : null;
   // Viva Smart Checkout appends t (transaction id) + s (order code)
   const transactionId = typeof sp.t === "string" ? sp.t : null;
   const vivaOrderCode = typeof sp.s === "string" ? sp.s : null;
 
-  let order =
-    orderNumberParam
-      ? await prisma.order.findUnique({
-          where: { orderNumber: orderNumberParam },
-          include: { payment: true, items: true },
-        })
-      : null;
+  let order: OrderWithRelations | null = null;
 
-  if (!order && vivaOrderCode) {
-    const payment = await prisma.payment.findFirst({
-      where: { providerPaymentId: vivaOrderCode },
-      include: { order: { include: { payment: true, items: true } } },
+  // 1) Opaque token path (COD / mock / our redirect) — orderNumber alone is not enough.
+  if (accessToken && accessToken.length >= 10) {
+    order = await prisma.order.findFirst({
+      where: {
+        accessToken,
+        ...(orderNumberParam ? { orderNumber: orderNumberParam } : {}),
+      },
+      include: { payment: true, items: true },
     });
-    order = payment?.order ?? null;
   }
 
-  // Confirm payment when returning from Viva (webhook may arrive later).
+  // 2) Viva return path — capability is a real paid transaction (re-verified via API).
   if (
-    order &&
-    order.paymentStatus !== "PAID" &&
+    !order &&
     transactionId &&
     vivaOrderCode &&
     isVivaConfigured()
@@ -58,24 +67,41 @@ export default async function CheckoutSuccessPage({
     try {
       const tx = await retrieveVivaTransaction(transactionId);
       if (String(tx.orderCode) === vivaOrderCode && tx.statusId === "F") {
-        const paid = await markOrderPaidByProviderId(vivaOrderCode, {
-          transactionId,
-          note: `Payment confirmed via Viva.com (${transactionId})`,
+        const payment = await prisma.payment.findFirst({
+          where: { providerPaymentId: vivaOrderCode },
+          include: { order: { include: { payment: true, items: true } } },
         });
-        if (paid) {
-          await sendOrderConfirmationEmail({
-            to: order.email,
-            orderNumber: order.orderNumber,
-            total: Number(order.total),
-            items: order.items.map((item) => ({
-              productName: item.productName,
-              quantity: item.quantity,
-              howToUse: item.howToUse,
-            })),
-          });
-          order = await prisma.order.findUnique({
-            where: { id: order.id },
-            include: { payment: true, items: true },
+        if (
+          payment?.order &&
+          vivaAmountMatchesPayment(tx.amount, Number(payment.amount))
+        ) {
+          order = payment.order;
+          if (order.paymentStatus !== "PAID") {
+            const paid = await markOrderPaidByProviderId(vivaOrderCode, {
+              transactionId,
+              note: `Payment confirmed via Viva.com (${transactionId})`,
+            });
+            if (paid) {
+              await sendOrderConfirmationEmail({
+                to: order.email,
+                orderNumber: order.orderNumber,
+                total: Number(order.total),
+                items: order.items.map((item) => ({
+                  productName: item.productName,
+                  quantity: item.quantity,
+                  howToUse: item.howToUse,
+                })),
+              });
+              order = await prisma.order.findUnique({
+                where: { id: order.id },
+                include: { payment: true, items: true },
+              });
+            }
+          }
+        } else if (payment && !vivaAmountMatchesPayment(tx.amount, Number(payment.amount))) {
+          console.error("[checkout:success] amount mismatch", {
+            viva: tx.amount,
+            expected: Math.round(Number(payment.amount) * 100),
           });
         }
       }
@@ -84,9 +110,13 @@ export default async function CheckoutSuccessPage({
     }
   }
 
-  const paymentMethod = order?.payment?.method ?? "card";
-  const isPickup = order?.shippingMethod === "pickup";
-  const orderNumber = order?.orderNumber ?? orderNumberParam;
+  if (!order) {
+    notFound();
+  }
+
+  const paymentMethod = order.payment?.method ?? "card";
+  const isPickup = order.shippingMethod === "pickup";
+  const orderNumber = order.orderNumber;
 
   return (
     <div className="container-page py-16 sm:py-20">
@@ -97,50 +127,44 @@ export default async function CheckoutSuccessPage({
         <h1 className="mt-3 font-serif text-3xl text-ink sm:text-4xl">
           {dict.checkout.success.title}
         </h1>
-        {orderNumber ? (
-          <p className="mt-3 text-sm text-ink-muted">
-            {dict.checkout.success.orderNumber}:{" "}
-            <span className="font-medium text-ink">{orderNumber}</span>
-          </p>
-        ) : null}
-        {order ? (
-          <p className="mt-1 text-sm text-ink-muted">
-            {formatPrice(Number(order.total))}
-          </p>
-        ) : null}
+        <p className="mt-3 text-sm text-ink-muted">
+          {dict.checkout.success.orderNumber}:{" "}
+          <span className="font-medium text-ink">{orderNumber}</span>
+        </p>
+        <p className="mt-1 text-sm text-ink-muted">
+          {formatPrice(Number(order.total))}
+        </p>
         <p className="mx-auto mt-4 max-w-md text-sm text-ink-muted">
           {dict.checkout.success.emailSent}
         </p>
       </div>
 
-      {order ? (
-        <div className="mx-auto mt-10 max-w-xl border border-oak/40 bg-bg-muted p-5 text-left sm:p-6">
-          <h2 className="font-serif text-xl text-ink">
-            {dict.checkout.success.nextSteps}
-          </h2>
-          <div className="mt-4 space-y-3 text-sm leading-relaxed text-ink-muted">
-            {paymentMethod === "card" ? (
-              <p>{dict.checkout.success.cardPaid}</p>
-            ) : null}
-            {paymentMethod === "cod" ? (
-              <p>{dict.checkout.success.codNext}</p>
-            ) : null}
-            {isPickup ? (
-              <p className="border-t border-oak/30 pt-3">
-                {dict.checkout.success.pickupNext}
-                <span className="mt-2 block text-ink">
-                  {store.pickup.name} · {store.pickup.line1},{" "}
-                  {store.pickup.postalCode} {store.pickup.city}
-                </span>
-              </p>
-            ) : (
-              <p className="border-t border-oak/30 pt-3">
-                {dict.checkout.success.deliveryNext}
-              </p>
-            )}
-          </div>
+      <div className="mx-auto mt-10 max-w-xl border border-oak/40 bg-bg-muted p-5 text-left sm:p-6">
+        <h2 className="font-serif text-xl text-ink">
+          {dict.checkout.success.nextSteps}
+        </h2>
+        <div className="mt-4 space-y-3 text-sm leading-relaxed text-ink-muted">
+          {paymentMethod === "card" ? (
+            <p>{dict.checkout.success.cardPaid}</p>
+          ) : null}
+          {paymentMethod === "cod" ? (
+            <p>{dict.checkout.success.codNext}</p>
+          ) : null}
+          {isPickup ? (
+            <p className="border-t border-oak/30 pt-3">
+              {dict.checkout.success.pickupNext}
+              <span className="mt-2 block text-ink">
+                {store.pickup.name} · {store.pickup.line1},{" "}
+                {store.pickup.postalCode} {store.pickup.city}
+              </span>
+            </p>
+          ) : (
+            <p className="border-t border-oak/30 pt-3">
+              {dict.checkout.success.deliveryNext}
+            </p>
+          )}
         </div>
-      ) : null}
+      </div>
 
       <div className="mt-8 flex justify-center gap-3">
         <Link

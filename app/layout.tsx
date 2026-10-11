@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Manrope } from "next/font/google";
 import { Providers } from "@/components/providers";
+import { serializeJsonLd } from "@/lib/json-ld";
 import { STORE_NAME, absoluteUrl, metadataBaseUrl } from "@/lib/utils";
 import "./globals.css";
 
@@ -51,7 +52,7 @@ export default function RootLayout({
       <body className="min-h-screen antialiased">
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(orgJsonLd) }}
         />
         <Providers>{children}</Providers>
       </body>

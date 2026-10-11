@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ContactForm } from "@/features/contact/components/contact-form";
 
 export const metadata: Metadata = {
   title: "Contact",
@@ -13,33 +14,7 @@ export default function ContactPage() {
         Our customer care team is available Monday–Friday, 9:00–18:00 (EET).
         Email us at care@soyoung.example or use the form below.
       </p>
-      <form className="mt-8 max-w-md space-y-4">
-        <input
-          name="name"
-          placeholder="Name"
-          className="flex h-11 w-full border border-oak/60 bg-bg-muted px-3 text-sm"
-          required
-        />
-        <input
-          name="email"
-          type="email"
-          placeholder="Email"
-          className="flex h-11 w-full border border-oak/60 bg-bg-muted px-3 text-sm"
-          required
-        />
-        <textarea
-          name="message"
-          placeholder="How can we help?"
-          className="min-h-[120px] w-full border border-oak/60 bg-bg-muted px-3 py-2 text-sm"
-          required
-        />
-        <button
-          type="submit"
-          className="h-11 bg-coral px-6 text-xs uppercase tracking-wide font-bold text-white hover:bg-coral-dark"
-        >
-          Send message
-        </button>
-      </form>
+      <ContactForm />
     </div>
   );
 }

@@ -9,6 +9,7 @@ import type { Role } from "@prisma/client";
 declare module "next-auth" {
   interface User {
     role?: Role;
+    passwordChangedAt?: string | null;
   }
   interface Session {
     user: {
@@ -24,12 +25,13 @@ declare module "@auth/core/jwt" {
   interface JWT {
     id?: string;
     role?: Role;
+    passwordChangedAt?: string | null;
   }
 }
 
 const credentialsSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(6),
+  password: z.string().min(8),
 });
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -65,8 +67,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return {
           id: user.id,
           email: user.email,
-          name: user.name ?? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim(),
+          name:
+            user.name ??
+            `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim(),
           role: user.role,
+          passwordChangedAt: user.passwordChangedAt?.toISOString() ?? null,
         };
       },
     }),
@@ -76,34 +81,42 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        token.passwordChangedAt = user.passwordChangedAt ?? null;
         return token;
       }
 
       if (token.id) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
-          select: { role: true, active: true },
+          select: { role: true, active: true, passwordChangedAt: true },
         });
         if (!dbUser || !dbUser.active) {
-          token.role = undefined;
-          token.id = undefined;
-          return token;
+          return {};
+        }
+        const changedAt = dbUser.passwordChangedAt?.toISOString() ?? null;
+        if (
+          token.passwordChangedAt != null &&
+          changedAt != null &&
+          token.passwordChangedAt !== changedAt
+        ) {
+          return {};
+        }
+        // First login after adding passwordChangedAt: bind the claim.
+        if (token.passwordChangedAt == null && changedAt != null) {
+          token.passwordChangedAt = changedAt;
         }
         token.role = dbUser.role;
       }
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
-        if (!token.id || !token.role) {
-          // Force callers to treat as unauthenticated if revoked/disabled.
-          session.user.id = "";
-          session.user.role = "CUSTOMER";
-        } else {
-          session.user.id = token.id as string;
-          session.user.role = token.role as Role;
-        }
+      if (!token?.id || !token?.role) {
+        // Make session.user falsy so existing `if (!session?.user)` guards work.
+        const { user: _removed, ...rest } = session;
+        return rest as typeof session;
       }
+      session.user.id = token.id as string;
+      session.user.role = token.role as Role;
       return session;
     },
   },

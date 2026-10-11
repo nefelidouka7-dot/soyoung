@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { LoginPageView } from "@/features/auth/components/login-form";
 import { auth } from "@/lib/auth";
 import { getServerDictionary } from "@/lib/i18n/server";
+import { safeCallbackUrl } from "@/lib/safe-callback-url";
 import type { Role } from "@prisma/client";
 
 const ADMIN_ROLES: Role[] = ["ADMIN", "SUPER_ADMIN", "MANAGER", "EDITOR"];
@@ -10,13 +11,6 @@ const ADMIN_ROLES: Role[] = ["ADMIN", "SUPER_ADMIN", "MANAGER", "EDITOR"];
 export async function generateMetadata(): Promise<Metadata> {
   const dict = await getServerDictionary();
   return { title: dict.auth.signIn };
-}
-
-function safeCallbackUrl(value: string | undefined): string {
-  if (!value || !value.startsWith("/") || value.startsWith("//")) {
-    return "/account";
-  }
-  return value;
 }
 
 export default async function LoginPage({

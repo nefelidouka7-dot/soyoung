@@ -30,8 +30,7 @@ const nextConfig: NextConfig = {
   },
   images: {
     remotePatterns: r2RemotePatterns(),
-    dangerouslyAllowSVG: true,
-    // inline so optimized JPGs render reliably in <img>; CSP still sandboxes SVGs
+    dangerouslyAllowSVG: false,
     contentDispositionType: "inline",
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
@@ -40,6 +39,42 @@ const nextConfig: NextConfig = {
       // Product reels up to 25MB (+ form overhead)
       bodySizeLimit: "32mb",
     },
+  },
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains; preload",
+          },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "X-Frame-Options", value: "DENY" },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=(), payment=()",
+          },
+          {
+            key: "Content-Security-Policy",
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: blob: https:",
+              "font-src 'self' data:",
+              "media-src 'self' https: blob:",
+              "connect-src 'self' https:",
+              "frame-ancestors 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+              "object-src 'none'",
+            ].join("; "),
+          },
+        ],
+      },
+    ];
   },
 };
 

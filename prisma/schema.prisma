@@ -74,19 +74,21 @@ enum HeroSlideType {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  emailVerified DateTime?
-  passwordHash  String?
-  name          String?
-  firstName     String?
-  lastName      String?
-  phone         String?
-  image         String?
-  role          Role      @default(CUSTOMER)
-  active        Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                String    @id @default(cuid())
+  email             String    @unique
+  emailVerified     DateTime?
+  passwordHash      String?
+  name              String?
+  firstName         String?
+  lastName          String?
+  phone             String?
+  image             String?
+  role              Role      @default(CUSTOMER)
+  active            Boolean   @default(true)
+  /** Bumped on password reset/change so existing JWTs become invalid. */
+  passwordChangedAt DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   accounts  Account[]
   sessions  Session[]
@@ -415,6 +417,8 @@ model Address {
 model Order {
   id              String        @id @default(cuid())
   orderNumber     String        @unique
+  /** Opaque capability token for the success page (not guessable like SY-N). */
+  accessToken     String        @unique @default(cuid())
   userId          String?
   email           String
   phone           String?
@@ -453,6 +457,7 @@ model Order {
 
   @@index([userId])
   @@index([orderNumber])
+  @@index([accessToken])
   @@index([status])
   @@index([createdAt])
   @@index([email])

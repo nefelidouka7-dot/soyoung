@@ -209,6 +209,9 @@ async function collectImageUrls(formData: FormData): Promise<string[]> {
   const uploaded: string[] = [];
   for (const entry of formData.getAll("imageFiles")) {
     if (!(entry instanceof File) || entry.size === 0) continue;
+    if (entry.size > MAX_PRODUCT_IMAGE_BYTES) {
+      throw new Error("Η εικόνα είναι πολύ μεγάλη (μέγ. 8MB).");
+    }
     const buffer = Buffer.from(await entry.arrayBuffer());
     const stored = await storage.upload(
       buffer,

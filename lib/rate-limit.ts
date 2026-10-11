@@ -25,11 +25,22 @@ export function rateLimit(
   return { ok: true, remaining: limit - entry.count };
 }
 
-/** Best-effort client IP from request headers (server actions / route handlers). */
+/**
+ * Best-effort client IP. On Vercel prefer platform-provided headers so
+ * clients cannot freely spoof the first X-Forwarded-For hop.
+ */
 export function clientIpFromHeaders(headers: Headers): string {
+  const vercel = headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim();
+  if (vercel) return vercel;
+
+  const realIp = headers.get("x-real-ip")?.trim();
+  if (realIp) return realIp;
+
   const forwarded = headers.get("x-forwarded-for");
   if (forwarded) {
-    return forwarded.split(",")[0]?.trim() || "unknown";
+    // Last hop is typically the edge-added value when the platform appends.
+    const parts = forwarded.split(",").map((p) => p.trim()).filter(Boolean);
+    return parts[parts.length - 1] || "unknown";
   }
-  return headers.get("x-real-ip")?.trim() || "unknown";
+  return "unknown";
 }

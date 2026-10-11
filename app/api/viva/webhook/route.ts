@@ -2,10 +2,12 @@ import { NextResponse } from "next/server";
 import {
   getVivaWebhookVerificationKey,
   retrieveVivaTransaction,
+  vivaAmountMatchesPayment,
 } from "@/lib/payments";
 import { markOrderPaidByProviderId } from "@/server/services/checkout.service";
 import { sendOrderConfirmationEmail } from "@/emails/send";
 import { prisma } from "@/db/prisma";
+import { clientIpFromHeaders, rateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -39,6 +41,11 @@ type VivaWebhookBody = {
  * @see https://developer.viva.com/webhooks-for-payments/transaction-payment-created/
  */
 export async function POST(req: Request) {
+  const ip = clientIpFromHeaders(req.headers);
+  if (!rateLimit(`viva-webhook:${ip}`, 60, 60_000).ok) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  }
+
   let body: VivaWebhookBody;
   try {
     body = (await req.json()) as VivaWebhookBody;
@@ -66,6 +73,23 @@ export async function POST(req: Request) {
     }
     if (tx.statusId !== "F") {
       return NextResponse.json({ received: true, status: tx.statusId });
+    }
+
+    const pendingPayment = await prisma.payment.findFirst({
+      where: { providerPaymentId: orderCode },
+      select: { amount: true },
+    });
+    if (
+      !pendingPayment ||
+      !vivaAmountMatchesPayment(tx.amount, Number(pendingPayment.amount))
+    ) {
+      console.error("[viva:webhook] amount mismatch", {
+        viva: tx.amount,
+        expected: pendingPayment
+          ? Math.round(Number(pendingPayment.amount) * 100)
+          : null,
+      });
+      return NextResponse.json({ error: "Amount mismatch" }, { status: 400 });
     }
 
     const order = await markOrderPaidByProviderId(orderCode, {

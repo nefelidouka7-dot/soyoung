@@ -29,7 +29,7 @@ services:
       AUTH_URL: ${AUTH_URL:-http://localhost:3000}
       NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
-      ALLOW_MOCK_PAYMENTS: ${ALLOW_MOCK_PAYMENTS:-true}
+      ALLOW_MOCK_PAYMENTS: ${ALLOW_MOCK_PAYMENTS:-false}
       UPLOAD_DIR: /app/public/uploads
     volumes:
       - uploads_data:/app/public/uploads

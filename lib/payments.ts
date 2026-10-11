@@ -46,14 +46,24 @@ export type PaymentOrderResult = {
 };
 
 function assertMockPaymentsAllowed() {
+  // Never allow mock checkout against a shared/production database.
   const allowMock =
-    process.env.ALLOW_MOCK_PAYMENTS === "true" ||
+    process.env.ALLOW_MOCK_PAYMENTS === "true" &&
     process.env.NODE_ENV !== "production";
   if (!allowMock) {
     throw new Error(
-      "Payments are not configured. Set VIVA_CLIENT_ID, VIVA_CLIENT_SECRET, and VIVA_SOURCE_CODE in production."
+      "Payments are not configured. Set VIVA_CLIENT_ID, VIVA_CLIENT_SECRET, and VIVA_SOURCE_CODE (and VIVA_ENV=production in production)."
     );
   }
+}
+
+/** Compare Viva amount (integer cents) to our stored EUR decimal. */
+export function vivaAmountMatchesPayment(
+  vivaAmountCents: number,
+  paymentAmountEur: number
+): boolean {
+  const expected = Math.round(Number(paymentAmountEur) * 100);
+  return Number.isFinite(vivaAmountCents) && vivaAmountCents === expected;
 }
 
 let cachedToken: { value: string; expiresAt: number } | null = null;

@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/db/prisma";
 import { requireAdmin } from "@/lib/admin";
+import { MAX_PRODUCT_IMAGE_BYTES } from "@/lib/media-limits";
+import { sanitizePublicHref } from "@/lib/safe-href";
 import { storage } from "@/lib/storage";
 import {
   DEFAULT_HERO_CAROUSEL_SETTINGS,
@@ -51,6 +53,9 @@ async function resolveImageUrl(
 ): Promise<{ url: string } | { error: string }> {
   const file = formData.get("imageFile");
   if (file instanceof File && file.size > 0) {
+    if (file.size > MAX_PRODUCT_IMAGE_BYTES) {
+      return { error: "Η εικόνα είναι πολύ μεγάλη (μέγ. 8MB)." };
+    }
     try {
       const buffer = Buffer.from(await file.arrayBuffer());
       const stored = await storage.upload(
@@ -70,7 +75,15 @@ async function resolveImageUrl(
   }
 
   const url = String(formData.get("imageUrl") ?? "").trim();
-  if (url) return { url };
+  if (url) {
+    const safe = sanitizePublicHref(url);
+    // Allow relative /images/... and /uploads/... as well as https allowlist
+    if (url.startsWith("/images/") || url.startsWith("/uploads/")) {
+      return { url };
+    }
+    if (safe) return { url: safe };
+    return { error: "Μη έγκυρο URL εικόνας." };
+  }
   if (existing) return { url: existing };
   return { error: "Πρόσθεσε εικόνα hero — ανέβασε αρχείο ή επικόλλησε URL." };
 }
@@ -126,10 +139,10 @@ function toSlideData(data: z.infer<typeof slideSchema>) {
       subheadEl: data.subheadEl,
       ctaPrimaryLabelEn: data.ctaPrimaryLabelEn,
       ctaPrimaryLabelEl: data.ctaPrimaryLabelEl,
-      ctaPrimaryHref: data.ctaPrimaryHref,
+      ctaPrimaryHref: sanitizePublicHref(data.ctaPrimaryHref),
       ctaSecondaryLabelEn: data.ctaSecondaryLabelEn,
       ctaSecondaryLabelEl: data.ctaSecondaryLabelEl,
-      ctaSecondaryHref: data.ctaSecondaryHref,
+      ctaSecondaryHref: sanitizePublicHref(data.ctaSecondaryHref),
       productId: data.type === "PRODUCT" ? data.productId : null,
     },
   };
@@ -234,6 +247,7 @@ export async function saveHeroCarouselSettings(
 }
 
 export async function ensureDefaultHeroSettings() {
+  await requireAdmin();
   await prisma.siteSetting.upsert({
     where: { key: HERO_CAROUSEL_SETTING_KEY },
     create: {

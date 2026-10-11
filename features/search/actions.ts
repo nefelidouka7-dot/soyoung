@@ -1,8 +1,16 @@
 "use server";
 
+import { headers } from "next/headers";
 import { prisma } from "@/db/prisma";
+import { clientIpFromHeaders, rateLimit } from "@/lib/rate-limit";
 
 export async function searchCatalog(query: string) {
+  const h = await headers();
+  const ip = clientIpFromHeaders(h);
+  if (!rateLimit(`search:${ip}`, 40, 60_000).ok) {
+    return { products: [], brands: [], categories: [] };
+  }
+
   const q = query.trim();
   if (q.length < 2) {
     return { products: [], brands: [], categories: [] };

@@ -154,7 +154,7 @@ export async function computeCartTotals(
     const product = byId.get(item.productId);
     if (!product) throw new Error("One or more products are unavailable.");
     const variant = item.variantId
-      ? product.variants.find((v) => v.id === item.variantId)
+      ? product.variants.find((v) => v.id === item.variantId && v.active)
       : null;
     if (item.variantId && !variant) {
       throw new Error("Selected variant is unavailable.");
@@ -297,7 +297,11 @@ export async function createOrderFromCheckout(input: {
     for (const line of totals.lines) {
       if (line.variantId) {
         const variant = await tx.productVariant.findFirst({
-          where: { id: line.variantId, stock: { gte: line.quantity } },
+          where: {
+            id: line.variantId,
+            active: true,
+            stock: { gte: line.quantity },
+          },
         });
         if (!variant) {
           throw new Error(`Insufficient stock for ${line.productName}.`);
@@ -313,7 +317,11 @@ export async function createOrderFromCheckout(input: {
       if (commitStock) {
         if (line.variantId) {
           const updated = await tx.productVariant.updateMany({
-            where: { id: line.variantId, stock: { gte: line.quantity } },
+            where: {
+              id: line.variantId,
+              active: true,
+              stock: { gte: line.quantity },
+            },
             data: { stock: { decrement: line.quantity } },
           });
           if (updated.count === 0) {
@@ -441,7 +449,11 @@ export async function markOrderPaidByProviderId(
       if (!line.productId) continue;
       if (line.variantId) {
         const updated = await tx.productVariant.updateMany({
-          where: { id: line.variantId, stock: { gte: line.quantity } },
+          where: {
+            id: line.variantId,
+            active: true,
+            stock: { gte: line.quantity },
+          },
           data: { stock: { decrement: line.quantity } },
         });
         if (updated.count === 0) {

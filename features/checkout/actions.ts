@@ -48,6 +48,15 @@ export async function validateCheckoutTotals(input: {
   shippingMethod?: z.infer<typeof checkoutSchema>["shippingMethod"];
   paymentMethod?: z.infer<typeof checkoutSchema>["paymentMethod"];
 }) {
+  const h = await headers();
+  const ip = clientIpFromHeaders(h);
+  if (!rateLimit(`checkout-totals:${ip}`, 30, 60_000).ok) {
+    return {
+      ok: false as const,
+      error: "Too many requests. Please wait a moment.",
+    };
+  }
+
   try {
     const totals = await computeCartTotals(input.items, input.couponCode, {
       shippingMethod: input.shippingMethod,
@@ -133,7 +142,7 @@ export async function placeOrderAction(raw: unknown) {
 
     // Create the shop order first so we can pass orderNumber to Viva.
     const order = await createOrderFromCheckout({
-      userId: session?.user?.id,
+      userId: session?.user?.id || null,
       email: data.email,
       phone: data.phone,
       items: data.items,
@@ -152,7 +161,9 @@ export async function placeOrderAction(raw: unknown) {
         phone: data.phone,
       },
       paymentProviderId: null,
-      markPaid: !useCard,
+      // COD / offline: never mark PAID until cash is received in store/admin.
+      markPaid: false,
+      // Reserve stock for COD; card stock commits after Viva confirms payment.
       commitStock: !useCard,
     });
 
@@ -172,6 +183,7 @@ export async function placeOrderAction(raw: unknown) {
         ok: true as const,
         orderId: order.id,
         orderNumber: order.orderNumber,
+        accessToken: order.accessToken,
         checkoutUrl: null,
         mock: true,
         paymentMethod: data.paymentMethod,
@@ -215,6 +227,7 @@ export async function placeOrderAction(raw: unknown) {
         ok: true as const,
         orderId: order.id,
         orderNumber: order.orderNumber,
+        accessToken: order.accessToken,
         checkoutUrl: null,
         mock: true,
         paymentMethod: data.paymentMethod,
@@ -225,6 +238,7 @@ export async function placeOrderAction(raw: unknown) {
       ok: true as const,
       orderId: order.id,
       orderNumber: order.orderNumber,
+      accessToken: order.accessToken,
       checkoutUrl: payment.checkoutUrl,
       mock: false,
       paymentMethod: data.paymentMethod,

@@ -18,6 +18,50 @@ function runPrisma(args: string[]) {
   }
 }
 
+/**
+ * Prisma cannot add a required column with an app-level default when rows exist.
+ * Backfill Order.accessToken / User.passwordChangedAt before `db push`.
+ */
+async function backfillSecurityColumns(url: string) {
+  const prisma = new PrismaClient({
+    datasources: { db: { url } },
+  });
+  try {
+    await prisma.$executeRawUnsafe(
+      `ALTER TABLE "Order" ADD COLUMN IF NOT EXISTS "accessToken" TEXT`
+    );
+    await prisma.$executeRawUnsafe(`
+      UPDATE "Order"
+      SET "accessToken" = md5(random()::text || id || clock_timestamp()::text)
+      WHERE "accessToken" IS NULL
+    `);
+    await prisma.$executeRawUnsafe(
+      `ALTER TABLE "Order" ALTER COLUMN "accessToken" SET NOT NULL`
+    );
+    await prisma.$executeRawUnsafe(`
+      DO $$ BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint WHERE conname = 'Order_accessToken_key'
+        ) THEN
+          ALTER TABLE "Order" ADD CONSTRAINT "Order_accessToken_key" UNIQUE ("accessToken");
+        END IF;
+      END $$
+    `);
+    await prisma.$executeRawUnsafe(
+      `CREATE INDEX IF NOT EXISTS "Order_accessToken_idx" ON "Order"("accessToken")`
+    );
+    await prisma.$executeRawUnsafe(
+      `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "passwordChangedAt" TIMESTAMP(3)`
+    );
+    console.log("[ensure-catalog] Security columns backfilled (if needed).");
+  } catch (error) {
+    // Fresh DB / missing tables — db push will create them.
+    console.warn("[ensure-catalog] Security backfill skipped:", error);
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
 async function main() {
   const url = resolveDatabaseUrl();
   if (!url) {
@@ -26,6 +70,8 @@ async function main() {
     );
     return;
   }
+
+  await backfillSecurityColumns(url);
 
   console.log("[ensure-catalog] Pushing schema…");
   runPrisma(["db", "push", "--skip-generate"]);
