@@ -201,13 +201,6 @@ export default async function HomePage() {
         </section>
       )}
 
-      <p
-        className="border-b border-oak/20 bg-bg-muted/40 py-5 text-center font-serif text-[1.35rem] italic tracking-[-0.01em] text-coral sm:py-6 sm:text-[1.55rem]"
-        lang="en"
-      >
-        Get your k-glow!
-      </p>
-
       <KBeautyJourney
         bestSellers={bestSellers.products}
         newIn={newIn.products}

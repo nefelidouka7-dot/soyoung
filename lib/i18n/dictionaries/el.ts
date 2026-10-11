@@ -288,8 +288,8 @@ export const el: Dictionary = {
   home: {
     eyebrow: "Για κάθε τύπο επιδερμίδας",
     headline: "Η κορεάτικη ρουτίνα σου, ξεκινά εδώ.",
-    headlineLead: "Η κορεάτικη ρουτίνα σου,",
-    headlineTrail: "ξεκινά εδώ.",
+    headlineLead: "Get your",
+    headlineTrail: "k-glow!",
     subhead: "Ανακάλυψε τη ρουτίνα που σου μοιάζει.",
     heroCta: "Shop now",
     heroQuizCta: "Quiz επιδερμίδας",

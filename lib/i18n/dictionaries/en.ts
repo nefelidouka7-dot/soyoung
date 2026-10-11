@@ -232,8 +232,8 @@ export const en: Dictionary = {
   home: {
     eyebrow: "For every skin type",
     headline: "Your Korean routine starts here.",
-    headlineLead: "Your Korean routine",
-    headlineTrail: "starts here.",
+    headlineLead: "Get your",
+    headlineTrail: "k-glow!",
     subhead: "Discover the routine that feels like you.",
     heroCta: "Shop now",
     heroQuizCta: "Skin quiz",
