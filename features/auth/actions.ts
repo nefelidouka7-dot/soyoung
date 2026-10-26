@@ -25,9 +25,14 @@ export type AuthErrorCode =
 
 export type AuthActionState = { error?: AuthErrorCode } | null;
 
+/** bcrypt ignores everything past 72 bytes, so longer passwords are rejected. */
+const MAX_PASSWORD_BYTES = 72;
+const passwordTooLong = (password: string) =>
+  Buffer.byteLength(password, "utf8") > MAX_PASSWORD_BYTES;
+
 const registerSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(8),
+  password: z.string().min(8).refine((p) => !passwordTooLong(p)),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
 });
@@ -191,6 +196,7 @@ export async function resetPasswordAction(formData: FormData) {
 
   if (!token) return { error: "invalidToken" as const };
   if (password.length < 8) return { error: "passwordTooShort" as const };
+  if (passwordTooLong(password)) return { error: "passwordTooLong" as const };
   if (password !== confirm) return { error: "passwordMismatch" as const };
 
   const tokenHash = hashPasswordResetToken(token);
@@ -202,13 +208,20 @@ export async function resetPasswordAction(formData: FormData) {
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
-  await prisma.$transaction([
-    prisma.user.update({
+  const consumed = await prisma.$transaction(async (tx) => {
+    // Consume the token first: of two concurrent requests only one gets count 1.
+    const used = await tx.passwordResetToken.deleteMany({
+      where: { token: tokenHash, expires: { gt: new Date() } },
+    });
+    if (used.count !== 1) return false;
+    await tx.user.update({
       where: { email: record.email },
       data: { passwordHash, passwordChangedAt: new Date() },
-    }),
-    prisma.passwordResetToken.deleteMany({ where: { email: record.email } }),
-  ]);
+    });
+    await tx.passwordResetToken.deleteMany({ where: { email: record.email } });
+    return true;
+  });
+  if (!consumed) return { error: "invalidToken" as const };
 
   return { success: true as const };
 }

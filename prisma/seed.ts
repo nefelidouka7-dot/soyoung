@@ -1,6 +1,9 @@
 import { PrismaClient, type Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { config } from "dotenv";
 import { resolveDatabaseUrl } from "../db/env";
+
+config({ path: ".env" });
 
 resolveDatabaseUrl();
 
@@ -73,7 +76,32 @@ function productImage(p: {
   return "/images/product-cream.jpg";
 }
 
+/**
+ * The seed wipes every table (users and orders included) and creates accounts
+ * with well-known passwords — only ever run it against a local database.
+ */
+function assertLocalDatabase() {
+  const url = process.env.DATABASE_URL ?? "";
+  let host = "";
+  try {
+    host = new URL(url).hostname;
+  } catch {
+    /* handled below */
+  }
+  const local = ["localhost", "127.0.0.1", "::1", "db"].includes(host);
+  if (process.env.NODE_ENV === "production" || !local) {
+    if (process.env.SEED_ALLOW_REMOTE !== "true") {
+      console.error(
+        `Refusing to seed: database host "${host || "unknown"}" is not local. ` +
+          "The seed deletes all data. Set SEED_ALLOW_REMOTE=true to override."
+      );
+      process.exit(1);
+    }
+  }
+}
+
 async function main() {
+  assertLocalDatabase();
   console.log("Seeding SoYoung…");
 
   await prisma.orderTimeline.deleteMany();

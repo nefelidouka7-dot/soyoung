@@ -51,7 +51,7 @@ function AccordionRow({
   const buttonId = useId();
 
   return (
-    <div className="border-b border-oak/35 py-5 first:pt-0">
+    <div className="border-b border-oak/40 first:border-t">
       <h3 className="m-0">
         <button
           type="button"
@@ -59,19 +59,30 @@ function AccordionRow({
           aria-expanded={open}
           aria-controls={panelId}
           onClick={onToggle}
-          className="flex w-full cursor-pointer items-center justify-between gap-4 text-left"
+          className="group flex w-full cursor-pointer items-center justify-between gap-6 py-6 text-left"
         >
-          <span className="font-serif text-xl text-ink sm:text-[1.35rem]">
+          <span className="font-serif text-[1.4rem] leading-tight tracking-tight text-ink transition-colors duration-300 group-hover:text-coral-dark sm:text-[1.6rem]">
             {item.title}
           </span>
           <span
             className={cn(
-              "inline-flex h-6 w-6 shrink-0 items-center justify-center text-lg leading-none text-ink-muted transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
-              open && "rotate-45"
+              "relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full ring-1 transition-[background-color,box-shadow] duration-300",
+              open ? "bg-ink ring-ink" : "ring-oak group-hover:ring-ink/40"
             )}
             aria-hidden
           >
-            +
+            <span
+              className={cn(
+                "absolute h-px w-3.5 transition-colors duration-300",
+                open ? "bg-bg" : "bg-ink"
+              )}
+            />
+            <span
+              className={cn(
+                "absolute h-3.5 w-px transition-[rotate,background-color] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
+                open ? "rotate-90 bg-bg" : "bg-ink"
+              )}
+            />
           </span>
         </button>
       </h3>
@@ -90,7 +101,7 @@ function AccordionRow({
           <div
             className={cn(
               "transition-opacity duration-300 ease-out",
-              open ? "opacity-100 delay-75" : "opacity-0"
+              open ? "pb-7 opacity-100 delay-75" : "opacity-0"
             )}
           >
             {item.content}

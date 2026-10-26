@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/db/prisma";
-import { requireAdmin, decimalToNumber, formatAdminDate } from "@/lib/admin";
+import { requireAdmin, decimalToNumber, formatAdminDate, OPERATIONS_ROLES } from "@/lib/admin";
 import { formatPrice } from "@/lib/utils";
 import {
   AdminBreadcrumb,
@@ -16,7 +16,7 @@ export default async function AdminCustomerDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireAdmin();
+  await requireAdmin(OPERATIONS_ROLES);
   const { id } = await params;
 
   const customer = await prisma.user.findUnique({

@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { MAX_QTY_PER_LINE } from "@/lib/checkout-options";
 
 export type CartLine = {
   productId: string;
@@ -57,7 +58,10 @@ export const useCartStore = create<CartState>()(
       setHydrated: (v) => set({ hydrated: v }),
       addItem: (item) => {
         const qty = Math.max(1, item.quantity ?? 1);
-        const maxStock = Math.max(1, item.maxStock || 99);
+        const maxStock = Math.max(
+          1,
+          Math.min(MAX_QTY_PER_LINE, item.maxStock || MAX_QTY_PER_LINE)
+        );
         const items = [...get().items];
         const key = lineKey(item.productId, item.variantId);
         const idx = items.findIndex(
@@ -87,7 +91,10 @@ export const useCartStore = create<CartState>()(
           lineKey(i.productId, i.variantId) === lineKey(productId, variantId)
             ? {
                 ...i,
-                quantity: Math.max(1, Math.min(i.maxStock || 99, quantity)),
+                quantity: Math.max(
+                  1,
+                  Math.min(i.maxStock || MAX_QTY_PER_LINE, MAX_QTY_PER_LINE, quantity)
+                ),
               }
             : i
         );

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Menu, Search, ShoppingBag, User } from "lucide-react";
+import { Search, ShoppingBag, User } from "lucide-react";
 import { cn, formatPrice } from "@/lib/utils";
 import { useCommerceSettings } from "@/lib/commerce-settings";
 import { interpolate } from "@/lib/i18n";
@@ -13,19 +13,9 @@ import { useTranslation } from "@/lib/i18n/use-translation";
 import type { NavigationData } from "@/types";
 import { SiteLogo } from "@/components/layout/site-logo";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
-import { MobileNavDrawer } from "@/components/layout/mobile-nav-drawer";
-import {
-  DesktopMegaMenu,
-  type MegaPanel,
-} from "@/components/layout/desktop-mega-menu";
-import { menuText, navBar } from "@/lib/storefront-menu";
+import { NavDrawer } from "@/components/layout/nav-drawer";
 
-const MENU_ANIM_MS = 320;
-const MEGA_OPEN_MS = 40;
-
-type DesktopNavItem =
-  | { id: string; label: string; href: string }
-  | { id: string; label: string; panel: MegaPanel };
+const MENU_ANIM_MS = 520;
 
 export function SiteHeader({ navigation }: { navigation: NavigationData }) {
   const { dict, locale } = useTranslation();
@@ -35,8 +25,6 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [menuMounted, setMenuMounted] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
-  const [megaPanel, setMegaPanel] = useState<MegaPanel | null>(null);
-  const megaOpenTimer = useRef<number | null>(null);
   const cartHydrated = useCartStore((s) => s.hydrated);
   const cartCount = useCartStore((s) =>
     s.items.reduce((n, i) => n + i.quantity, 0)
@@ -44,43 +32,6 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
   const displayCount = cartHydrated ? cartCount : 0;
   const [cartBump, setCartBump] = useState(false);
   const prevCartCount = useRef<number | null>(null);
-
-  const clearMegaTimers = useCallback(() => {
-    if (megaOpenTimer.current) window.clearTimeout(megaOpenTimer.current);
-    megaOpenTimer.current = null;
-  }, []);
-
-  const closeMega = useCallback(() => {
-    clearMegaTimers();
-    setMegaPanel(null);
-  }, [clearMegaTimers]);
-
-  const openMegaPanel = useCallback(
-    (panel: MegaPanel) => {
-      clearMegaTimers();
-      megaOpenTimer.current = window.setTimeout(() => {
-        setMegaPanel(panel);
-      }, MEGA_OPEN_MS);
-    },
-    [clearMegaTimers]
-  );
-
-  useEffect(() => clearMegaTimers, [clearMegaTimers]);
-
-  const desktopNav: DesktopNavItem[] = [
-    { id: "home", label: menuText(locale, navBar.home), href: navBar.home.href },
-    { id: "highlights", label: menuText(locale, navBar.highlights), panel: "highlights" },
-    { id: "sets", label: menuText(locale, navBar.sets), href: navBar.sets.href },
-    { id: "skincare", label: menuText(locale, navBar.face), panel: "skincare" },
-    { id: "makeup", label: menuText(locale, navBar.makeup), panel: "makeup" },
-    { id: "brands", label: menuText(locale, navBar.brands), panel: "brands" },
-    { id: "quiz", label: menuText(locale, navBar.quiz), href: navBar.quiz.href },
-    { id: "care", label: menuText(locale, navBar.care), panel: "care" },
-  ];
-
-  useEffect(() => {
-    closeMega();
-  }, [pathname, closeMega]);
 
   useEffect(() => {
     if (!cartHydrated) return;
@@ -135,22 +86,18 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
   }, []);
 
   function openMobileMenu() {
-    closeMega();
     setMenuMounted(true);
     setMobileOpen(true);
   }
 
   useEffect(() => {
-    if (!mobileOpen && !megaPanel) return;
+    if (!mobileOpen) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        closeMenu();
-        closeMega();
-      }
+      if (e.key === "Escape") closeMenu();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [mobileOpen, megaPanel, closeMenu, closeMega]);
+  }, [mobileOpen, closeMenu]);
 
   function isActive(href: string) {
     return pathname === href || pathname.startsWith(`${href}/`);
@@ -178,152 +125,94 @@ export function SiteHeader({ navigation }: { navigation: NavigationData }) {
           </div>
         </div>
 
-        {/* Hover zone: only nav + mega panel — leaving closes immediately */}
-        <div
-          className="relative"
-          onMouseLeave={() => {
-            if (megaPanel) closeMega();
-          }}
+        <header
+          className={cn(
+            "relative border-b border-transparent bg-bg transition-all duration-300",
+            scrolled && "border-oak/30 bg-bg/95 backdrop-blur-sm"
+          )}
         >
-          <header
+          {/* Top bar: icons + logo */}
+          <div
             className={cn(
-              "relative border-b border-transparent bg-bg transition-all duration-300",
-              scrolled && "border-oak/30 bg-bg/95 backdrop-blur-sm",
-              megaPanel && "border-oak/25"
+              "container-page grid grid-cols-[1fr_auto_1fr] items-center gap-2 transition-[height] duration-300",
+              scrolled ? "h-14" : "h-14 md:h-16"
             )}
           >
-            {/* Top bar: icons + logo */}
-            <div
-              className={cn(
-                "container-page grid grid-cols-[1fr_auto_1fr] items-center gap-2 transition-[height] duration-300",
-                scrolled ? "h-14" : "h-14 md:h-16"
-              )}
-            >
-              <div className="flex items-center justify-start gap-0.5">
-                <button
-                  type="button"
-                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center text-ink transition-opacity hover:opacity-70 xl:hidden"
-                  onClick={openMobileMenu}
-                  aria-label={dict.nav.openMenu}
-                  aria-expanded={mobileOpen}
-                  aria-haspopup="true"
-                >
-                  <Menu className="h-5 w-5" strokeWidth={1.5} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    useUIStore.getState().openSearch();
-                  }}
-                  className="inline-flex h-10 w-10 items-center justify-center text-ink transition-opacity hover:opacity-70"
-                  aria-label={dict.nav.search}
-                >
-                  <Search className="h-5 w-5" strokeWidth={1.5} />
-                </button>
-              </div>
-
-              <SiteLogo priority className="justify-self-center" />
-
-              <div className="flex items-center justify-end gap-1.5 sm:gap-2">
-                <LocaleSwitcher className="hidden sm:inline-flex xl:hidden" />
-                <button
-                  type="button"
-                  onClick={() => {
-                    useUIStore.getState().openCart();
-                  }}
-                  className={cn(
-                    "relative inline-flex h-10 w-10 items-center justify-center text-ink transition-opacity hover:opacity-70",
-                    cartBump && "animate-cart-bump"
-                  )}
-                  aria-label={
-                    displayCount
-                      ? `${dict.nav.cart}, ${displayCount}`
-                      : dict.nav.cart
-                  }
-                >
-                  <ShoppingBag className="h-5 w-5" strokeWidth={1.5} />
-                  {displayCount > 0 ? (
-                    <span
-                      className={cn(
-                        "absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center bg-coral px-1 text-[10px] font-bold text-white",
-                        cartBump && "animate-cart-badge"
-                      )}
-                    >
-                      {displayCount > 99 ? "99+" : displayCount}
-                    </span>
-                  ) : null}
-                </button>
-                <Link
-                  href="/login"
-                  className="inline-flex h-10 w-10 items-center justify-center text-ink transition-opacity hover:opacity-70"
-                  aria-label={dict.nav.account}
-                >
-                  <User className="h-5 w-5" strokeWidth={1.5} />
-                </Link>
-              </div>
+            <div className="flex items-center justify-start gap-0.5">
+              <button
+                type="button"
+                className="group inline-flex h-10 min-w-10 shrink-0 items-center justify-center gap-2.5 text-ink lg:px-2"
+                onClick={openMobileMenu}
+                aria-label={dict.nav.openMenu}
+                aria-expanded={mobileOpen}
+                aria-haspopup="true"
+              >
+                <span className="relative block h-3.5 w-5" aria-hidden>
+                  <span className="absolute left-0 top-0 h-[1.5px] w-5 bg-current transition-[width] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:w-3" />
+                  <span className="absolute left-0 top-1/2 h-[1.5px] w-3.5 -translate-y-1/2 bg-current transition-[width] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:w-5" />
+                  <span className="absolute bottom-0 left-0 h-[1.5px] w-5 bg-current transition-[width] delay-75 duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:w-4" />
+                </span>
+                <span className="hidden text-[11px] font-semibold uppercase tracking-[0.2em] lg:inline">
+                  {locale === "el" ? "Μενού" : "Menu"}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  useUIStore.getState().openSearch();
+                }}
+                className="inline-flex h-10 w-10 items-center justify-center text-ink transition-opacity hover:opacity-70"
+                aria-label={dict.nav.search}
+              >
+                <Search className="h-5 w-5" strokeWidth={1.5} />
+              </button>
             </div>
 
-            {/* Desktop horizontal nav — Soko-style, opens on hover (xl+) */}
-            <nav
-              className="hidden border-t border-oak/15 xl:block"
-              aria-label={dict.nav.shopAll}
-            >
-              <ul className="container-page flex flex-nowrap items-center justify-center gap-x-5 py-3 2xl:gap-x-8">
-                {desktopNav.map((item) => {
-                  const activePanel =
-                    "panel" in item && megaPanel === item.panel;
-                  const activeHref = "href" in item && isActive(item.href);
+            <SiteLogo priority className="justify-self-center" />
 
-                  if ("href" in item) {
-                    return (
-                      <li key={item.id} className="shrink-0">
-                        <Link
-                          href={item.href}
-                          onClick={closeMega}
-                          onMouseEnter={closeMega}
-                          className={cn(
-                            "whitespace-nowrap text-[13px] font-semibold tracking-[-0.01em] text-ink transition-opacity hover:opacity-55 2xl:text-[14px]",
-                            activeHref && "opacity-55"
-                          )}
-                        >
-                          {item.label}
-                        </Link>
-                      </li>
-                    );
-                  }
-
-                  return (
-                    <li key={item.id} className="shrink-0">
-                      <button
-                        type="button"
-                        onMouseEnter={() => openMegaPanel(item.panel)}
-                        onFocus={() => openMegaPanel(item.panel)}
-                        aria-expanded={activePanel}
-                        aria-haspopup="true"
-                        className={cn(
-                          "whitespace-nowrap text-[13px] font-semibold tracking-[-0.01em] text-ink transition-opacity hover:opacity-55 2xl:text-[14px]",
-                          activePanel && "opacity-55"
-                        )}
-                      >
-                        {item.label}
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </nav>
-          </header>
-
-          <DesktopMegaMenu
-            navigation={navigation}
-            panel={megaPanel}
-            onClose={closeMega}
-          />
-        </div>
+            <div className="flex items-center justify-end gap-1.5 sm:gap-2">
+              <LocaleSwitcher className="hidden sm:inline-flex xl:hidden" />
+              <button
+                type="button"
+                onClick={() => {
+                  useUIStore.getState().openCart();
+                }}
+                className={cn(
+                  "relative inline-flex h-10 w-10 items-center justify-center text-ink transition-opacity hover:opacity-70",
+                  cartBump && "animate-cart-bump"
+                )}
+                aria-label={
+                  displayCount
+                    ? `${dict.nav.cart}, ${displayCount}`
+                    : dict.nav.cart
+                }
+              >
+                <ShoppingBag className="h-5 w-5" strokeWidth={1.5} />
+                {displayCount > 0 ? (
+                  <span
+                    className={cn(
+                      "absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center bg-coral px-1 text-[10px] font-bold text-white",
+                      cartBump && "animate-cart-badge"
+                    )}
+                  >
+                    {displayCount > 99 ? "99+" : displayCount}
+                  </span>
+                ) : null}
+              </button>
+              <Link
+                href="/login"
+                className="inline-flex h-10 w-10 items-center justify-center text-ink transition-opacity hover:opacity-70"
+                aria-label={dict.nav.account}
+              >
+                <User className="h-5 w-5" strokeWidth={1.5} />
+              </Link>
+            </div>
+          </div>
+        </header>
       </div>
 
       {menuMounted ? (
-        <MobileNavDrawer
+        <NavDrawer
           navigation={navigation}
           visible={menuVisible}
           onClose={closeMenu}

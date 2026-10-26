@@ -10,16 +10,18 @@ import {
   adminPageContext,
   type AdminNavBadges,
 } from "@/features/admin/components/admin-nav";
+import type { Role } from "@prisma/client";
 import { cn } from "@/lib/utils";
 
 type Props = {
   email: string;
   logoutAction: () => void | Promise<void>;
   badges?: AdminNavBadges;
+  role: Role;
   children: React.ReactNode;
 };
 
-export function AdminShell({ email, logoutAction, badges, children }: Props) {
+export function AdminShell({ email, role, logoutAction, badges, children }: Props) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const { section, title } = adminPageContext(pathname);
@@ -43,7 +45,7 @@ export function AdminShell({ email, logoutAction, badges, children }: Props) {
     <div data-admin className="flex min-h-screen font-sans text-ink">
       <aside className="sticky top-0 z-30 hidden h-screen w-64 shrink-0 flex-col border-r border-ink/[0.07] bg-[#f1efec] lg:flex">
         <SidebarBrand />
-        <AdminNav badges={badges} />
+        <AdminNav badges={badges} role={role} />
         <SidebarFooter email={email} initial={initial} logoutAction={logoutAction} />
       </aside>
 
@@ -79,7 +81,7 @@ export function AdminShell({ email, logoutAction, badges, children }: Props) {
               <X className="h-5 w-5" />
             </button>
           </div>
-          <AdminNav badges={badges} onNavigate={() => setOpen(false)} />
+          <AdminNav badges={badges} role={role} onNavigate={() => setOpen(false)} />
           <SidebarFooter email={email} initial={initial} logoutAction={logoutAction} />
         </aside>
       </div>

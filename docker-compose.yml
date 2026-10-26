@@ -4,10 +4,11 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: soyoung
-      POSTGRES_PASSWORD: soyoung
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-soyoung}
       POSTGRES_DB: soyoung
+    # Bound to localhost only: never expose Postgres on a public interface.
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -24,7 +25,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: postgresql://soyoung:soyoung@db:5432/soyoung?schema=public
+      DATABASE_URL: postgresql://soyoung:${POSTGRES_PASSWORD:-soyoung}@db:5432/soyoung?schema=public
       AUTH_SECRET: ${AUTH_SECRET:?Set AUTH_SECRET to a long random value}
       AUTH_URL: ${AUTH_URL:-http://localhost:3000}
       NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}

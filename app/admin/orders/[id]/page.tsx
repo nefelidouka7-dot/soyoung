@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/db/prisma";
-import { requireAdmin, decimalToNumber, formatAdminDate } from "@/lib/admin";
+import { requireAdmin, decimalToNumber, formatAdminDate, OPERATIONS_ROLES } from "@/lib/admin";
 import { formatPrice } from "@/lib/utils";
 import { updateOrderStatus } from "@/features/admin/actions/orders";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,7 @@ export default async function AdminOrderDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireAdmin();
+  await requireAdmin(OPERATIONS_ROLES);
   const { id } = await params;
 
   const order = await prisma.order.findUnique({

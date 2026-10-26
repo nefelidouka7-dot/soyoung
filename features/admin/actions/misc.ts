@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { ReviewStatus } from "@prisma/client";
 import { prisma } from "@/db/prisma";
-import { requireAdmin } from "@/lib/admin";
+import { requireAdmin, OPERATIONS_ROLES, OWNER_ROLES } from "@/lib/admin";
 import {
   getStoreSettings,
   saveStoreSettings,
@@ -60,7 +60,7 @@ export async function createCoupon(
   _prev: CouponActionState,
   formData: FormData
 ): Promise<CouponActionState> {
-  await requireAdmin();
+  await requireAdmin(OPERATIONS_ROLES);
   const parsed = couponSchema.safeParse({
     code: formData.get("code"),
     type: formData.get("type"),
@@ -115,13 +115,13 @@ export async function createCoupon(
 }
 
 export async function toggleCoupon(id: string, active: boolean) {
-  await requireAdmin();
+  await requireAdmin(OPERATIONS_ROLES);
   await prisma.coupon.update({ where: { id }, data: { active } });
   revalidatePath("/admin/discounts");
 }
 
 export async function deleteCoupon(id: string) {
-  await requireAdmin();
+  await requireAdmin(OPERATIONS_ROLES);
   await prisma.coupon.delete({ where: { id } });
   revalidatePath("/admin/discounts");
 }
@@ -139,7 +139,7 @@ export async function adjustStock(
   _prev: StockActionState,
   formData: FormData
 ): Promise<StockActionState> {
-  await requireAdmin();
+  await requireAdmin(OPERATIONS_ROLES);
   const raw = String(formData.get("delta") ?? "").trim();
   const delta = Number(raw);
   if (!raw || !Number.isInteger(delta) || delta === 0) {
@@ -205,7 +205,7 @@ export async function saveStoreCommerceSettings(
   _prev: SettingActionState,
   formData: FormData
 ): Promise<SettingActionState> {
-  await requireAdmin();
+  await requireAdmin(OWNER_ROLES);
 
   const freeShippingThreshold = Number(formData.get("freeShippingThreshold"));
   const standardShippingFee = Number(formData.get("standardShippingFee"));

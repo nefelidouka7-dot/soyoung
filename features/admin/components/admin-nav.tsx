@@ -17,7 +17,9 @@ import {
   Images,
   type LucideIcon,
 } from "lucide-react";
+import type { Role } from "@prisma/client";
 import { cn } from "@/lib/utils";
+import { canAccessAdminPath } from "@/lib/admin-access";
 
 type NavLink = {
   href: string;
@@ -82,16 +84,24 @@ export type AdminNavBadges = Partial<Record<string, number>>;
 export function AdminNav({
   onNavigate,
   badges,
+  role,
 }: {
   onNavigate?: () => void;
   badges?: AdminNavBadges;
+  role: Role;
 }) {
   const pathname = usePathname();
+  const visibleGroups = groups
+    .map((group) => ({
+      ...group,
+      links: group.links.filter((link) => canAccessAdminPath(role, link.href)),
+    }))
+    .filter((group) => group.links.length > 0);
 
   return (
     <nav aria-label="Διαχείριση" className="flex-1 overflow-y-auto px-3 py-5">
       <div className="space-y-6">
-        {groups.map((group) => (
+        {visibleGroups.map((group) => (
           <div key={group.label}>
             <p className="mb-1.5 px-3 text-[11px] font-medium text-ink-muted/75">
               {group.label}

@@ -32,6 +32,8 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ### Seed accounts
 
+Local development only — `npm run db:seed` wipes the database and refuses to run against a non-local host (override with `SEED_ALLOW_REMOTE=true`). Never create these accounts in production.
+
 | Role | Email | Password |
 |------|-------|----------|
 | Admin | admin@soyoung.com | Admin123! |

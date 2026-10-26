@@ -92,14 +92,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Amount mismatch" }, { status: 400 });
     }
 
-    const order = await markOrderPaidByProviderId(orderCode, {
+    const result = await markOrderPaidByProviderId(orderCode, {
       transactionId,
       note: "Payment confirmed via Viva.com",
     });
 
-    if (order) {
+    // Only the call that actually flipped the order to PAID sends the email.
+    if (result?.newlyPaid) {
       const full = await prisma.order.findUnique({
-        where: { id: order.id },
+        where: { id: result.order.id },
         include: { items: true },
       });
       if (full) {

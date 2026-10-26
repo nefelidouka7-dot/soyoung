@@ -360,6 +360,19 @@ export const en: Dictionary = {
     watchReelSupport:
       "How it looks, how it spreads, how it sits on skin — in real time, from our routine.",
     followOnInstagram: "Follow @soyoung",
+    inStock: "In stock · ships in 1–2 business days",
+    lowStock: "Only {count} left",
+    quantity: "Quantity",
+    freeShippingFrom: "Free shipping from {amount}",
+    easyReturns: "14-day returns",
+    authentic: "100% authentic K-beauty",
+    aboutTitle: "Everything you need to know",
+    aboutEyebrow: "The product",
+    keyFacts: "At a glance",
+    brand: "Brand",
+    type: "Type",
+    youMayAlsoLike: "You may also like",
+    moreFrom: "View more",
   },
   search: {
     placeholder: "Search products, brands, categories…",
@@ -404,6 +417,7 @@ export const en: Dictionary = {
     invalidResetToken: "This reset link is invalid or has expired.",
     passwordMismatch: "Passwords do not match.",
     passwordTooShort: "Password must be at least 8 characters.",
+    passwordTooLong: "Password is too long (max 72 characters).",
     errors: {
       invalidCredentials: "Invalid email or password.",
       checkDetails: "Please check your details and try again.",

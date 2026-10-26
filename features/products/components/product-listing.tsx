@@ -80,10 +80,13 @@ export default async function CategoryListingPage({
     | "newest"
     | "price-asc"
     | "price-desc";
-  const page = Number(typeof sp.page === "string" ? sp.page : 1) || 1;
+  const page = Math.min(
+    500,
+    Math.max(1, Math.floor(Number(typeof sp.page === "string" ? sp.page : 1) || 1))
+  );
   const onSale = sp.offers === "1" || sp.offers === "true";
   const inStock = sp.available === "1" || sp.available === "true";
-  const q = typeof sp.q === "string" ? sp.q : undefined;
+  const q = typeof sp.q === "string" ? sp.q.slice(0, 100) : undefined;
   const ingredientSlug =
     typeof sp.ingredient === "string" ? sp.ingredient : undefined;
 

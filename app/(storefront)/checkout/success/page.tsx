@@ -81,7 +81,7 @@ export default async function CheckoutSuccessPage({
               transactionId,
               note: `Payment confirmed via Viva.com (${transactionId})`,
             });
-            if (paid) {
+            if (paid?.newlyPaid) {
               await sendOrderConfirmationEmail({
                 to: order.email,
                 orderNumber: order.orderNumber,
@@ -92,6 +92,8 @@ export default async function CheckoutSuccessPage({
                   howToUse: item.howToUse,
                 })),
               });
+            }
+            if (paid) {
               order = await prisma.order.findUnique({
                 where: { id: order.id },
                 include: { payment: true, items: true },

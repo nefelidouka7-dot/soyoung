@@ -76,11 +76,8 @@ async function resolveImageUrl(
 
   const url = String(formData.get("imageUrl") ?? "").trim();
   if (url) {
+    // Relative /images/… and /uploads/… paths or the https allowlist (no `..`).
     const safe = sanitizePublicHref(url);
-    // Allow relative /images/... and /uploads/... as well as https allowlist
-    if (url.startsWith("/images/") || url.startsWith("/uploads/")) {
-      return { url };
-    }
     if (safe) return { url: safe };
     return { error: "Μη έγκυρο URL εικόνας." };
   }

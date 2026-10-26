@@ -134,7 +134,7 @@ export function HomeHeroCarousel({ slides, settings, labels }: Props) {
   return (
     <section
       ref={rootRef}
-      className="relative isolate touch-pan-y overflow-hidden bg-bg"
+      className="group/hero relative isolate touch-pan-y overflow-hidden bg-bg"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocusCapture={() => setPaused(true)}
@@ -166,12 +166,19 @@ export function HomeHeroCarousel({ slides, settings, labels }: Props) {
       </div>
 
       {count > 1 ? (
+        <>
+          <SideArrow side="left" onClick={prev} label={labels.previous} />
+          <SideArrow side="right" onClick={next} label={labels.next} />
+        </>
+      ) : null}
+
+      {count > 1 ? (
         <div className="pointer-events-none absolute inset-x-0 bottom-5 z-10 flex items-center justify-center gap-3 sm:bottom-8 sm:gap-4">
           <button
             type="button"
             onClick={prev}
             aria-label={labels.previous}
-            className="pointer-events-auto inline-flex h-9 w-9 items-center justify-center rounded-full bg-bg/55 text-ink shadow-[0_1px_0_rgba(28,27,26,0.06)] ring-1 ring-ink/10 backdrop-blur-[2px] transition-[background-color] hover:bg-bg/80"
+            className="pointer-events-auto inline-flex h-9 w-9 md:hidden items-center justify-center rounded-full bg-bg/55 text-ink shadow-[0_1px_0_rgba(28,27,26,0.06)] ring-1 ring-ink/10 backdrop-blur-[2px] transition-[background-color] hover:bg-bg/80"
           >
             <ChevronLeft className="h-4 w-4" strokeWidth={1.75} />
           </button>
@@ -196,13 +203,47 @@ export function HomeHeroCarousel({ slides, settings, labels }: Props) {
             type="button"
             onClick={next}
             aria-label={labels.next}
-            className="pointer-events-auto inline-flex h-9 w-9 items-center justify-center rounded-full bg-bg/55 text-ink shadow-[0_1px_0_rgba(28,27,26,0.06)] ring-1 ring-ink/10 backdrop-blur-[2px] transition-[background-color] hover:bg-bg/80"
+            className="pointer-events-auto inline-flex h-9 w-9 md:hidden items-center justify-center rounded-full bg-bg/55 text-ink shadow-[0_1px_0_rgba(28,27,26,0.06)] ring-1 ring-ink/10 backdrop-blur-[2px] transition-[background-color] hover:bg-bg/80"
           >
             <ChevronRight className="h-4 w-4" strokeWidth={1.75} />
           </button>
         </div>
       ) : null}
     </section>
+  );
+}
+
+/** Tablet/desktop arrows, vertically centred on the slide edges. */
+function SideArrow({
+  side,
+  onClick,
+  label,
+}: {
+  side: "left" | "right";
+  onClick: () => void;
+  label: string;
+}) {
+  const Icon = side === "left" ? ChevronLeft : ChevronRight;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      className={cn(
+        "group/arrow absolute top-1/2 z-10 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-bg/70 text-ink opacity-80 shadow-[0_10px_30px_-12px_rgba(28,27,26,0.35)] ring-1 ring-ink/10 backdrop-blur-md transition-[opacity,background-color,scale] duration-300 ease-out hover:scale-105 hover:bg-bg hover:opacity-100 focus-visible:opacity-100 group-hover/hero:opacity-100 md:inline-flex lg:h-14 lg:w-14",
+        side === "left" ? "left-4 lg:left-6" : "right-4 lg:right-6"
+      )}
+    >
+      <Icon
+        className={cn(
+          "h-5 w-5 transition-transform duration-300 ease-out",
+          side === "left"
+            ? "group-hover/arrow:-translate-x-0.5"
+            : "group-hover/arrow:translate-x-0.5"
+        )}
+        strokeWidth={1.5}
+      />
+    </button>
   );
 }
 
@@ -235,7 +276,7 @@ function HeroSlide({
       <div className="hero-grain pointer-events-none absolute inset-0" aria-hidden />
 
       <div className="container-page relative flex min-h-[min(86svh,38rem)] flex-col items-center justify-center pb-16 pt-24 text-center sm:min-h-[88svh] sm:items-start sm:pb-24 sm:pt-28 sm:text-left lg:min-h-[min(90svh,46rem)]">
-        <div className="w-full max-w-[22rem] sm:max-w-[34rem]">
+        <div className="w-full max-w-[22rem] sm:max-w-[34rem] md:ml-14 lg:ml-16 2xl:ml-0">
           {slide.eyebrow ? (
             <div className="flex items-center justify-center gap-3 sm:justify-start">
               <span className="h-px w-8 bg-oak sm:w-14" aria-hidden />

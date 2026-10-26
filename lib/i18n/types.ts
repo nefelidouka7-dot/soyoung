@@ -351,6 +351,19 @@ export type Dictionary = {
     watchReelEyebrow: string;
     watchReelSupport: string;
     followOnInstagram: string;
+    inStock: string;
+    lowStock: string;
+    quantity: string;
+    freeShippingFrom: string;
+    easyReturns: string;
+    authentic: string;
+    aboutTitle: string;
+    aboutEyebrow: string;
+    keyFacts: string;
+    brand: string;
+    type: string;
+    youMayAlsoLike: string;
+    moreFrom: string;
   };
   search: {
     placeholder: string;
@@ -394,6 +407,7 @@ export type Dictionary = {
     invalidResetToken: string;
     passwordMismatch: string;
     passwordTooShort: string;
+    passwordTooLong: string;
     errors: {
       invalidCredentials: string;
       checkDetails: string;

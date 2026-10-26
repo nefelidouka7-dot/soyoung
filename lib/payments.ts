@@ -57,6 +57,11 @@ function assertMockPaymentsAllowed() {
   }
 }
 
+/** Throws when card checkout can't be taken — call before creating the order. */
+export function assertCardPaymentsAvailable() {
+  if (!isVivaConfigured()) assertMockPaymentsAllowed();
+}
+
 /** Compare Viva amount (integer cents) to our stored EUR decimal. */
 export function vivaAmountMatchesPayment(
   vivaAmountCents: number,

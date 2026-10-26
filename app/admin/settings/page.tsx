@@ -1,4 +1,4 @@
-import { requireAdmin } from "@/lib/admin";
+import { requireAdmin, OWNER_ROLES } from "@/lib/admin";
 import { STORE_NAME, formatPrice } from "@/lib/utils";
 import {
   AdminPageHeader,
@@ -8,7 +8,7 @@ import { StoreSettingsForm } from "@/features/admin/components/settings-form";
 import { getStoreSettings } from "@/server/repositories/store-settings.repository";
 
 export default async function AdminSettingsPage() {
-  await requireAdmin();
+  await requireAdmin(OWNER_ROLES);
   const settings = await getStoreSettings();
 
   return (

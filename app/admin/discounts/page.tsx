@@ -1,6 +1,6 @@
 import { TicketPercent } from "lucide-react";
 import { prisma } from "@/db/prisma";
-import { requireAdmin, decimalToNumber, formatAdminDate } from "@/lib/admin";
+import { requireAdmin, decimalToNumber, formatAdminDate, OPERATIONS_ROLES } from "@/lib/admin";
 import { cn, formatPrice } from "@/lib/utils";
 import {
   AdminPageHeader,
@@ -43,7 +43,7 @@ const HEALTH_TONE: Record<
 };
 
 export default async function AdminDiscountsPage() {
-  await requireAdmin();
+  await requireAdmin(OPERATIONS_ROLES);
 
   const coupons = await prisma.coupon.findMany({
     orderBy: { createdAt: "desc" },

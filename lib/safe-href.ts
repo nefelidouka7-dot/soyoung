@@ -10,6 +10,7 @@ export function sanitizePublicHref(
   if (!raw) return null;
 
   if (raw.startsWith("/") && !raw.startsWith("//") && !raw.includes("\\")) {
+    if (raw.split(/[/?]/).includes("..")) return null;
     if (/^\/[\w\-./?=&%~+]*$/.test(raw)) return raw;
     return null;
   }
@@ -19,6 +20,21 @@ export function sanitizePublicHref(
     if (url.protocol !== "https:") return null;
     const allowed = allowedHttpsHosts();
     if (!allowed.has(url.hostname.toLowerCase())) return null;
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
+/** Any https URL without embedded credentials — for links to third-party sites (e.g. a brand's website). */
+export function sanitizeExternalHttpsUrl(
+  value: string | null | undefined
+): string | null {
+  const raw = value?.trim();
+  if (!raw) return null;
+  try {
+    const url = new URL(raw);
+    if (url.protocol !== "https:" || url.username || url.password) return null;
     return url.toString();
   } catch {
     return null;

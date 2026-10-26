@@ -1,5 +1,5 @@
 import { prisma } from "@/db/prisma";
-import { requireAdmin } from "@/lib/admin";
+import { requireAdmin, OPERATIONS_ROLES } from "@/lib/admin";
 import {
   AdminEmpty,
   AdminPageHeader,
@@ -18,7 +18,7 @@ export default async function AdminInventoryPage({
 }: {
   searchParams: Promise<{ q?: string }>;
 }) {
-  await requireAdmin();
+  await requireAdmin(OPERATIONS_ROLES);
   const { q } = await searchParams;
 
   const products = await prisma.product.findMany({

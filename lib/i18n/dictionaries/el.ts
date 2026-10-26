@@ -417,6 +417,19 @@ export const el: Dictionary = {
     watchReelSupport:
       "Πώς φαίνεται, πώς απλώνεται, πώς κάθεται στην επιδερμίδα — σε πραγματικό χρόνο, από τη δική μας ρουτίνα.",
     followOnInstagram: "Ακολούθησε @soyoung",
+    inStock: "Σε απόθεμα · αποστολή σε 1–2 εργάσιμες",
+    lowStock: "Μόνο {count} τεμάχια διαθέσιμα",
+    quantity: "Ποσότητα",
+    freeShippingFrom: "Δωρεάν αποστολή από {amount}",
+    easyReturns: "Επιστροφές εντός 14 ημερών",
+    authentic: "100% αυθεντικά K-beauty",
+    aboutTitle: "Όλα όσα πρέπει να ξέρεις",
+    aboutEyebrow: "Το προϊόν",
+    keyFacts: "Με μια ματιά",
+    brand: "Μάρκα",
+    type: "Τύπος",
+    youMayAlsoLike: "Μπορεί να σου αρέσουν",
+    moreFrom: "Περισσότερα",
   },
   search: {
     placeholder: "Αναζήτηση προϊόντων, μαρκών, κατηγοριών…",
@@ -462,6 +475,7 @@ export const el: Dictionary = {
     invalidResetToken: "Ο σύνδεσμος δεν είναι έγκυρος ή έχει λήξει.",
     passwordMismatch: "Οι κωδικοί δεν ταιριάζουν.",
     passwordTooShort: "Ο κωδικός πρέπει να έχει τουλάχιστον 8 χαρακτήρες.",
+    passwordTooLong: "Ο κωδικός είναι πολύ μεγάλος (έως 72 χαρακτήρες).",
     errors: {
       invalidCredentials: "Λάθος email ή κωδικός.",
       checkDetails: "Έλεγξε τα στοιχεία σου και δοκίμασε ξανά.",

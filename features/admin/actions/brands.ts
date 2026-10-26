@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/db/prisma";
+import { sanitizeExternalHttpsUrl, sanitizePublicHref } from "@/lib/safe-href";
 import { requireAdmin } from "@/lib/admin";
 import { slugify } from "@/lib/utils";
 
@@ -20,6 +21,21 @@ const brandSchema = z.object({
   featured: z.coerce.boolean().optional(),
   active: z.coerce.boolean().optional(),
 });
+
+/** Rejects unsafe URLs; `undefined` means a field was invalid. */
+function safeBrandUrls(data: z.infer<typeof brandSchema>) {
+  const website = data.website?.trim() ? sanitizeExternalHttpsUrl(data.website) : null;
+  const logo = data.logo?.trim() ? sanitizePublicHref(data.logo) : null;
+  const banner = data.banner?.trim() ? sanitizePublicHref(data.banner) : null;
+  if (
+    (data.website?.trim() && !website) ||
+    (data.logo?.trim() && !logo) ||
+    (data.banner?.trim() && !banner)
+  ) {
+    return undefined;
+  }
+  return { website, logo, banner };
+}
 
 export type BrandActionState = {
   error?: string;
@@ -40,14 +56,17 @@ function parseBrand(formData: FormData) {
   });
 }
 
-function toBrandData(data: z.infer<typeof brandSchema>) {
+function toBrandData(
+  data: z.infer<typeof brandSchema>,
+  urls: NonNullable<ReturnType<typeof safeBrandUrls>>
+) {
   return {
     name: data.name.trim(),
     slug: data.slug?.trim() ? slugify(data.slug) : slugify(data.name),
     description: data.description?.trim() || null,
-    logo: data.logo?.trim() || null,
-    banner: data.banner?.trim() || null,
-    website: data.website?.trim() || null,
+    logo: urls.logo,
+    banner: urls.banner,
+    website: urls.website,
     seoTitle: data.seoTitle?.trim() || null,
     seoDescription: data.seoDescription?.trim() || null,
     featured: Boolean(data.featured),
@@ -62,9 +81,11 @@ export async function createBrand(
   await requireAdmin();
   const parsed = parseBrand(formData);
   if (!parsed.success) return { error: "Έλεγξε τα πεδία του brand." };
+  const urls = safeBrandUrls(parsed.data);
+  if (!urls) return { error: "Μη έγκυρο URL (website: μόνο https://)." };
 
   try {
-    await prisma.brand.create({ data: toBrandData(parsed.data) });
+    await prisma.brand.create({ data: toBrandData(parsed.data, urls) });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
       return { error: "Υπάρχει ήδη brand με αυτό το slug." };
@@ -83,9 +104,14 @@ export async function updateBrand(
   await requireAdmin();
   const parsed = parseBrand(formData);
   if (!parsed.success) return { error: "Έλεγξε τα πεδία του brand." };
+  const urls = safeBrandUrls(parsed.data);
+  if (!urls) return { error: "Μη έγκυρο URL (website: μόνο https://)." };
 
   try {
-    await prisma.brand.update({ where: { id }, data: toBrandData(parsed.data) });
+    await prisma.brand.update({
+      where: { id },
+      data: toBrandData(parsed.data, urls),
+    });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
       return { error: "Υπάρχει ήδη brand με αυτό το slug." };

@@ -8,10 +8,21 @@ import type { Coupon, Prisma } from "@prisma/client";
 import { prisma } from "@/db/prisma";
 import { getStoreSettings } from "@/server/repositories/store-settings.repository";
 
+/**
+ * Round euros to cents. Totals must match the Decimal(10,2) stored on the order
+ * and the integer cents charged by Viva, or paid orders fail the amount check.
+ */
+function roundMoney(n: number) {
+  return Math.round((n + Number.EPSILON) * 100) / 100;
+}
+
 /** Opaque capability token for the checkout success page. */
 function newOrderAccessToken() {
   return createHash("sha256").update(randomBytes(32)).digest("hex").slice(0, 32);
 }
+
+/** Messages from this error are safe to show to shoppers; anything else is logged only. */
+export class CheckoutError extends Error {}
 
 export type CheckoutLineInput = {
   productId: string;
@@ -62,10 +73,17 @@ export type CouponResolution =
       minOrderAmount?: number;
     };
 
+export type CouponLine = {
+  productId: string;
+  /** The product's category and its parent category. */
+  categoryIds: string[];
+  totalPrice: number;
+};
+
 export async function resolveCoupon(
   code: string | null | undefined,
   subtotal: number,
-  options?: { productIds?: string[]; categoryIds?: string[] }
+  lines: CouponLine[]
 ): Promise<CouponResolution | null> {
   const trimmed = code?.trim();
   if (!trimmed) return null;
@@ -94,27 +112,31 @@ export async function resolveCoupon(
     return { ok: false, reason: "min_order", minOrderAmount: minOrder };
   }
 
-  if (coupon.productIds.length > 0) {
-    const hit = options?.productIds?.some((id) => coupon.productIds.includes(id));
-    if (!hit) return { ok: false, reason: "not_found" };
-  }
-  if (coupon.categoryIds.length > 0) {
-    const hit = options?.categoryIds?.some((id) =>
-      coupon.categoryIds.includes(id)
-    );
-    if (!hit) return { ok: false, reason: "not_found" };
-  }
+  // Product/category coupons discount only the lines they apply to.
+  const eligible = lines.filter(
+    (l) =>
+      (coupon.productIds.length === 0 ||
+        coupon.productIds.includes(l.productId)) &&
+      (coupon.categoryIds.length === 0 ||
+        l.categoryIds.some((id) => coupon.categoryIds.includes(id)))
+  );
+  if (eligible.length === 0) return { ok: false, reason: "not_found" };
+  const eligibleSubtotal = roundMoney(
+    eligible.reduce((n, l) => n + l.totalPrice, 0)
+  );
 
   let discountAmount = 0;
   if (coupon.type === "PERCENTAGE") {
-    discountAmount = (subtotal * Number(coupon.value)) / 100;
+    discountAmount = (eligibleSubtotal * Number(coupon.value)) / 100;
     if (coupon.maxDiscount) {
       discountAmount = Math.min(discountAmount, Number(coupon.maxDiscount));
     }
   } else {
     discountAmount = Number(coupon.value);
   }
-  discountAmount = Math.min(Math.max(0, discountAmount), subtotal);
+  discountAmount = roundMoney(
+    Math.min(Math.max(0, discountAmount), eligibleSubtotal)
+  );
 
   return { ok: true, coupon, discountAmount };
 }
@@ -143,11 +165,24 @@ export async function computeCartTotals(
     };
   }
 
-  const productIds = [...new Set(items.map((i) => i.productId))];
+  // Merge repeated lines so stock is checked against the real total quantity.
+  const merged = new Map<string, CheckoutLineInput>();
+  for (const item of items) {
+    const key = `${item.productId}:${item.variantId ?? ""}`;
+    const prev = merged.get(key);
+    merged.set(
+      key,
+      prev ? { ...prev, quantity: prev.quantity + item.quantity } : { ...item }
+    );
+  }
+  const mergedItems = [...merged.values()];
+
+  const productIds = [...new Set(mergedItems.map((i) => i.productId))];
   const products = await prisma.product.findMany({
     where: { id: { in: productIds }, status: "ACTIVE" },
     include: {
       brand: true,
+      category: { select: { parentId: true } },
       images: { orderBy: { sortOrder: "asc" }, take: 1 },
       variants: true,
     },
@@ -155,19 +190,24 @@ export async function computeCartTotals(
   const byId = new Map(products.map((p) => [p.id, p]));
 
   const lines: ComputedTotals["lines"] = [];
+  const couponLines: CouponLine[] = [];
+  const qtyByProduct = new Map<string, number>();
 
-  for (const item of items) {
+  for (const item of mergedItems) {
     const product = byId.get(item.productId);
-    if (!product) throw new Error("One or more products are unavailable.");
+    if (!product) throw new CheckoutError("One or more products are unavailable.");
     const variant = item.variantId
       ? product.variants.find((v) => v.id === item.variantId && v.active)
       : null;
     if (item.variantId && !variant) {
-      throw new Error("Selected variant is unavailable.");
+      throw new CheckoutError("Selected variant is unavailable.");
     }
     const stock = variant?.stock ?? product.stock;
-    if (item.quantity < 1 || item.quantity > stock) {
-      throw new Error(`Insufficient stock for ${product.name}.`);
+    // Variant sales also draw down the parent product's stock.
+    const productQty = (qtyByProduct.get(product.id) ?? 0) + item.quantity;
+    qtyByProduct.set(product.id, productQty);
+    if (item.quantity < 1 || item.quantity > stock || productQty > product.stock) {
+      throw new CheckoutError(`Insufficient stock for ${product.name}.`);
     }
     const unitPrice = Number(variant?.price ?? product.price);
     lines.push({
@@ -181,19 +221,24 @@ export async function computeCartTotals(
       howToUse: product.howToUse ?? null,
       unitPrice,
       quantity: item.quantity,
-      totalPrice: unitPrice * item.quantity,
+      totalPrice: roundMoney(unitPrice * item.quantity),
       stock,
+    });
+    couponLines.push({
+      productId: product.id,
+      categoryIds: [product.categoryId, product.category.parentId].filter(
+        (id): id is string => Boolean(id)
+      ),
+      totalPrice: roundMoney(unitPrice * item.quantity),
     });
   }
 
-  const subtotal = lines.reduce((n, l) => n + l.totalPrice, 0);
+  const subtotal = roundMoney(lines.reduce((n, l) => n + l.totalPrice, 0));
   let coupon: Coupon | null = null;
   let discountAmount = 0;
   let couponRejection: ComputedTotals["couponRejection"] = null;
 
-  const resolved = await resolveCoupon(couponCode, subtotal, {
-    productIds: lines.map((l) => l.productId),
-  });
+  const resolved = await resolveCoupon(couponCode, subtotal, couponLines);
   if (resolved?.ok) {
     coupon = resolved.coupon;
     discountAmount = resolved.discountAmount;
@@ -205,7 +250,7 @@ export async function computeCartTotals(
   }
 
   const store = await getStoreSettings();
-  const afterDiscount = subtotal - discountAmount;
+  const afterDiscount = roundMoney(subtotal - discountAmount);
   const shippingAmount = shippingFeeFor(
     shippingMethod,
     afterDiscount,
@@ -213,7 +258,9 @@ export async function computeCartTotals(
     store.standardShippingFee
   );
   const paymentFee = paymentMethod === "cod" ? store.codFee : 0;
-  const total = Math.max(0, afterDiscount + shippingAmount + paymentFee);
+  const total = roundMoney(
+    Math.max(0, afterDiscount + shippingAmount + paymentFee)
+  );
 
   return {
     lines,
@@ -310,14 +357,14 @@ export async function createOrderFromCheckout(input: {
           },
         });
         if (!variant) {
-          throw new Error(`Insufficient stock for ${line.productName}.`);
+          throw new CheckoutError(`Insufficient stock for ${line.productName}.`);
         }
       }
       const product = await tx.product.findFirst({
         where: { id: line.productId, stock: { gte: line.quantity } },
       });
       if (!product) {
-        throw new Error(`Insufficient stock for ${line.productName}.`);
+        throw new CheckoutError(`Insufficient stock for ${line.productName}.`);
       }
 
       if (commitStock) {
@@ -331,7 +378,7 @@ export async function createOrderFromCheckout(input: {
             data: { stock: { decrement: line.quantity } },
           });
           if (updated.count === 0) {
-            throw new Error(`Insufficient stock for ${line.productName}.`);
+            throw new CheckoutError(`Insufficient stock for ${line.productName}.`);
           }
         }
         const updated = await tx.product.updateMany({
@@ -339,7 +386,7 @@ export async function createOrderFromCheckout(input: {
           data: { stock: { decrement: line.quantity } },
         });
         if (updated.count === 0) {
-          throw new Error(`Insufficient stock for ${line.productName}.`);
+          throw new CheckoutError(`Insufficient stock for ${line.productName}.`);
         }
         await tx.inventoryLedger.create({
           data: {
@@ -353,11 +400,16 @@ export async function createOrderFromCheckout(input: {
       }
     }
 
-    if (totals.coupon && commitStock) {
-      await tx.coupon.update({
-        where: { id: totals.coupon.id },
-        data: { usageCount: { increment: 1 } },
-      });
+    // Reserve the coupon use now (card orders included) with an atomic guard,
+    // so parallel checkouts can't exceed usageLimit. Released on cancellation.
+    if (totals.coupon) {
+      const reserved = await tx.$executeRaw`
+        UPDATE "Coupon" SET "usageCount" = "usageCount" + 1, "updatedAt" = NOW()
+        WHERE "id" = ${totals.coupon.id}
+          AND ("usageLimit" IS NULL OR "usageCount" < "usageLimit")`;
+      if (reserved === 0) {
+        throw new CheckoutError("This coupon has reached its usage limit.");
+      }
     }
 
     const status = input.markPaid ? "PAID" : "PENDING";
@@ -440,6 +492,11 @@ export async function createOrderFromCheckout(input: {
   });
 }
 
+/**
+ * Mark a card order paid and commit its stock. Idempotent: the webhook, the
+ * success page and Viva retries may all call this — only the first call
+ * returns `newlyPaid: true` (use that to send the confirmation email once).
+ */
 export async function markOrderPaidByProviderId(
   providerPaymentId: string,
   options?: { transactionId?: string; note?: string }
@@ -449,30 +506,45 @@ export async function markOrderPaidByProviderId(
     include: { order: { include: { items: true } } },
   });
   if (!payment) return null;
-  if (payment.order.paymentStatus === "PAID") return payment.order;
 
-  const order = await prisma.$transaction(async (tx) => {
+  return prisma.$transaction(async (tx) => {
+    const claimed = await tx.order.updateMany({
+      where: { id: payment.orderId, paymentStatus: { not: "PAID" } },
+      data: { status: "PAID", paymentStatus: "PAID", paidAt: new Date() },
+    });
+    if (claimed.count === 0) {
+      const order = await tx.order.findUniqueOrThrow({
+        where: { id: payment.orderId },
+      });
+      return { order, newlyPaid: false };
+    }
+
+    // The customer has already been charged: never fail here. Lines we can't
+    // fulfil are flagged for a refund/restock instead of rolling back.
+    const shortages: string[] = [];
     for (const line of payment.order.items) {
       if (!line.productId) continue;
-      if (line.variantId) {
-        const updated = await tx.productVariant.updateMany({
-          where: {
-            id: line.variantId,
-            active: true,
-            stock: { gte: line.quantity },
-          },
-          data: { stock: { decrement: line.quantity } },
-        });
-        if (updated.count === 0) {
-          throw new Error(`Insufficient stock for ${line.productName}.`);
-        }
-      }
-      const updated = await tx.product.updateMany({
+      const product = await tx.product.updateMany({
         where: { id: line.productId, stock: { gte: line.quantity } },
         data: { stock: { decrement: line.quantity } },
       });
-      if (updated.count === 0) {
-        throw new Error(`Insufficient stock for ${line.productName}.`);
+      if (product.count === 0) {
+        shortages.push(line.productName);
+        continue;
+      }
+      if (line.variantId) {
+        const variant = await tx.productVariant.updateMany({
+          where: { id: line.variantId, stock: { gte: line.quantity } },
+          data: { stock: { decrement: line.quantity } },
+        });
+        if (variant.count === 0) {
+          await tx.product.update({
+            where: { id: line.productId },
+            data: { stock: { increment: line.quantity } },
+          });
+          shortages.push(line.productName);
+          continue;
+        }
       }
       await tx.inventoryLedger.create({
         data: {
@@ -485,24 +557,9 @@ export async function markOrderPaidByProviderId(
       });
     }
 
-    if (payment.order.couponCode) {
-      await tx.coupon.updateMany({
-        where: { code: payment.order.couponCode },
-        data: { usageCount: { increment: 1 } },
-      });
-    }
-
     await tx.payment.update({
       where: { id: payment.id },
       data: { status: "PAID" },
-    });
-    const updated = await tx.order.update({
-      where: { id: payment.orderId },
-      data: {
-        status: "PAID",
-        paymentStatus: "PAID",
-        paidAt: new Date(),
-      },
     });
     await tx.orderTimeline.create({
       data: {
@@ -515,10 +572,86 @@ export async function markOrderPaidByProviderId(
             : "Payment confirmed via Viva.com"),
       },
     });
-    return updated;
-  });
+    if (shortages.length > 0) {
+      const warning = `Stock shortage, refund or restock needed: ${shortages.join(", ")}`;
+      console.error("[checkout] paid order short on stock", {
+        orderId: payment.orderId,
+        shortages,
+      });
+      await tx.orderTimeline.create({
+        data: { orderId: payment.orderId, status: "PAID", note: warning },
+      });
+      await tx.order.update({
+        where: { id: payment.orderId },
+        data: {
+          notes: [payment.order.notes, `⚠ ${warning}`].filter(Boolean).join(" · "),
+        },
+      });
+    }
 
-  return order;
+    const order = await tx.order.findUniqueOrThrow({
+      where: { id: payment.orderId },
+    });
+    return { order, newlyPaid: true };
+  });
+}
+
+/**
+ * Cancelling an order returns what it was holding: committed stock (COD orders,
+ * or card orders that were paid) and the reserved coupon use. Idempotent.
+ */
+export async function cancelOrderAndRelease(orderId: string, note: string | null) {
+  return prisma.$transaction(async (tx) => {
+    const claimed = await tx.order.updateMany({
+      where: { id: orderId, status: { notIn: ["CANCELLED", "REFUNDED"] } },
+      data: { status: "CANCELLED", cancelledAt: new Date() },
+    });
+    if (claimed.count === 0) return false;
+
+    const order = await tx.order.findUniqueOrThrow({
+      where: { id: orderId },
+      include: { items: true, payment: true },
+    });
+    const stockCommitted =
+      order.payment?.method === "cod" || order.paymentStatus === "PAID";
+
+    if (stockCommitted) {
+      for (const line of order.items) {
+        if (!line.productId) continue;
+        await tx.product.updateMany({
+          where: { id: line.productId },
+          data: { stock: { increment: line.quantity } },
+        });
+        if (line.variantId) {
+          await tx.productVariant.updateMany({
+            where: { id: line.variantId },
+            data: { stock: { increment: line.quantity } },
+          });
+        }
+        await tx.inventoryLedger.create({
+          data: {
+            productId: line.productId,
+            variantId: line.variantId,
+            change: line.quantity,
+            type: "RETURN",
+            note: `Order ${order.orderNumber} cancelled`,
+          },
+        });
+      }
+    }
+
+    if (order.couponCode) {
+      await tx.coupon.updateMany({
+        where: { code: order.couponCode, usageCount: { gt: 0 } },
+        data: { usageCount: { decrement: 1 } },
+      });
+    }
+
+    await tx.orderTimeline.create({
+      data: { orderId, status: "CANCELLED", note },
+    });
+    return true;
+  });
 }
 
 /** @deprecated use markOrderPaidByProviderId */

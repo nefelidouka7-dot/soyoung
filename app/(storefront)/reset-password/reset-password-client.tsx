@@ -64,6 +64,8 @@ export default function ResetPasswordClient() {
                 setError(dict.auth.passwordMismatch);
               } else if (res.error === "passwordTooShort") {
                 setError(dict.auth.passwordTooShort);
+              } else if (res.error === "passwordTooLong") {
+                setError(dict.auth.passwordTooLong);
               } else if (res.success) {
                 setSuccess(true);
               }

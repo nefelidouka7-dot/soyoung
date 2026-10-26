@@ -1,15 +1,23 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import type { Role } from "@prisma/client";
+import { ADMIN_ROLES } from "@/lib/admin-access";
 
-const ADMIN_ROLES: Role[] = ["ADMIN", "SUPER_ADMIN", "MANAGER", "EDITOR"];
+export { ADMIN_ROLES, OPERATIONS_ROLES, OWNER_ROLES } from "@/lib/admin-access";
 
-export async function requireAdmin() {
+/**
+ * Guard for admin pages and server actions (actions are public endpoints, so
+ * each one must call this). `allowed` narrows access below the full admin set.
+ */
+export async function requireAdmin(allowed: Role[] = ADMIN_ROLES) {
   const session = await auth();
   const role = session?.user?.role;
   const id = session?.user?.id;
   if (!session || !id || !role || !ADMIN_ROLES.includes(role)) {
     redirect("/login?callbackUrl=/admin");
+  }
+  if (!allowed.includes(role)) {
+    redirect("/admin");
   }
   return session;
 }

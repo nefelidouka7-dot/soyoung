@@ -6,6 +6,7 @@ import { z } from "zod";
 import { Prisma, ProductStatus, VariantType } from "@prisma/client";
 import { prisma } from "@/db/prisma";
 import { requireAdmin } from "@/lib/admin";
+import { sanitizePublicHref } from "@/lib/safe-href";
 import { slugify } from "@/lib/utils";
 import { storage } from "@/lib/storage";
 import {
@@ -200,11 +201,24 @@ export async function uploadProductVideoPoster(
   return uploadProductImage(formData);
 }
 
+/** Optional media URL field: own uploads/paths or the https allowlist only. */
+function mediaUrlField(formData: FormData, name: string) {
+  const raw = String(formData.get(name) ?? "").trim();
+  if (!raw) return { url: null };
+  const url = sanitizePublicHref(raw);
+  return url ? { url } : { error: "Μη έγκυρο URL βίντεο/εικόνας." };
+}
+
 async function collectImageUrls(formData: FormData): Promise<string[]> {
   const fromText = String(formData.get("imageUrls") ?? "")
     .split("\n")
     .map((s) => s.trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    .map((url) => {
+      const safe = sanitizePublicHref(url);
+      if (!safe) throw new Error(`Μη έγκυρο URL εικόνας: ${url.slice(0, 80)}`);
+      return safe;
+    });
 
   const uploaded: string[] = [];
   for (const entry of formData.getAll("imageFiles")) {
@@ -242,7 +256,8 @@ function collectVariants(formData: FormData) {
     const type = (types[i] || "SHADE") as VariantType;
     const priceRaw = prices[i]?.trim();
     const stock = Number.parseInt(stocks[i] || "0", 10);
-    const image = images[i]?.trim() || null;
+    // Invalid / off-allowlist variant images are dropped.
+    const image = sanitizePublicHref(images[i]) ?? null;
     rows.push({
       name,
       type,
@@ -284,9 +299,13 @@ export async function createProduct(
       error: e instanceof Error ? e.message : "Μη έγκυρο upload εικόνας.",
     };
   }
-  const videoUrl = String(formData.get("videoUrl") ?? "").trim() || null;
-  const videoPosterUrl =
-    String(formData.get("videoPosterUrl") ?? "").trim() || null;
+  const videoField = mediaUrlField(formData, "videoUrl");
+  const posterField = mediaUrlField(formData, "videoPosterUrl");
+  if (videoField.error || posterField.error) {
+    return { error: videoField.error ?? posterField.error };
+  }
+  const videoUrl = videoField.url;
+  const videoPosterUrl = posterField.url;
   const variants = collectVariants(formData);
   let productId: string;
   try {
@@ -373,9 +392,13 @@ export async function updateProduct(
       error: e instanceof Error ? e.message : "Μη έγκυρο upload εικόνας.",
     };
   }
-  const videoUrl = String(formData.get("videoUrl") ?? "").trim() || null;
-  const videoPosterUrl =
-    String(formData.get("videoPosterUrl") ?? "").trim() || null;
+  const videoField = mediaUrlField(formData, "videoUrl");
+  const posterField = mediaUrlField(formData, "videoPosterUrl");
+  if (videoField.error || posterField.error) {
+    return { error: videoField.error ?? posterField.error };
+  }
+  const videoUrl = videoField.url;
+  const videoPosterUrl = posterField.url;
   const variants = collectVariants(formData);
 
   try {

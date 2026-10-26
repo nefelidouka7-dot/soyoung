@@ -27,6 +27,7 @@ export default async function AdminLayout({
   return (
     <AdminShell
       email={session.user.email ?? ""}
+      role={session.user.role}
       logoutAction={logoutAction}
       badges={{
         "/admin/orders": pendingOrders,

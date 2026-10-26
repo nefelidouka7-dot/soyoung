@@ -6,6 +6,13 @@
 type Entry = { count: number; resetAt: number };
 
 const buckets = new Map<string, Entry>();
+const MAX_BUCKETS = 10_000;
+
+function pruneExpired(now: number) {
+  for (const [key, entry] of buckets) {
+    if (entry.resetAt < now) buckets.delete(key);
+  }
+}
 
 export function rateLimit(
   key: string,
@@ -15,6 +22,7 @@ export function rateLimit(
   const now = Date.now();
   const entry = buckets.get(key);
   if (!entry || entry.resetAt < now) {
+    if (buckets.size >= MAX_BUCKETS) pruneExpired(now);
     buckets.set(key, { count: 1, resetAt: now + windowMs });
     return { ok: true, remaining: limit - 1 };
   }
@@ -26,21 +34,22 @@ export function rateLimit(
 }
 
 /**
- * Best-effort client IP. On Vercel prefer platform-provided headers so
- * clients cannot freely spoof the first X-Forwarded-For hop.
+ * Client IP for rate limiting. Only headers set by our own edge are trusted:
+ * - Vercel: the platform overwrites x-vercel-forwarded-for / x-forwarded-for.
+ * - Self-hosted: set TRUSTED_IP_HEADER (e.g. "x-real-ip") to the header your
+ *   reverse proxy sets. Without it we never read client-controlled headers,
+ *   since a spoofed IP would let anyone reset their own limit.
  */
 export function clientIpFromHeaders(headers: Headers): string {
-  const vercel = headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim();
-  if (vercel) return vercel;
+  if (process.env.VERCEL) {
+    const ip =
+      headers.get("x-vercel-forwarded-for") ?? headers.get("x-forwarded-for");
+    return ip?.split(",")[0]?.trim() || "unknown";
+  }
 
-  const realIp = headers.get("x-real-ip")?.trim();
-  if (realIp) return realIp;
-
-  const forwarded = headers.get("x-forwarded-for");
-  if (forwarded) {
-    // Last hop is typically the edge-added value when the platform appends.
-    const parts = forwarded.split(",").map((p) => p.trim()).filter(Boolean);
-    return parts[parts.length - 1] || "unknown";
+  const trusted = process.env.TRUSTED_IP_HEADER?.trim().toLowerCase();
+  if (trusted) {
+    return headers.get(trusted)?.split(",")[0]?.trim() || "unknown";
   }
   return "unknown";
 }

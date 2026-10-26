@@ -4,25 +4,38 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import {
+  CheckoutError,
   computeCartTotals,
   createOrderFromCheckout,
 } from "@/server/services/checkout.service";
-import { createPaymentOrder } from "@/lib/payments";
+import { assertCardPaymentsAvailable, createPaymentOrder } from "@/lib/payments";
 import { sendOrderConfirmationEmail } from "@/emails/send";
 import { clientIpFromHeaders, rateLimit } from "@/lib/rate-limit";
 import {
   isOfflinePayment,
   isPaymentAllowed,
+  MAX_QTY_PER_LINE,
   PAYMENT_METHODS,
   SHIPPING_METHODS,
 } from "@/lib/checkout-options";
 import { prisma } from "@/db/prisma";
 import { getLocale } from "@/lib/i18n/server";
 
+const MAX_LINES = 30;
+const COD_WINDOW_MS = 24 * 60 * 60_000;
+
+/** Only our own CheckoutError messages reach the shopper; the rest is logged. */
+function checkoutErrorMessage(e: unknown, fallback: string) {
+  if (e instanceof CheckoutError) return e.message;
+  console.error("[checkout]", e);
+  return fallback;
+}
+
 const lineSchema = z.object({
   productId: z.string().min(1),
   variantId: z.string().nullable().optional(),
-  quantity: z.number().int().positive(),
+  // Caps keep a single (unpaid, cash-on-delivery) order from emptying stock.
+  quantity: z.number().int().positive().max(MAX_QTY_PER_LINE),
 });
 
 const checkoutSchema = z.object({
@@ -39,7 +52,7 @@ const checkoutSchema = z.object({
   couponCode: z.string().optional(),
   shippingMethod: z.enum(SHIPPING_METHODS),
   paymentMethod: z.enum(PAYMENT_METHODS),
-  items: z.array(lineSchema).min(1),
+  items: z.array(lineSchema).min(1).max(MAX_LINES),
 });
 
 export async function validateCheckoutTotals(input: {
@@ -77,7 +90,7 @@ export async function validateCheckoutTotals(input: {
   } catch (e) {
     return {
       ok: false as const,
-      error: e instanceof Error ? e.message : "Unable to calculate totals.",
+      error: checkoutErrorMessage(e, "Unable to calculate totals."),
     };
   }
 }
@@ -132,6 +145,24 @@ export async function placeOrderAction(raw: unknown) {
     };
   }
 
+  // Cash-on-delivery reserves stock without payment: throttle it per IP,
+  // phone and email so fake orders can't drain inventory.
+  if (data.paymentMethod === "cod") {
+    const phone = data.phone.replace(/\D/g, "");
+    const email = data.email.toLowerCase();
+    if (
+      !rateLimit(`cod:ip:${ip}`, 5, COD_WINDOW_MS).ok ||
+      !rateLimit(`cod:phone:${phone}`, 3, COD_WINDOW_MS).ok ||
+      !rateLimit(`cod:email:${email}`, 3, COD_WINDOW_MS).ok
+    ) {
+      return {
+        ok: false as const,
+        error:
+          "Too many cash-on-delivery orders. Please pay by card or contact us.",
+      };
+    }
+  }
+
   try {
     const totals = await computeCartTotals(data.items, data.couponCode, {
       shippingMethod: data.shippingMethod,
@@ -139,6 +170,20 @@ export async function placeOrderAction(raw: unknown) {
     });
 
     const useCard = data.paymentMethod === "card";
+    if (useCard) {
+      // Fail before creating the order, so no orphan PENDING orders are left.
+      try {
+        assertCardPaymentsAvailable();
+      } catch (e) {
+        console.error("[checkout] card payments unavailable", e);
+        throw new CheckoutError(
+          "Card payments are temporarily unavailable. Please try again later."
+        );
+      }
+      if (Math.round(totals.total * 100) < 30) {
+        throw new CheckoutError("Minimum payable amount is €0.30.");
+      }
+    }
 
     // Create the shop order first so we can pass orderNumber to Viva.
     const order = await createOrderFromCheckout({
@@ -246,7 +291,7 @@ export async function placeOrderAction(raw: unknown) {
   } catch (e) {
     return {
       ok: false as const,
-      error: e instanceof Error ? e.message : "Checkout failed.",
+      error: checkoutErrorMessage(e, "Checkout failed. Please try again."),
     };
   }
 }

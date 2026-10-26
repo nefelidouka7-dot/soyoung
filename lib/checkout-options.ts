@@ -108,3 +108,6 @@ export function shippingFeeFor(
   if (afterDiscount >= freeThreshold) return 0;
   return standardFee;
 }
+
+/** Most units of one product per order (enforced in the cart and on the server). */
+export const MAX_QTY_PER_LINE = 10;

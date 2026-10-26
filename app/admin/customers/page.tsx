@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/db/prisma";
-import { requireAdmin, decimalToNumber, formatAdminDate } from "@/lib/admin";
+import { requireAdmin, decimalToNumber, formatAdminDate, OPERATIONS_ROLES } from "@/lib/admin";
 import { formatPrice } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,7 @@ export default async function AdminCustomersPage({
 }: {
   searchParams: Promise<{ q?: string }>;
 }) {
-  await requireAdmin();
+  await requireAdmin(OPERATIONS_ROLES);
   const { q } = await searchParams;
 
   const customers = await prisma.user.findMany({

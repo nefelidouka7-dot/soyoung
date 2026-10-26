@@ -11,7 +11,8 @@ export async function searchCatalog(query: string) {
     return { products: [], brands: [], categories: [] };
   }
 
-  const q = query.trim();
+  // Public action: cap the term so huge strings can't become costly ILIKE scans.
+  const q = typeof query === "string" ? query.trim().slice(0, 100) : "";
   if (q.length < 2) {
     return { products: [], brands: [], categories: [] };
   }
