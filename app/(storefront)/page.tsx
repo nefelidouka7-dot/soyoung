@@ -64,6 +64,24 @@ export default async function HomePage() {
     console.error("[home] Catalog query failed — check DATABASE_URL / Neon:", error);
   }
 
+  // Shown when no slides are configured in the admin, so phones and desktop
+  // get the same hero layout either way.
+  const fallbackHeroSlide: HeroSlideView = {
+    id: "fallback",
+    type: "CAMPAIGN",
+    imageUrl: "/images/hero.jpg",
+    imageAlt: dict.home.heroAlt,
+    eyebrow: dict.home.eyebrow,
+    headline: dict.home.headlineLead,
+    headlineAccent: dict.home.headlineTrail,
+    subhead: dict.home.subhead,
+    ctaPrimaryLabel: dict.home.heroCta,
+    ctaPrimaryHref: "/best-sellers",
+    ctaSecondaryLabel: dict.home.heroQuizCta,
+    ctaSecondaryHref: "/skin-type",
+    product: null,
+  };
+
   const categories = [
     {
       name: dict.home.routineCleansers,
@@ -127,79 +145,16 @@ export default async function HomePage() {
 
   return (
     <>
-      {heroSlides.length > 0 ? (
-        <HomeHeroCarousel
-          slides={heroSlides}
-          settings={heroSettings}
-          labels={{
-            previous: dict.home.heroPrevious,
-            next: dict.home.heroNext,
-            goToSlide: dict.home.heroGoToSlide,
-            onSale: dict.home.heroOnSale,
-          }}
-        />
-      ) : (
-        <section className="relative isolate overflow-hidden bg-bg">
-          <Image
-            src="/images/hero.jpg"
-            alt={dict.home.heroAlt}
-            fill
-            priority
-            className="animate-hero-zoom object-cover object-[82%_38%] sm:object-[70%_48%] lg:object-[62%_46%]"
-            sizes="100vw"
-          />
-          <div className="hero-veil pointer-events-none absolute inset-0" aria-hidden />
-          <div className="hero-grain pointer-events-none absolute inset-0" aria-hidden />
-
-          <div className="container-page relative flex min-h-[min(86svh,38rem)] flex-col justify-end pb-8 pt-24 sm:min-h-[88svh] sm:justify-center sm:pb-20 sm:pt-28 lg:min-h-[min(90svh,46rem)]">
-            <div className="w-full max-w-[22rem] sm:max-w-[34rem]">
-              <div className="animate-home-rise flex items-center gap-3">
-                <span className="h-px w-8 bg-oak sm:w-14" aria-hidden />
-                <p className="text-[10px] uppercase tracking-[0.26em] text-ink-muted sm:tracking-[0.32em]">
-                  {dict.home.eyebrow}
-                </p>
-              </div>
-
-              <h1 className="animate-home-rise-d1 mt-4 font-serif text-[clamp(2.35rem,11vw,3.4rem)] leading-[1.02] tracking-[-0.025em] text-ink sm:mt-7 sm:text-[clamp(2.6rem,7vw,4.75rem)] sm:leading-[0.98]">
-                <span className="block">{dict.home.headlineLead}</span>
-                <span className="mt-1 block italic text-coral">
-                  {dict.home.headlineTrail}
-                </span>
-              </h1>
-
-              <p className="animate-home-rise-d2 mt-4 max-w-[30ch] text-[14px] leading-[1.7] text-ink-muted sm:mt-7 sm:max-w-[34ch] sm:text-base sm:leading-[1.8]">
-                {dict.home.subhead}
-              </p>
-
-              <div className="animate-home-rise-d3 mt-7 flex flex-col gap-2.5 sm:mt-10 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
-                <Link
-                  href="/best-sellers"
-                  className="group inline-flex h-12 w-full items-center justify-center gap-2.5 bg-coral px-7 text-[11px] uppercase tracking-[0.16em] font-bold text-white shadow-[0_14px_34px_-16px_rgba(28,27,26,0.45)] transition-colors hover:bg-coral-dark sm:w-auto"
-                >
-                  {dict.home.heroCta}
-                  <ArrowRight
-                    className="h-3.5 w-3.5 transition-transform duration-300 ease-out group-hover:translate-x-1"
-                    strokeWidth={1.75}
-                  />
-                </Link>
-                <Link
-                  href="/skin-type"
-                  className="inline-flex h-12 min-h-12 w-full shrink-0 items-center justify-center border border-ink/20 bg-bg/70 px-6 text-[11px] uppercase tracking-[0.16em] text-ink backdrop-blur-[2px] transition-colors hover:border-ink/40 hover:bg-bg/80 sm:w-auto sm:bg-bg/55"
-                >
-                  {dict.home.heroQuizCta}
-                </Link>
-              </div>
-
-              <span
-                className="animate-home-rise-d3 mt-14 hidden h-14 w-px overflow-hidden bg-oak/50 lg:flex"
-                aria-hidden
-              >
-                <span className="animate-hero-cue block h-5 w-px bg-ink/55" />
-              </span>
-            </div>
-          </div>
-        </section>
-      )}
+      <HomeHeroCarousel
+        slides={heroSlides.length > 0 ? heroSlides : [fallbackHeroSlide]}
+        settings={heroSettings}
+        labels={{
+          previous: dict.home.heroPrevious,
+          next: dict.home.heroNext,
+          goToSlide: dict.home.heroGoToSlide,
+          onSale: dict.home.heroOnSale,
+        }}
+      />
 
       <KBeautyJourney
         bestSellers={bestSellers.products}

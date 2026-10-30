@@ -290,7 +290,7 @@ function HeroSlide({
           alt={slide.imageAlt || slide.headline}
           fill
           priority={priority}
-          className="animate-hero-zoom object-cover object-[70%_40%] sm:object-[70%_48%] lg:object-[62%_46%]"
+          className="animate-hero-zoom object-cover object-[78%_45%] sm:object-[70%_48%] lg:object-[62%_46%]"
           sizes="100vw"
         />
         <div className="hero-veil pointer-events-none absolute inset-0 hidden sm:block" aria-hidden />
@@ -309,7 +309,7 @@ function HeroSlide({
         ) : null}
       </div>
 
-      <div className="container-page relative -mt-6 flex flex-col pb-12 sm:mt-0 sm:min-h-[88svh] sm:justify-center sm:pb-24 sm:pt-28 lg:min-h-[min(90svh,46rem)]">
+      <div className="container-page relative -mt-4 flex flex-col pb-6 sm:mt-0 sm:min-h-[88svh] sm:justify-center sm:pb-24 sm:pt-28 lg:min-h-[min(90svh,46rem)]">
         <div className="w-full max-w-[34rem] md:ml-14 lg:ml-16 2xl:ml-0">
           {slide.eyebrow ? (
             <div className="flex items-center gap-3">
@@ -320,7 +320,7 @@ function HeroSlide({
             </div>
           ) : null}
 
-          <h1 className="mt-3 font-serif text-[clamp(2.2rem,10vw,2.9rem)] leading-[1.02] tracking-[-0.025em] text-ink text-balance sm:mt-7 sm:text-[clamp(2.6rem,7vw,4.75rem)] sm:leading-[0.98]">
+          <h1 className="mt-3 font-serif text-[clamp(2.6rem,12vw,3.4rem)] leading-[1] tracking-[-0.025em] text-ink text-balance sm:mt-7 sm:text-[clamp(2.6rem,7vw,4.75rem)] sm:leading-[0.98]">
             <span className="block">{slide.headline}</span>
             {slide.headlineAccent ? (
               <span className="mt-1 block italic text-coral">
@@ -330,7 +330,7 @@ function HeroSlide({
           </h1>
 
           {slide.subhead ? (
-            <p className="mt-3 line-clamp-3 max-w-[36ch] text-[14px] leading-[1.65] text-ink-muted sm:mt-7 sm:line-clamp-none sm:max-w-[34ch] sm:text-base sm:leading-[1.8]">
+            <p className="mt-4 line-clamp-3 max-w-[36ch] text-[15px] leading-[1.65] text-ink-muted sm:mt-7 sm:line-clamp-none sm:max-w-[34ch] sm:text-base sm:leading-[1.8]">
               {slide.subhead}
             </p>
           ) : null}
@@ -355,11 +355,11 @@ function HeroSlide({
             </div>
           ) : null}
 
-          <div className="mt-6 flex w-full items-center gap-2.5 sm:mt-10 sm:flex-wrap sm:gap-4">
+          <div className="mt-7 grid w-full grid-cols-2 gap-2.5 sm:mt-10 sm:flex sm:items-center sm:flex-wrap sm:gap-4">
             {slide.ctaPrimaryHref && slide.ctaPrimaryLabel ? (
               <Link
                 href={slide.ctaPrimaryHref}
-                className="group inline-flex h-12 min-w-0 flex-1 items-center justify-center gap-2.5 bg-coral px-5 text-[11px] font-bold uppercase tracking-[0.16em] text-white shadow-[0_14px_34px_-16px_rgba(28,27,26,0.45)] transition-colors hover:bg-coral-dark sm:flex-none sm:px-7"
+                className="group inline-flex h-12 min-w-0 items-center justify-center gap-2.5 bg-coral px-4 text-[11px] font-bold uppercase tracking-[0.16em] text-white shadow-[0_14px_34px_-16px_rgba(28,27,26,0.45)] transition-colors hover:bg-coral-dark sm:px-7"
               >
                 <span className="truncate">{slide.ctaPrimaryLabel}</span>
                 <ArrowRight
@@ -371,7 +371,7 @@ function HeroSlide({
             {slide.ctaSecondaryHref && slide.ctaSecondaryLabel ? (
               <Link
                 href={slide.ctaSecondaryHref}
-                className="inline-flex h-12 min-w-0 shrink-0 items-center justify-center border border-ink/20 px-4 text-[11px] uppercase tracking-[0.16em] text-ink transition-colors hover:border-ink/40 hover:bg-bg/80 sm:bg-bg/55 sm:px-6 sm:backdrop-blur-[2px]"
+                className="inline-flex h-12 min-w-0 items-center justify-center border border-ink/20 px-3 text-[11px] uppercase tracking-[0.12em] sm:shrink-0 sm:tracking-[0.16em] text-ink transition-colors hover:border-ink/40 hover:bg-bg/80 sm:bg-bg/55 sm:px-6 sm:backdrop-blur-[2px]"
               >
                 <span className="truncate">{slide.ctaSecondaryLabel}</span>
               </Link>
