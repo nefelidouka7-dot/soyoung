@@ -230,16 +230,18 @@ export default async function HomePage() {
                 className="object-cover transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04]"
                 sizes="(max-width:640px) 50vw, (max-width:1024px) 33vw, 16vw"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-ink/60 via-ink/15 to-transparent transition-opacity duration-500 ease-out group-hover:opacity-90" />
-              <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-3 sm:p-4 lg:p-3">
-                <span className="font-serif text-[1.15rem] leading-none text-bg transition-opacity duration-500 ease-out sm:text-[1.35rem] lg:text-[1.1rem] group-hover:opacity-90">
-                  {cat.name}
+              <div className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-ink/80 via-ink/35 to-transparent transition-opacity duration-500 ease-out group-hover:opacity-90 sm:h-full sm:from-ink/70 sm:via-ink/20" />
+              <div className="absolute inset-x-0 bottom-0 px-3.5 pb-3.5 sm:p-5 lg:p-4">
+                <span className="flex items-end justify-between gap-2">
+                  <span className="min-w-0 font-(family-name:--font-garamond-greek) text-[1.35rem] font-bold leading-[1.1] tracking-[0.02em] text-bg [text-shadow:0_1px_12px_rgba(28,27,26,0.35)] min-[400px]:text-[1.45rem] sm:text-[1.65rem] lg:text-[1.45rem]">
+                    {cat.name}
+                  </span>
+                  <ArrowRight
+                    className="mb-1 hidden h-3.5 w-3.5 shrink-0 text-bg/55 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-1 group-hover:text-bg sm:block"
+                    strokeWidth={1.75}
+                    aria-hidden
+                  />
                 </span>
-                <ArrowRight
-                  className="mb-0.5 h-3.5 w-3.5 shrink-0 text-bg/55 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-1 group-hover:text-bg"
-                  strokeWidth={1.75}
-                  aria-hidden
-                />
               </div>
             </Link>
           ))}
@@ -348,7 +350,8 @@ export default async function HomePage() {
 
       <FollowUs
         headline={dict.home.followUsHeadline}
-        cta={dict.home.followUsCta}
+        subhead={dict.home.followUsSubhead}
+        action={dict.home.followUsAction}
       />
     </>
   );

@@ -711,7 +711,7 @@ function FilterGroup({
 }) {
   return (
     <div className="border-b border-oak/25 pb-7 last:border-b-0 last:pb-0">
-      <p className="text-[10px] uppercase tracking-[0.18em] text-ink-muted">
+      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-ink">
         {title}
       </p>
       <div className="mt-3.5 space-y-1">{children}</div>

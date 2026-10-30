@@ -25,7 +25,7 @@ export default async function AccountLayout({
     <div className="pb-16 lg:pb-24">
       <div className="border-b border-oak/30 bg-bg-muted/50">
         <div className="container-page py-8 lg:py-10">
-          <p className="text-[11px] uppercase tracking-[0.16em] text-ink-muted">
+          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-ink">
             {dict.account.title}
           </p>
           <h1 className="mt-2 font-serif text-[1.85rem] leading-tight text-ink sm:text-[2.25rem]">

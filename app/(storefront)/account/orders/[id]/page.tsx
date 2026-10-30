@@ -61,7 +61,7 @@ export default async function OrderDetailPage({
 
       <div className="mt-10 grid gap-10 lg:grid-cols-2 lg:gap-14">
         <div>
-          <h3 className="text-[11px] uppercase tracking-[0.14em] text-ink-muted">
+          <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] text-ink">
             {dict.account.products}
           </h3>
           <ul className="mt-4 divide-y divide-oak/30 border-y border-oak/30">
@@ -113,7 +113,7 @@ export default async function OrderDetailPage({
 
         <div className="space-y-10">
           <div>
-            <h3 className="text-[11px] uppercase tracking-[0.14em] text-ink-muted">
+            <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] text-ink">
               {dict.account.shipping}
             </h3>
             <p className="mt-4 text-sm leading-relaxed text-ink-muted">
@@ -137,7 +137,7 @@ export default async function OrderDetailPage({
 
           {order.timeline.length > 0 ? (
             <div>
-              <h3 className="text-[11px] uppercase tracking-[0.14em] text-ink-muted">
+              <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] text-ink">
                 {dict.account.timeline}
               </h3>
               <ol className="mt-4 space-y-3 border-l border-oak/40 pl-4">

@@ -160,7 +160,7 @@ export function ProductPurchasePanel({ product }: Props) {
   }
 
   return (
-    <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-14 xl:gap-20">
+    <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-14 xl:gap-20">
       {/* ── Gallery ─────────────────────────────────────────── */}
       <div className="lg:sticky lg:top-28">
         <MobileGallery

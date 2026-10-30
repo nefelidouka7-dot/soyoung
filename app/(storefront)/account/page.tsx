@@ -40,7 +40,7 @@ export default async function AccountPage() {
 
       <section className="mt-10">
         <div className="flex items-baseline justify-between gap-4">
-          <h3 className="text-[11px] uppercase tracking-[0.14em] text-ink-muted">
+          <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] text-ink">
             {dict.account.recentOrders}
           </h3>
           {orders.length > 0 ? (

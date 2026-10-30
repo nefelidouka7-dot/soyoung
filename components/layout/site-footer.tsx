@@ -134,7 +134,7 @@ function FooterCol({
 }) {
   return (
     <div className="min-w-0">
-      <p className="text-xs uppercase tracking-wider text-ink">{title}</p>
+      <p className="text-xs font-bold uppercase tracking-wider text-ink">{title}</p>
       <ul className="mt-3 space-y-2.5 sm:mt-4">{children}</ul>
     </div>
   );

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Manrope } from "next/font/google";
+import { Cormorant_Garamond, EB_Garamond, Manrope } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { serializeJsonLd } from "@/lib/json-ld";
 import { STORE_NAME, absoluteUrl, metadataBaseUrl } from "@/lib/utils";
@@ -11,11 +11,23 @@ const cormorant = Cormorant_Garamond({
   weight: ["400", "500", "600", "700"],
   style: ["normal", "italic"],
   display: "swap",
+  // The generated fallback face (local Times) has Greek glyphs and would
+  // shadow the Greek font below, so skip it.
+  adjustFontFallback: false,
+});
+
+// Cormorant has no Greek glyphs; EB Garamond (same Garamond lineage) covers them.
+const garamondGreek = EB_Garamond({
+  variable: "--font-garamond-greek",
+  subsets: ["greek", "greek-ext"],
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
+  display: "swap",
 });
 
 const manrope = Manrope({
   variable: "--font-manrope",
-  subsets: ["latin", "latin-ext"],
+  subsets: ["latin", "latin-ext", "greek"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
 });
@@ -48,7 +60,7 @@ export default function RootLayout({
   };
 
   return (
-    <html lang="el" className={`${cormorant.variable} ${manrope.variable}`}>
+    <html lang="el" className={`${cormorant.variable} ${garamondGreek.variable} ${manrope.variable}`}>
       <body className="min-h-screen antialiased">
         <script
           type="application/ld+json"

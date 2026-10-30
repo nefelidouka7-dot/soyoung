@@ -273,7 +273,8 @@ export type Dictionary = {
     reviewsHeadline: string;
     reviewsShop: string;
     followUsHeadline: string;
-    followUsCta: string;
+    followUsSubhead: string;
+    followUsAction: string;
     heroPrevious: string;
     heroNext: string;
     heroGoToSlide: string;

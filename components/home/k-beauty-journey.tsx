@@ -58,7 +58,7 @@ export function KBeautyJourney({ bestSellers, newIn, choice }: Props) {
             type="button"
             onClick={() => setTab(item.id)}
             className={cn(
-              "relative pb-2 text-[12px] font-semibold tracking-[0.04em] transition-colors sm:text-[13px]",
+              "relative pb-2 text-[12px] font-bold tracking-[0.04em] transition-colors sm:text-[13px]",
               tab === item.id
                 ? "text-ink"
                 : "text-ink/40 hover:text-ink/70"
