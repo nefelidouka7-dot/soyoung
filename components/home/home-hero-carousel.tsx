@@ -173,7 +173,7 @@ export function HomeHeroCarousel({ slides, settings, labels }: Props) {
       ) : null}
 
       {count > 1 ? (
-        <div className="pointer-events-none absolute inset-x-0 top-[calc(min(118vw,60svh)-2rem)] z-10 flex justify-center gap-1.5 sm:hidden">
+        <div className="pointer-events-none absolute inset-x-0 bottom-3.5 z-10 flex justify-center gap-1.5 sm:hidden">
           {slides.map((slide, i) => (
             <button
               key={slide.id}
@@ -182,8 +182,8 @@ export function HomeHeroCarousel({ slides, settings, labels }: Props) {
               aria-current={i === index}
               onClick={() => goTo(i)}
               className={cn(
-                "pointer-events-auto h-1.5 rounded-full shadow-[0_1px_4px_rgba(28,27,26,0.25)] transition-all duration-300",
-                i === index ? "w-6 bg-white" : "w-1.5 bg-white/60"
+                "pointer-events-auto h-1.5 rounded-full transition-all duration-300",
+                i === index ? "w-6 bg-ink" : "w-1.5 bg-ink/30"
               )}
             />
           ))}
@@ -281,101 +281,95 @@ function HeroSlide({
     slide.product.compareAtPrice > slide.product.price;
 
   return (
-    <div className="relative isolate flex flex-col sm:block sm:min-h-[88svh] lg:min-h-[min(90svh,46rem)]">
-      {/* Phones: clean image on top that fades into the page; text below it.
-          sm+: full-bleed image behind the text with the soft veil. */}
-      <div className="relative h-[min(118vw,60svh)] w-full overflow-hidden sm:absolute sm:inset-0 sm:h-auto">
+    <div className="relative isolate h-[calc(100svh-5.5rem)] min-h-[34rem] max-h-[50rem] sm:h-auto sm:max-h-none sm:min-h-[88svh] lg:min-h-[min(90svh,46rem)]">
+      {/* Full-bleed image on every size. Phones: headline in the calm space at
+          the top, actions at the bottom, product in between. sm+: text on the
+          left over the soft veil. */}
+      <div className="absolute inset-x-0 bottom-0 top-[26%] overflow-hidden sm:top-0">
         <Image
           src={slide.imageUrl}
           alt={slide.imageAlt || slide.headline}
           fill
           priority={priority}
-          className="animate-hero-zoom object-cover object-[78%_45%] sm:object-[70%_48%] lg:object-[62%_46%]"
+          className="animate-hero-zoom object-cover object-[80%_50%] sm:object-[70%_48%] lg:object-[62%_46%]"
           sizes="100vw"
         />
         <div className="hero-veil pointer-events-none absolute inset-0 hidden sm:block" aria-hidden />
+        <div className="hero-veil-mobile pointer-events-none absolute inset-0 sm:hidden" aria-hidden />
         <div className="hero-grain pointer-events-none absolute inset-0" aria-hidden />
-        <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-bg via-bg/60 to-transparent sm:hidden"
-          aria-hidden
-        />
-
-        {showSale ? (
-          <span className="absolute left-5 top-5 bg-coral px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-white sm:hidden">
-            {slide.product?.discountPercent != null
-              ? `−${slide.product.discountPercent}% · ${labels.onSale}`
-              : labels.onSale}
-          </span>
-        ) : null}
       </div>
 
-      <div className="container-page relative -mt-4 flex flex-col pb-6 sm:mt-0 sm:min-h-[88svh] sm:justify-center sm:pb-24 sm:pt-28 lg:min-h-[min(90svh,46rem)]">
-        <div className="w-full max-w-[34rem] md:ml-14 lg:ml-16 2xl:ml-0">
-          {slide.eyebrow ? (
-            <div className="flex items-center gap-3">
-              <span className="h-px w-8 bg-coral sm:w-14 sm:bg-oak" aria-hidden />
-              <p className="text-[10px] uppercase tracking-[0.26em] text-ink-muted sm:tracking-[0.32em]">
-                {slide.eyebrow}
-              </p>
-            </div>
-          ) : null}
-
-          <h1 className="mt-3 font-serif text-[clamp(2.6rem,12vw,3.4rem)] leading-[1] tracking-[-0.025em] text-ink text-balance sm:mt-7 sm:text-[clamp(2.6rem,7vw,4.75rem)] sm:leading-[0.98]">
-            <span className="block">{slide.headline}</span>
-            {slide.headlineAccent ? (
-              <span className="mt-1 block italic text-coral">
-                {slide.headlineAccent}
-              </span>
+      <div className="container-page relative flex h-full flex-col pb-9 pt-10 text-center sm:h-auto sm:min-h-[88svh] sm:justify-center sm:pb-24 sm:pt-28 sm:text-left lg:min-h-[min(90svh,46rem)]">
+        <div className="mx-auto flex h-full w-full max-w-[34rem] flex-col justify-between sm:mx-0 sm:block sm:h-auto md:ml-14 lg:ml-16 2xl:ml-0">
+          <div>
+            {slide.eyebrow ? (
+              <div className="flex items-center justify-center gap-3 sm:justify-start">
+                <span className="hidden h-px w-14 bg-oak sm:block" aria-hidden />
+                <p className="text-[10px] uppercase tracking-[0.3em] text-ink-muted sm:tracking-[0.32em]">
+                  {slide.eyebrow}
+                </p>
+              </div>
             ) : null}
-          </h1>
 
-          {slide.subhead ? (
-            <p className="mt-4 line-clamp-3 max-w-[36ch] text-[15px] leading-[1.65] text-ink-muted sm:mt-7 sm:line-clamp-none sm:max-w-[34ch] sm:text-base sm:leading-[1.8]">
-              {slide.subhead}
-            </p>
-          ) : null}
+            <h1 className="mt-4 font-serif text-[clamp(2.75rem,13vw,3.5rem)] leading-[0.98] tracking-[-0.025em] text-ink text-balance sm:mt-7 sm:text-[clamp(2.6rem,7vw,4.75rem)]">
+              <span className="block">{slide.headline}</span>
+              {slide.headlineAccent ? (
+                <span className="mt-1 block italic text-coral">
+                  {slide.headlineAccent}
+                </span>
+              ) : null}
+            </h1>
 
-          {slide.product ? (
-            <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1 sm:mt-6">
-              <span className="font-serif text-[1.6rem] leading-none tracking-tight text-ink sm:text-[1.85rem]">
-                {formatPrice(slide.product.price)}
-              </span>
-              {showSale && slide.product.compareAtPrice != null ? (
-                <>
-                  <span className="text-[14px] text-ink-muted line-through sm:text-[15px]">
-                    {formatPrice(slide.product.compareAtPrice)}
-                  </span>
-                  <span className="hidden bg-coral px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.08em] text-white sm:inline">
-                    {slide.product.discountPercent != null
-                      ? `−${slide.product.discountPercent}% · ${labels.onSale}`
-                      : labels.onSale}
-                  </span>
-                </>
+            {slide.subhead ? (
+              <p className="mx-auto mt-4 line-clamp-2 max-w-[30ch] text-[15px] leading-[1.6] text-ink-muted sm:mx-0 sm:mt-7 sm:line-clamp-none sm:max-w-[34ch] sm:text-base sm:leading-[1.8]">
+                {slide.subhead}
+              </p>
+            ) : null}
+          </div>
+
+          <div>
+            {slide.product ? (
+              <div className="flex flex-wrap items-baseline justify-center gap-x-3 gap-y-1 sm:mt-6 sm:justify-start">
+                <span className="font-serif text-[1.6rem] leading-none tracking-tight text-ink sm:text-[1.85rem]">
+                  {formatPrice(slide.product.price)}
+                </span>
+                {showSale && slide.product.compareAtPrice != null ? (
+                  <>
+                    <span className="text-[14px] text-ink-muted line-through sm:text-[15px]">
+                      {formatPrice(slide.product.compareAtPrice)}
+                    </span>
+                    <span className="bg-coral px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.08em] text-white">
+                      {slide.product.discountPercent != null
+                        ? `−${slide.product.discountPercent}% · ${labels.onSale}`
+                        : labels.onSale}
+                    </span>
+                  </>
+                ) : null}
+              </div>
+            ) : null}
+
+            <div className="mt-5 grid w-full grid-cols-2 gap-2.5 sm:mt-10 sm:flex sm:flex-wrap sm:items-center sm:gap-4">
+              {slide.ctaPrimaryHref && slide.ctaPrimaryLabel ? (
+                <Link
+                  href={slide.ctaPrimaryHref}
+                  className="group inline-flex h-12 min-w-0 items-center justify-center gap-2.5 bg-coral px-4 text-[11px] font-bold uppercase tracking-[0.16em] text-white shadow-[0_14px_34px_-16px_rgba(28,27,26,0.45)] transition-colors hover:bg-coral-dark sm:px-7"
+                >
+                  <span className="truncate">{slide.ctaPrimaryLabel}</span>
+                  <ArrowRight
+                    className="h-3.5 w-3.5 shrink-0 transition-transform duration-300 ease-out group-hover:translate-x-1"
+                    strokeWidth={1.75}
+                  />
+                </Link>
+              ) : null}
+              {slide.ctaSecondaryHref && slide.ctaSecondaryLabel ? (
+                <Link
+                  href={slide.ctaSecondaryHref}
+                  className="inline-flex h-12 min-w-0 items-center justify-center border border-ink/20 bg-bg/60 px-3 text-[11px] uppercase tracking-[0.12em] text-ink backdrop-blur-[2px] transition-colors hover:border-ink/40 hover:bg-bg/80 sm:shrink-0 sm:bg-bg/55 sm:px-6 sm:tracking-[0.16em]"
+                >
+                  <span className="truncate">{slide.ctaSecondaryLabel}</span>
+                </Link>
               ) : null}
             </div>
-          ) : null}
-
-          <div className="mt-7 grid w-full grid-cols-2 gap-2.5 sm:mt-10 sm:flex sm:items-center sm:flex-wrap sm:gap-4">
-            {slide.ctaPrimaryHref && slide.ctaPrimaryLabel ? (
-              <Link
-                href={slide.ctaPrimaryHref}
-                className="group inline-flex h-12 min-w-0 items-center justify-center gap-2.5 bg-coral px-4 text-[11px] font-bold uppercase tracking-[0.16em] text-white shadow-[0_14px_34px_-16px_rgba(28,27,26,0.45)] transition-colors hover:bg-coral-dark sm:px-7"
-              >
-                <span className="truncate">{slide.ctaPrimaryLabel}</span>
-                <ArrowRight
-                  className="h-3.5 w-3.5 shrink-0 transition-transform duration-300 ease-out group-hover:translate-x-1"
-                  strokeWidth={1.75}
-                />
-              </Link>
-            ) : null}
-            {slide.ctaSecondaryHref && slide.ctaSecondaryLabel ? (
-              <Link
-                href={slide.ctaSecondaryHref}
-                className="inline-flex h-12 min-w-0 items-center justify-center border border-ink/20 px-3 text-[11px] uppercase tracking-[0.12em] sm:shrink-0 sm:tracking-[0.16em] text-ink transition-colors hover:border-ink/40 hover:bg-bg/80 sm:bg-bg/55 sm:px-6 sm:backdrop-blur-[2px]"
-              >
-                <span className="truncate">{slide.ctaSecondaryLabel}</span>
-              </Link>
-            ) : null}
           </div>
         </div>
       </div>
