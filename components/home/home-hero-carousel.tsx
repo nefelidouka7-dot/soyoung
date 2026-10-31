@@ -46,12 +46,18 @@ export function HomeHeroCarousel({ slides, settings, labels }: Props) {
     [count]
   );
 
+  // Manual navigation stops at the ends; only autoplay wraps around.
   const next = useCallback(() => {
-    setIndex((i) => (count <= 1 ? i : (i + 1) % count));
+    setIndex((i) => Math.min(i + 1, count - 1));
   }, [count]);
   const prev = useCallback(() => {
-    setIndex((i) => (count <= 1 ? i : (i - 1 + count) % count));
-  }, [count]);
+    setIndex((i) => Math.max(i - 1, 0));
+  }, []);
+
+  const indexRef = useRef(0);
+  useEffect(() => {
+    indexRef.current = index;
+  }, [index]);
 
   useEffect(() => {
     if (!settings.autoplay || count <= 1 || paused || dragging) return;
@@ -96,8 +102,13 @@ export function HomeHeroCarousel({ slides, settings, labels }: Props) {
 
       if (start.locked !== "x") return;
       e.preventDefault();
-      dragXRef.current = dx;
-      setDragX(dx);
+      // Rubber-band when pulling past the first or last slide.
+      const pastEdge =
+        (indexRef.current === 0 && dx > 0) ||
+        (indexRef.current === count - 1 && dx < 0);
+      const offset = pastEdge ? dx * 0.3 : dx;
+      dragXRef.current = offset;
+      setDragX(offset);
     };
 
     const onEnd = () => {
@@ -130,6 +141,8 @@ export function HomeHeroCarousel({ slides, settings, labels }: Props) {
   if (count === 0) return null;
 
   const trackOffset = `calc(${-index * 100}% + ${dragX}px)`;
+  const atFirst = index === 0;
+  const atLast = index === count - 1;
 
   return (
     <section
@@ -167,8 +180,8 @@ export function HomeHeroCarousel({ slides, settings, labels }: Props) {
 
       {count > 1 ? (
         <>
-          <SideArrow side="left" onClick={prev} label={labels.previous} />
-          <SideArrow side="right" onClick={next} label={labels.next} />
+          <SideArrow side="left" onClick={prev} label={labels.previous} disabled={atFirst} />
+          <SideArrow side="right" onClick={next} label={labels.next} disabled={atLast} />
         </>
       ) : null}
 
@@ -195,8 +208,9 @@ export function HomeHeroCarousel({ slides, settings, labels }: Props) {
           <button
             type="button"
             onClick={prev}
+            disabled={atFirst}
             aria-label={labels.previous}
-            className="pointer-events-auto inline-flex h-9 w-9 md:hidden items-center justify-center rounded-full bg-bg/55 text-ink shadow-[0_1px_0_rgba(28,27,26,0.06)] ring-1 ring-ink/10 backdrop-blur-[2px] transition-[background-color] hover:bg-bg/80"
+            className="pointer-events-auto inline-flex h-9 w-9 md:hidden items-center justify-center rounded-full bg-bg/55 text-ink shadow-[0_1px_0_rgba(28,27,26,0.06)] ring-1 ring-ink/10 backdrop-blur-[2px] transition-[background-color] hover:bg-bg/80 disabled:cursor-default disabled:opacity-35 disabled:hover:bg-bg/55"
           >
             <ChevronLeft className="h-4 w-4" strokeWidth={1.75} />
           </button>
@@ -220,8 +234,9 @@ export function HomeHeroCarousel({ slides, settings, labels }: Props) {
           <button
             type="button"
             onClick={next}
+            disabled={atLast}
             aria-label={labels.next}
-            className="pointer-events-auto inline-flex h-9 w-9 md:hidden items-center justify-center rounded-full bg-bg/55 text-ink shadow-[0_1px_0_rgba(28,27,26,0.06)] ring-1 ring-ink/10 backdrop-blur-[2px] transition-[background-color] hover:bg-bg/80"
+            className="pointer-events-auto inline-flex h-9 w-9 md:hidden items-center justify-center rounded-full bg-bg/55 text-ink shadow-[0_1px_0_rgba(28,27,26,0.06)] ring-1 ring-ink/10 backdrop-blur-[2px] transition-[background-color] hover:bg-bg/80 disabled:cursor-default disabled:opacity-35 disabled:hover:bg-bg/55"
           >
             <ChevronRight className="h-4 w-4" strokeWidth={1.75} />
           </button>
@@ -236,19 +251,25 @@ function SideArrow({
   side,
   onClick,
   label,
+  disabled,
 }: {
   side: "left" | "right";
   onClick: () => void;
   label: string;
+  disabled: boolean;
 }) {
   const Icon = side === "left" ? ChevronLeft : ChevronRight;
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
       aria-label={label}
       className={cn(
-        "group/arrow absolute top-1/2 z-10 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-bg/70 text-ink opacity-80 shadow-[0_10px_30px_-12px_rgba(28,27,26,0.35)] ring-1 ring-ink/10 backdrop-blur-md transition-[opacity,background-color,scale] duration-300 ease-out hover:scale-105 hover:bg-bg hover:opacity-100 focus-visible:opacity-100 group-hover/hero:opacity-100 md:inline-flex lg:h-14 lg:w-14",
+        "group/arrow absolute top-1/2 z-10 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-bg/70 text-ink shadow-[0_10px_30px_-12px_rgba(28,27,26,0.35)] ring-1 ring-ink/10 backdrop-blur-md transition-[opacity,background-color,scale] duration-300 ease-out md:inline-flex lg:h-14 lg:w-14",
+        disabled
+          ? "cursor-default opacity-30"
+          : "opacity-80 hover:scale-105 hover:bg-bg hover:opacity-100 focus-visible:opacity-100 group-hover/hero:opacity-100",
         side === "left" ? "left-4 lg:left-6" : "right-4 lg:right-6"
       )}
     >
