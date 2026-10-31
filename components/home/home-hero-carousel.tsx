@@ -279,6 +279,15 @@ function HeroSlide({
     slide.product &&
     slide.product.compareAtPrice != null &&
     slide.product.compareAtPrice > slide.product.price;
+  const hasPrimary = Boolean(slide.ctaPrimaryHref && slide.ctaPrimaryLabel);
+  const hasSecondary = Boolean(slide.ctaSecondaryHref && slide.ctaSecondaryLabel);
+  // On phones a product slide puts its primary action inside the price card.
+  const phoneButtons =
+    (hasPrimary && !slide.product ? 1 : 0) + (hasSecondary ? 1 : 0);
+  const saleLabel =
+    slide.product?.discountPercent != null
+      ? `−${slide.product.discountPercent}% · ${labels.onSale}`
+      : labels.onSale;
 
   return (
     <div className="relative isolate h-[calc(100svh-5.5rem)] min-h-[34rem] max-h-[50rem] sm:h-auto sm:max-h-none sm:min-h-[88svh] lg:min-h-[min(90svh,46rem)]">
@@ -329,7 +338,46 @@ function HeroSlide({
 
           <div>
             {slide.product ? (
-              <div className="flex flex-wrap items-baseline justify-center gap-x-3 gap-y-1 sm:mt-6 sm:justify-start">
+              <div className="flex items-center gap-3 bg-bg/85 p-2.5 pl-4 text-left shadow-[0_18px_40px_-24px_rgba(28,27,26,0.4)] ring-1 ring-oak/50 backdrop-blur-md sm:hidden">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[12px] leading-tight text-ink-muted">
+                    {slide.product.name}
+                  </p>
+                  <div className="mt-1 flex items-baseline gap-2">
+                    <span className="font-serif text-[1.4rem] leading-none tracking-tight text-ink">
+                      {formatPrice(slide.product.price)}
+                    </span>
+                    {showSale && slide.product.compareAtPrice != null ? (
+                      <>
+                        <span className="text-[12px] text-ink-muted line-through">
+                          {formatPrice(slide.product.compareAtPrice)}
+                        </span>
+                        {slide.product.discountPercent != null ? (
+                          <span className="text-[11px] font-bold text-coral-dark">
+                            −{slide.product.discountPercent}%
+                          </span>
+                        ) : null}
+                      </>
+                    ) : null}
+                  </div>
+                </div>
+                {hasPrimary ? (
+                  <Link
+                    href={slide.ctaPrimaryHref!}
+                    className="group inline-flex h-11 shrink-0 items-center justify-center gap-2 bg-coral px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-white transition-colors hover:bg-coral-dark"
+                  >
+                    {slide.ctaPrimaryLabel}
+                    <ArrowRight
+                      className="h-3.5 w-3.5 shrink-0 transition-transform duration-300 ease-out group-hover:translate-x-1"
+                      strokeWidth={1.75}
+                    />
+                  </Link>
+                ) : null}
+              </div>
+            ) : null}
+
+            {slide.product ? (
+              <div className="hidden flex-wrap items-baseline gap-x-3 gap-y-1 sm:mt-6 sm:flex">
                 <span className="font-serif text-[1.6rem] leading-none tracking-tight text-ink sm:text-[1.85rem]">
                   {formatPrice(slide.product.price)}
                 </span>
@@ -339,20 +387,29 @@ function HeroSlide({
                       {formatPrice(slide.product.compareAtPrice)}
                     </span>
                     <span className="bg-coral px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.08em] text-white">
-                      {slide.product.discountPercent != null
-                        ? `−${slide.product.discountPercent}% · ${labels.onSale}`
-                        : labels.onSale}
+                      {saleLabel}
                     </span>
                   </>
                 ) : null}
               </div>
             ) : null}
 
-            <div className="mt-5 grid w-full grid-cols-2 gap-2.5 sm:mt-10 sm:flex sm:flex-wrap sm:items-center sm:gap-4">
-              {slide.ctaPrimaryHref && slide.ctaPrimaryLabel ? (
+            <div
+              className={cn(
+                "grid w-full gap-2.5 sm:mt-10 sm:flex sm:flex-wrap sm:items-center sm:gap-4",
+                phoneButtons === 0 && "hidden",
+                phoneButtons === 1 && "grid-cols-1",
+                phoneButtons === 2 && "grid-cols-2",
+                slide.product ? "mt-2.5" : "mt-5"
+              )}
+            >
+              {hasPrimary ? (
                 <Link
-                  href={slide.ctaPrimaryHref}
-                  className="group inline-flex h-12 min-w-0 items-center justify-center gap-2.5 bg-coral px-4 text-[11px] font-bold uppercase tracking-[0.16em] text-white shadow-[0_14px_34px_-16px_rgba(28,27,26,0.45)] transition-colors hover:bg-coral-dark sm:px-7"
+                  href={slide.ctaPrimaryHref!}
+                  className={cn(
+                    "group h-12 min-w-0 items-center justify-center gap-2.5 bg-coral px-4 text-[11px] font-bold uppercase tracking-[0.16em] text-white shadow-[0_14px_34px_-16px_rgba(28,27,26,0.45)] transition-colors hover:bg-coral-dark sm:px-7",
+                    slide.product ? "hidden sm:inline-flex" : "inline-flex"
+                  )}
                 >
                   <span className="truncate">{slide.ctaPrimaryLabel}</span>
                   <ArrowRight
@@ -361,9 +418,9 @@ function HeroSlide({
                   />
                 </Link>
               ) : null}
-              {slide.ctaSecondaryHref && slide.ctaSecondaryLabel ? (
+              {hasSecondary ? (
                 <Link
-                  href={slide.ctaSecondaryHref}
+                  href={slide.ctaSecondaryHref!}
                   className="inline-flex h-12 min-w-0 items-center justify-center border border-ink/20 bg-bg/60 px-3 text-[11px] uppercase tracking-[0.12em] text-ink backdrop-blur-[2px] transition-colors hover:border-ink/40 hover:bg-bg/80 sm:shrink-0 sm:bg-bg/55 sm:px-6 sm:tracking-[0.16em]"
                 >
                   <span className="truncate">{slide.ctaSecondaryLabel}</span>
