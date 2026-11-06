@@ -2,9 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { ReviewStatus } from "@prisma/client";
+import { Prisma, ReviewStatus } from "@prisma/client";
 import { prisma } from "@/db/prisma";
-import { requireAdmin, OPERATIONS_ROLES, OWNER_ROLES } from "@/lib/admin";
+import {
+  requireAdmin,
+  parseStoreDateTime,
+  OPERATIONS_ROLES,
+  OWNER_ROLES,
+} from "@/lib/admin";
 import {
   getStoreSettings,
   saveStoreSettings,
@@ -35,7 +40,7 @@ export async function deleteReview(id: string) {
 }
 
 const couponSchema = z.object({
-  code: z.string().min(1),
+  code: z.string().trim().min(1),
   type: z.enum(["PERCENTAGE", "FIXED"]),
   value: z.coerce.number().positive(),
   minOrder: z.union([z.coerce.number().nonnegative(), z.literal("")]).optional(),
@@ -90,6 +95,18 @@ export async function createCoupon(
     return { error: "Το ποσοστό δεν μπορεί να ξεπερνά το 100." };
   }
 
+  const startsAtDate = startsAt ? parseStoreDateTime(startsAt) : null;
+  const expiresAtDate = expiresAt ? parseStoreDateTime(expiresAt) : null;
+  if ((startsAt && !startsAtDate) || (expiresAt && !expiresAtDate)) {
+    return { error: "Μη έγκυρη ημερομηνία." };
+  }
+  if (expiresAtDate && expiresAtDate <= new Date()) {
+    return { error: "Η ημερομηνία λήξης έχει ήδη περάσει." };
+  }
+  if (startsAtDate && expiresAtDate && startsAtDate >= expiresAtDate) {
+    return { error: "Η έναρξη πρέπει να είναι πριν από τη λήξη." };
+  }
+
   try {
     await prisma.coupon.create({
       data: {
@@ -101,13 +118,20 @@ export async function createCoupon(
         maxDiscount:
           maxDiscount === "" || maxDiscount == null ? null : maxDiscount,
         usageLimit: usageLimit === "" || usageLimit == null ? null : usageLimit,
-        startsAt: startsAt ? new Date(startsAt) : null,
-        expiresAt: expiresAt ? new Date(expiresAt) : null,
+        startsAt: startsAtDate,
+        expiresAt: expiresAtDate,
         active: active !== false,
       },
     });
-  } catch {
-    return { error: "Αποτυχία δημιουργίας coupon. Ο κωδικός ίσως υπάρχει ήδη." };
+  } catch (e) {
+    if (
+      e instanceof Prisma.PrismaClientKnownRequestError &&
+      e.code === "P2002"
+    ) {
+      return { error: "Υπάρχει ήδη coupon με αυτόν τον κωδικό." };
+    }
+    console.error("[admin] createCoupon failed", e);
+    return { error: "Αποτυχία δημιουργίας coupon. Έλεγξε τα ποσά και δοκίμασε ξανά." };
   }
 
   revalidatePath("/admin/discounts");
@@ -150,7 +174,10 @@ export async function adjustStock(
 
   try {
     const result = await prisma.$transaction(async (tx) => {
-      const product = await tx.product.findUnique({ where: { id: productId } });
+      // Lock the row: a checkout decrementing stock between our read and write
+      // would otherwise be overwritten by the absolute value computed here.
+      const [product] = await tx.$queryRaw<{ name: string; stock: number }[]>`
+        SELECT "name", "stock" FROM "Product" WHERE "id" = ${productId} FOR UPDATE`;
       if (!product) return { error: "Το προϊόν δεν βρέθηκε." } as const;
 
       const previousStock = product.stock;
@@ -167,7 +194,7 @@ export async function adjustStock(
 
       await tx.product.update({
         where: { id: productId },
-        data: { stock: next },
+        data: { stock: { increment: appliedDelta } },
       });
       await tx.inventoryLedger.create({
         data: {

@@ -5,7 +5,10 @@ import { z } from "zod";
 import { OrderStatus } from "@prisma/client";
 import { prisma } from "@/db/prisma";
 import { requireAdmin, OPERATIONS_ROLES } from "@/lib/admin";
-import { cancelOrderAndRelease } from "@/server/services/checkout.service";
+import {
+  cancelOrderAndRelease,
+  FINAL_ORDER_STATUSES,
+} from "@/server/services/checkout.service";
 
 const statusSchema = z.enum([
   "PENDING",
@@ -25,9 +28,9 @@ export async function updateOrderStatus(orderId: string, formData: FormData) {
   const status = parsed.data as OrderStatus;
   const note = String(formData.get("note") ?? "").trim() || null;
 
-  // Cancelling also gives back reserved stock and the coupon use.
-  if (status === "CANCELLED") {
-    await cancelOrderAndRelease(orderId, note);
+  // Cancelling or refunding also gives back reserved stock and the coupon use.
+  if (status === "CANCELLED" || status === "REFUNDED") {
+    await cancelOrderAndRelease(orderId, note, status);
     revalidatePath("/admin/orders");
     revalidatePath(`/admin/orders/${orderId}`);
     return;
@@ -43,12 +46,18 @@ export async function updateOrderStatus(orderId: string, formData: FormData) {
   if (status === "SHIPPED") data.shippedAt = new Date();
   if (status === "DELIVERED") data.deliveredAt = new Date();
 
-  await prisma.$transaction([
-    prisma.order.update({ where: { id: orderId }, data }),
-    prisma.orderTimeline.create({
+  // Cancelled/refunded orders are final: their stock and coupon were already
+  // released, so reopening them would let a second cancel release them again.
+  await prisma.$transaction(async (tx) => {
+    const updated = await tx.order.updateMany({
+      where: { id: orderId, status: { notIn: FINAL_ORDER_STATUSES } },
+      data,
+    });
+    if (updated.count === 0) return;
+    await tx.orderTimeline.create({
       data: { orderId, status, note },
-    }),
-  ]);
+    });
+  });
 
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${orderId}`);

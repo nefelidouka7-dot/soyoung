@@ -47,6 +47,7 @@ export default async function AdminOrderDetailPage({
   if (!order) notFound();
 
   const updateWithId = updateOrderStatus.bind(null, order.id);
+  const isFinal = order.status === "CANCELLED" || order.status === "REFUNDED";
 
   return (
     <div>
@@ -148,6 +149,13 @@ export default async function AdminOrderDetailPage({
 
         <div className="space-y-4">
           <AdminPanel title="Αλλαγή status">
+            {isFinal ? (
+              <p className="text-sm text-ink-muted">
+                Η παραγγελία είναι {order.status === "CANCELLED" ? "ακυρωμένη" : "επιστραμμένη"}.
+                Το stock και το κουπόνι έχουν ήδη επιστραφεί, οπότε το status δεν
+                αλλάζει πια.
+              </p>
+            ) : (
             <form action={updateWithId} className="space-y-3">
               <div>
                 <Label htmlFor="status">Status</Label>
@@ -175,7 +183,13 @@ export default async function AdminOrderDetailPage({
               <Button type="submit" size="sm" className="w-full">
                 Αποθήκευση status
               </Button>
+              <p className="text-xs text-ink-muted">
+                CANCELLED και REFUNDED είναι οριστικά: επιστρέφουν stock και
+                κουπόνι. Σε REFUNDED μετά την αποστολή το stock δεν επιστρέφεται
+                αυτόματα.
+              </p>
             </form>
+            )}
           </AdminPanel>
 
           <AdminPanel title="Πελάτης">

@@ -241,6 +241,8 @@ async function collectImageUrls(formData: FormData): Promise<string[]> {
 }
 
 function collectVariants(formData: FormData) {
+  const ids = formData.getAll("variantId").map(String);
+  const originalStocks = formData.getAll("variantStockOriginal").map(String);
   const names = formData.getAll("variantName").map(String);
   const types = formData.getAll("variantType").map(String);
   const skus = formData.getAll("variantSku").map(String);
@@ -258,7 +260,10 @@ function collectVariants(formData: FormData) {
     const stock = Number.parseInt(stocks[i] || "0", 10);
     // Invalid / off-allowlist variant images are dropped.
     const image = sanitizePublicHref(images[i]) ?? null;
+    const originalStock = Number.parseInt(originalStocks[i] ?? "", 10);
     rows.push({
+      id: ids[i]?.trim() || null,
+      originalStock: Number.isFinite(originalStock) ? originalStock : null,
       name,
       type,
       sku,
@@ -266,12 +271,35 @@ function collectVariants(formData: FormData) {
         priceRaw && !Number.isNaN(Number(priceRaw))
           ? new Prisma.Decimal(priceRaw)
           : null,
-      stock: Number.isFinite(stock) ? stock : 0,
+      stock: Number.isFinite(stock) ? Math.max(0, stock) : 0,
       image,
-      active: true,
     });
   }
   return rows;
+}
+
+type VariantInput = ReturnType<typeof collectVariants>[number];
+
+/** Row shape for creating a variant (drops the form-only fields). */
+function newVariantData(v: VariantInput) {
+  return {
+    name: v.name,
+    type: v.type,
+    sku: v.sku,
+    price: v.price,
+    stock: v.stock,
+    image: v.image,
+    active: true,
+  };
+}
+
+/**
+ * New stock after an edit. With a baseline (the value the form loaded) only the
+ * admin's change is applied, so sales made while the form was open survive.
+ */
+function editedStock(current: number, submitted: number, baseline: number | null) {
+  if (baseline == null) return submitted;
+  return Math.max(0, current + (submitted - baseline));
 }
 
 export async function createProduct(
@@ -349,7 +377,9 @@ export async function createProduct(
               })),
             }
           : undefined,
-        variants: variants.length ? { create: variants } : undefined,
+        variants: variants.length
+          ? { create: variants.map(newVariantData) }
+          : undefined,
       },
     });
     productId = product.id;
@@ -401,11 +431,77 @@ export async function updateProduct(
   const videoPosterUrl = posterField.url;
   const variants = collectVariants(formData);
 
+  const stockBaselineRaw = String(formData.get("stockOriginal") ?? "").trim();
+  const stockBaseline =
+    stockBaselineRaw === "" ? null : Number.parseInt(stockBaselineRaw, 10);
+
   try {
-    await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
+      // Lock the product and its variants: checkout decrements stock with
+      // increments, and we only add the admin's delta on top of the live value.
+      const [current] = await tx.$queryRaw<
+        { stock: number; publishedAt: Date | null }[]
+      >`SELECT "stock", "publishedAt" FROM "Product" WHERE "id" = ${id} FOR UPDATE`;
+      if (!current) return { error: "Το προϊόν δεν βρέθηκε." };
+      const currentVariants = await tx.$queryRaw<{ id: string; stock: number }[]>`
+        SELECT "id", "stock" FROM "ProductVariant" WHERE "productId" = ${id} FOR UPDATE`;
+      const variantStock = new Map(currentVariants.map((v) => [v.id, v.stock]));
+
+      // Images are rebuilt from the gallery order; keep alt texts by URL.
+      const oldImages = await tx.productImage.findMany({
+        where: { productId: id },
+        select: { url: true, alt: true },
+      });
+      const altByUrl = new Map(oldImages.map((img) => [img.url, img.alt]));
+
       await tx.productSkinType.deleteMany({ where: { productId: id } });
       await tx.productImage.deleteMany({ where: { productId: id } });
-      await tx.productVariant.deleteMany({ where: { productId: id } });
+
+      // Variants are updated in place (cart and order lines point at their
+      // ids); only rows removed in the form are deleted. Deletes go first so a
+      // SKU freed by a removed row can be reused in the same save.
+      const keptIds = new Set(
+        variants.flatMap((v) => (v.id && variantStock.has(v.id) ? [v.id] : []))
+      );
+      const removedIds = currentVariants
+        .map((v) => v.id)
+        .filter((vid) => !keptIds.has(vid));
+      if (removedIds.length > 0) {
+        await tx.productVariant.deleteMany({ where: { id: { in: removedIds } } });
+      }
+
+      const ledger: { variantId: string | null; change: number }[] = [];
+      for (const v of variants) {
+        const live = v.id ? variantStock.get(v.id) : undefined;
+        if (v.id && live !== undefined) {
+          const stock = editedStock(live, v.stock, v.originalStock);
+          if (stock !== live) ledger.push({ variantId: v.id, change: stock - live });
+          await tx.productVariant.update({
+            where: { id: v.id },
+            // active / compareAtPrice / options aren't in the form: leave them.
+            data: {
+              name: v.name,
+              type: v.type,
+              sku: v.sku,
+              price: v.price,
+              stock,
+              image: v.image,
+            },
+          });
+        } else {
+          const created = await tx.productVariant.create({
+            data: { ...newVariantData(v), productId: id },
+            select: { id: true },
+          });
+          if (v.stock > 0) ledger.push({ variantId: created.id, change: v.stock });
+        }
+      }
+
+      const stock = editedStock(current.stock, data.stock, stockBaseline);
+      if (stock !== current.stock) {
+        ledger.push({ variantId: null, change: stock - current.stock });
+      }
+
       await tx.product.update({
         where: { id },
         data: {
@@ -421,7 +517,7 @@ export async function updateProduct(
           price: data.price,
           compareAtPrice: data.compareAtPrice,
           cost: data.cost,
-          stock: data.stock,
+          stock,
           lowStockThreshold: data.lowStockThreshold,
           productType: data.productType,
           volume: data.volume,
@@ -434,7 +530,10 @@ export async function updateProduct(
           seoDescription: data.seoDescription,
           videoUrl,
           videoPosterUrl: videoUrl ? videoPosterUrl : null,
-          publishedAt: data.status === "ACTIVE" ? new Date() : null,
+          // First time it went live; later saves keep the original date.
+          publishedAt:
+            current.publishedAt ??
+            (data.status === "ACTIVE" ? new Date() : null),
           skinTypes: data.skinTypeIds.length
             ? {
                 create: data.skinTypeIds.map((skinTypeId) => ({ skinTypeId })),
@@ -444,15 +543,29 @@ export async function updateProduct(
             ? {
                 create: imageUrls.map((url, i) => ({
                   url,
+                  alt: altByUrl.get(url) ?? null,
                   sortOrder: i,
                   isPrimary: i === 0,
                 })),
               }
             : undefined,
-          variants: variants.length ? { create: variants } : undefined,
         },
       });
+
+      if (ledger.length > 0) {
+        await tx.inventoryLedger.createMany({
+          data: ledger.map((entry) => ({
+            productId: id,
+            variantId: entry.variantId,
+            change: entry.change,
+            type: entry.change > 0 ? "RESTOCK" : "ADJUSTMENT",
+            note: "Επεξεργασία προϊόντος",
+          })),
+        });
+      }
+      return null;
     });
+    if (result) return result;
     revalidatePath("/admin/products");
     revalidatePath(`/admin/products/${id}`);
     revalidatePath(`/product/${data.slug}`);

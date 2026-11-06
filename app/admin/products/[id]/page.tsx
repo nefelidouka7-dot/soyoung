@@ -48,6 +48,8 @@ export default async function EditProductPage({
     variants: product.variants.map((v) => ({
       ...v,
       price: v.price != null ? decimalToNumber(v.price) : null,
+      compareAtPrice:
+        v.compareAtPrice != null ? decimalToNumber(v.compareAtPrice) : null,
     })),
   };
 
@@ -65,7 +67,9 @@ export default async function EditProductPage({
           />
         }
       />
+      {/* Remount after a save so variant ids and stock baselines come from the DB. */}
       <ProductForm
+        key={product.updatedAt.toISOString()}
         product={serialized}
         brands={brands}
         categories={categories}
