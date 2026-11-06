@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { prisma } from "@/db/prisma";
 import { ingredientBySlug } from "@/lib/ingredients";
 import type { Prisma, ProductStatus } from "@prisma/client";
@@ -159,7 +160,8 @@ export function mapProductCard(
   };
 }
 
-export async function findProductBySlug(slug: string) {
+/** Cached per request: generateMetadata and the page both need the product. */
+export const findProductBySlug = cache(async (slug: string) => {
   return prisma.product.findFirst({
     where: { slug, status: "ACTIVE" },
     include: {
@@ -171,7 +173,7 @@ export async function findProductBySlug(slug: string) {
       concerns: { include: { concern: true } },
     },
   });
-}
+});
 
 export async function findBrandBySlug(slug: string) {
   return prisma.brand.findFirst({

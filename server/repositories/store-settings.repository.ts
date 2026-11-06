@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { prisma } from "@/db/prisma";
 import {
   DEFAULT_STORE_SETTINGS,
@@ -17,7 +18,8 @@ export {
   parseStoreSettings,
 } from "@/lib/store-settings";
 
-export async function getStoreSettings(): Promise<StoreSettings> {
+/** Cached per request: the layout and pages (contact, legal) both read it. */
+export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
   try {
     const row = await prisma.siteSetting.findUnique({
       where: { key: STORE_SETTING_KEY },
@@ -27,7 +29,7 @@ export async function getStoreSettings(): Promise<StoreSettings> {
     console.error("[store-settings] Failed to load — using defaults:", error);
     return DEFAULT_STORE_SETTINGS;
   }
-}
+});
 
 export async function saveStoreSettings(
   next: StoreSettings
