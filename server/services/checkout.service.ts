@@ -4,7 +4,7 @@ import {
   type PaymentMethod,
   type ShippingMethod,
 } from "@/lib/checkout-options";
-import type { Coupon, Prisma } from "@prisma/client";
+import type { Coupon, OrderStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/db/prisma";
 import { getStoreSettings } from "@/server/repositories/store-settings.repository";
 
@@ -347,6 +347,9 @@ export async function createOrderFromCheckout(input: {
     input.paymentMethod === "cod" ? "Cash on delivery" : "Card payment";
 
   return prisma.$transaction(async (tx) => {
+    // Ledger rows for stock taken here; linked to the order once it exists so
+    // a cancellation can give back exactly what was taken.
+    const ledgerIds: string[] = [];
     for (const line of totals.lines) {
       if (line.variantId) {
         const variant = await tx.productVariant.findFirst({
@@ -388,7 +391,7 @@ export async function createOrderFromCheckout(input: {
         if (updated.count === 0) {
           throw new CheckoutError(`Insufficient stock for ${line.productName}.`);
         }
-        await tx.inventoryLedger.create({
+        const entry = await tx.inventoryLedger.create({
           data: {
             productId: line.productId,
             variantId: line.variantId,
@@ -396,7 +399,9 @@ export async function createOrderFromCheckout(input: {
             type: "SALE",
             note: input.markPaid ? "Order paid" : "Order placement",
           },
+          select: { id: true },
         });
+        ledgerIds.push(entry.id);
       }
     }
 
@@ -488,6 +493,13 @@ export async function createOrderFromCheckout(input: {
       include: { items: true },
     });
 
+    if (ledgerIds.length > 0) {
+      await tx.inventoryLedger.updateMany({
+        where: { id: { in: ledgerIds } },
+        data: { orderId: order.id },
+      });
+    }
+
     return order;
   });
 }
@@ -522,6 +534,19 @@ export async function markOrderPaidByProviderId(
     // The customer has already been charged: never fail here. Lines we can't
     // fulfil are flagged for a refund/restock instead of rolling back.
     const shortages: string[] = [];
+    // A zero-change row marks the line as "nothing taken", so cancelling this
+    // order later doesn't restock units that never left.
+    const recordShortage = (productId: string, variantId: string | null) =>
+      tx.inventoryLedger.create({
+        data: {
+          productId,
+          variantId,
+          change: 0,
+          type: "SALE",
+          note: "Payment confirmed, out of stock: not deducted",
+          orderId: payment.orderId,
+        },
+      });
     for (const line of payment.order.items) {
       if (!line.productId) continue;
       const product = await tx.product.updateMany({
@@ -530,6 +555,7 @@ export async function markOrderPaidByProviderId(
       });
       if (product.count === 0) {
         shortages.push(line.productName);
+        await recordShortage(line.productId, line.variantId);
         continue;
       }
       if (line.variantId) {
@@ -543,6 +569,7 @@ export async function markOrderPaidByProviderId(
             data: { stock: { increment: line.quantity } },
           });
           shortages.push(line.productName);
+          await recordShortage(line.productId, line.variantId);
           continue;
         }
       }
@@ -553,6 +580,7 @@ export async function markOrderPaidByProviderId(
           change: -line.quantity,
           type: "SALE",
           note: "Payment confirmed",
+          orderId: payment.orderId,
         },
       });
     }
@@ -596,45 +624,106 @@ export async function markOrderPaidByProviderId(
   });
 }
 
-/**
- * Cancelling an order returns what it was holding: committed stock (COD orders,
- * or card orders that were paid) and the reserved coupon use. Idempotent.
- */
-export async function cancelOrderAndRelease(orderId: string, note: string | null) {
-  return prisma.$transaction(async (tx) => {
-    const claimed = await tx.order.updateMany({
-      where: { id: orderId, status: { notIn: ["CANCELLED", "REFUNDED"] } },
-      data: { status: "CANCELLED", cancelledAt: new Date() },
-    });
-    if (claimed.count === 0) return false;
+/** Statuses an order can't leave: the stock and coupon have been released. */
+export const FINAL_ORDER_STATUSES: OrderStatus[] = ["CANCELLED", "REFUNDED"];
+const UNSHIPPED_ORDER_STATUSES: OrderStatus[] = ["PENDING", "PAID", "PROCESSING"];
 
-    const order = await tx.order.findUniqueOrThrow({
+/**
+ * Stock this order still holds, per product/variant: what its SALE ledger rows
+ * took minus what was already given back. Lines that were short at payment time
+ * have no SALE row, so they're never "returned". Orders placed before ledger
+ * rows were linked fall back to "every line, if stock was committed".
+ */
+async function stockHeldByOrder(
+  tx: Prisma.TransactionClient,
+  order: {
+    id: string;
+    paymentStatus: string;
+    payment: { method: string | null } | null;
+    items: { productId: string | null; variantId: string | null; quantity: number }[];
+  }
+) {
+  const rows = await tx.inventoryLedger.findMany({
+    where: { orderId: order.id, type: { in: ["SALE", "RETURN"] } },
+    select: { productId: true, variantId: true, change: true },
+  });
+
+  const held = new Map<string, { productId: string; variantId: string | null; quantity: number }>();
+  const add = (productId: string, variantId: string | null, quantity: number) => {
+    const key = `${productId}:${variantId ?? ""}`;
+    const current = held.get(key) ?? { productId, variantId, quantity: 0 };
+    current.quantity += quantity;
+    held.set(key, current);
+  };
+
+  if (rows.length > 0) {
+    for (const row of rows) add(row.productId, row.variantId, -row.change);
+  } else if (order.payment?.method === "cod" || order.paymentStatus === "PAID") {
+    for (const line of order.items) {
+      if (line.productId) add(line.productId, line.variantId, line.quantity);
+    }
+  }
+  return [...held.values()].filter((h) => h.quantity > 0);
+}
+
+/**
+ * Cancelling (or refunding) an order returns what it was holding: the stock it
+ * actually took and the reserved coupon use. A refund of an order that already
+ * left the store doesn't restock (the goods are with the customer). Idempotent.
+ */
+export async function cancelOrderAndRelease(
+  orderId: string,
+  note: string | null,
+  target: "CANCELLED" | "REFUNDED" = "CANCELLED"
+) {
+  return prisma.$transaction(async (tx) => {
+    const order = await tx.order.findUnique({
       where: { id: orderId },
       include: { items: true, payment: true },
     });
-    const stockCommitted =
-      order.payment?.method === "cod" || order.paymentStatus === "PAID";
+    if (!order || FINAL_ORDER_STATUSES.includes(order.status)) return false;
 
-    if (stockCommitted) {
-      for (const line of order.items) {
-        if (!line.productId) continue;
+    const refundPayment = target === "REFUNDED" && order.paymentStatus === "PAID";
+    // Claim on the status we read, so two concurrent releases can't both run.
+    const claimed = await tx.order.updateMany({
+      where: { id: orderId, status: order.status },
+      data:
+        target === "CANCELLED"
+          ? { status: "CANCELLED", cancelledAt: new Date() }
+          : { status: "REFUNDED", ...(refundPayment ? { paymentStatus: "REFUNDED" } : {}) },
+    });
+    if (claimed.count === 0) return false;
+
+    if (refundPayment && order.payment) {
+      await tx.payment.update({
+        where: { id: order.payment.id },
+        data: { status: "REFUNDED" },
+      });
+    }
+
+    const restock =
+      target === "CANCELLED" || UNSHIPPED_ORDER_STATUSES.includes(order.status);
+    if (restock) {
+      const label = target === "CANCELLED" ? "cancelled" : "refunded";
+      for (const held of await stockHeldByOrder(tx, order)) {
         await tx.product.updateMany({
-          where: { id: line.productId },
-          data: { stock: { increment: line.quantity } },
+          where: { id: held.productId },
+          data: { stock: { increment: held.quantity } },
         });
-        if (line.variantId) {
+        if (held.variantId) {
           await tx.productVariant.updateMany({
-            where: { id: line.variantId },
-            data: { stock: { increment: line.quantity } },
+            where: { id: held.variantId },
+            data: { stock: { increment: held.quantity } },
           });
         }
         await tx.inventoryLedger.create({
           data: {
-            productId: line.productId,
-            variantId: line.variantId,
-            change: line.quantity,
+            productId: held.productId,
+            variantId: held.variantId,
+            change: held.quantity,
             type: "RETURN",
-            note: `Order ${order.orderNumber} cancelled`,
+            note: `Order ${order.orderNumber} ${label}`,
+            orderId,
           },
         });
       }
@@ -648,7 +737,15 @@ export async function cancelOrderAndRelease(orderId: string, note: string | null
     }
 
     await tx.orderTimeline.create({
-      data: { orderId, status: "CANCELLED", note },
+      data: {
+        orderId,
+        status: target,
+        note:
+          note ??
+          (target === "REFUNDED" && !restock
+            ? "Refunded after shipping: stock not restored automatically"
+            : null),
+      },
     });
     return true;
   });

@@ -6,7 +6,11 @@ import {
   type StoreSettings,
 } from "@/lib/store-settings";
 
-export type { StoreSettings, StorePickupSettings } from "@/lib/store-settings";
+export type {
+  StoreSettings,
+  StorePickupSettings,
+  StoreBusinessSettings,
+} from "@/lib/store-settings";
 export {
   DEFAULT_STORE_SETTINGS,
   STORE_SETTING_KEY,
@@ -35,6 +39,7 @@ export async function saveStoreSettings(
     standardShippingFee: next.standardShippingFee,
     codFee: next.codFee,
     pickup: next.pickup,
+    business: next.business,
   };
 
   await prisma.siteSetting.upsert({

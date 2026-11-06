@@ -4,9 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Volume2, VolumeX } from "lucide-react";
-
-const INSTAGRAM_URL = "https://www.instagram.com/soyoung/";
-const HANDLE = "@soyoung";
+import { INSTAGRAM_HANDLE as HANDLE, INSTAGRAM_URL } from "@/lib/constants";
 
 type Props = {
   src: string;

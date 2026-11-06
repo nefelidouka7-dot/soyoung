@@ -46,11 +46,18 @@ type ProductWithRelations = Omit<
   skinTypes: { skinTypeId: string }[];
   images?: ProductImage[];
   variants?: Array<
-    Omit<ProductVariant, "price"> & { price: number | null }
+    Omit<ProductVariant, "price" | "compareAtPrice"> & {
+      price: number | null;
+      compareAtPrice: number | null;
+    }
   >;
 };
 
 type VariantRow = {
+  /** Existing variant id ("" for a new row) so saving updates it in place. */
+  id: string;
+  /** Stock when the form loaded; the server applies only the difference. */
+  originalStock: string;
   name: string;
   type: VariantType;
   sku: string;
@@ -113,6 +120,8 @@ export function ProductForm({
   const [variants, setVariants] = useState<VariantRow[]>(
     product?.variants?.length
       ? product.variants.map((v) => ({
+          id: v.id,
+          originalStock: String(v.stock),
           name: v.name,
           type: v.type,
           sku: v.sku,
@@ -287,6 +296,9 @@ export function ProductForm({
               defaultValue={product?.stock ?? 0}
               className={fieldClass}
             />
+            {product ? (
+              <input type="hidden" name="stockOriginal" value={product.stock} />
+            ) : null}
           </Field>
         </div>
 
@@ -541,6 +553,12 @@ export function ProductForm({
             </div>
 
             <div>
+              <input type="hidden" name="variantId" value={row.id} />
+              <input
+                type="hidden"
+                name="variantStockOriginal"
+                value={row.originalStock}
+              />
               <input type="hidden" name="variantImage" value={row.image} />
               <p className="text-sm font-medium text-ink">Φωτογραφία variant</p>
               <p className="mt-0.5 text-xs text-ink-muted">
@@ -616,6 +634,8 @@ export function ProductForm({
             setVariants((rows) => [
               ...rows,
               {
+                id: "",
+                originalStock: "",
                 name: "",
                 type: "SHADE",
                 sku: "",
