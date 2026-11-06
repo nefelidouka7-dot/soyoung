@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -44,9 +45,6 @@ export default async function ProductPage({ params }: Props) {
 
   const categorySlug = product.category.parent?.slug ?? product.category.slug;
   const categoryName = product.category.parent?.name ?? product.category.name;
-  const related = await findProducts({ categorySlug, pageSize: 5 })
-    .then((r) => r.products.filter((p) => p.id !== product.id).slice(0, 4))
-    .catch(() => []);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -216,33 +214,60 @@ export default async function ProductPage({ params }: Props) {
         />
       ) : null}
 
-      {related.length > 0 ? (
-        <section className="container-page mt-16 lg:mt-24">
-          <div className="mb-8 flex items-end justify-between gap-6 lg:mb-10">
-            <h2 className="font-serif text-[2rem] leading-none tracking-tight text-ink sm:text-[2.6rem]">
-              {dict.product.youMayAlsoLike}
-            </h2>
-            <Link
-              href={`/${categorySlug}`}
-              className="group inline-flex shrink-0 items-center gap-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink-muted transition-colors hover:text-ink"
-            >
-              {dict.product.moreFrom}
-              <ArrowRight
-                className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1"
-                strokeWidth={1.5}
-                aria-hidden
-              />
-            </Link>
-          </div>
-          <ProductGrid variant="featured">
-            {related.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </ProductGrid>
-        </section>
-      ) : null}
+      {/* Streams in after the product itself, so it never delays the page. */}
+      <Suspense fallback={null}>
+        <RelatedProducts
+          productId={product.id}
+          categorySlug={categorySlug}
+          title={dict.product.youMayAlsoLike}
+          moreFrom={dict.product.moreFrom}
+        />
+      </Suspense>
 
       <p className="sr-only">{STORE_NAME}</p>
     </div>
+  );
+}
+
+async function RelatedProducts({
+  productId,
+  categorySlug,
+  title,
+  moreFrom,
+}: {
+  productId: string;
+  categorySlug: string;
+  title: string;
+  moreFrom: string;
+}) {
+  const related = await findProducts({ categorySlug, pageSize: 5 })
+    .then((r) => r.products.filter((p) => p.id !== productId).slice(0, 4))
+    .catch(() => []);
+  if (related.length === 0) return null;
+
+  return (
+    <section className="container-page mt-16 lg:mt-24">
+      <div className="mb-8 flex items-end justify-between gap-6 lg:mb-10">
+        <h2 className="font-serif text-[2rem] leading-none tracking-tight text-ink sm:text-[2.6rem]">
+          {title}
+        </h2>
+        <Link
+          href={`/${categorySlug}`}
+          className="group inline-flex shrink-0 items-center gap-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink-muted transition-colors hover:text-ink"
+        >
+          {moreFrom}
+          <ArrowRight
+            className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1"
+            strokeWidth={1.5}
+            aria-hidden
+          />
+        </Link>
+      </div>
+      <ProductGrid variant="featured">
+        {related.map((p) => (
+          <ProductCard key={p.id} product={p} />
+        ))}
+      </ProductGrid>
+    </section>
   );
 }
