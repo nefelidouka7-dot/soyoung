@@ -1,4 +1,7 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ExternalLink } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
 import { prisma } from "@/db/prisma";
 import { requireAdmin, decimalToNumber } from "@/lib/admin";
 import {
@@ -58,6 +61,31 @@ export default async function EditProductPage({
       <AdminPageHeader
         title={product.name}
         description="Επεξεργασία στοιχείων, stock και media."
+        actions={
+          product.status === "ACTIVE" ? (
+            <Link
+              href={`/product/${product.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonVariants({ variant: "secondary", size: "sm", className: "gap-1.5" })}
+            >
+              Προβολή στο shop
+              <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+            </Link>
+          ) : (
+            <span
+              className={buttonVariants({
+                variant: "secondary",
+                size: "sm",
+                className: "cursor-not-allowed gap-1.5 opacity-50",
+              })}
+              title="Το προϊόν φαίνεται στο shop μόνο όταν είναι Ενεργό"
+            >
+              Προβολή στο shop
+              <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+            </span>
+          )
+        }
         breadcrumb={
           <AdminBreadcrumb
             items={[
