@@ -262,6 +262,17 @@ export async function saveStoreCommerceSettings(
     };
   }
 
+  const business = {
+    email: String(formData.get("businessEmail") ?? "").trim(),
+    legalName: String(formData.get("businessLegalName") ?? "").trim(),
+    vatNumber: String(formData.get("businessVatNumber") ?? "").trim(),
+    taxOffice: String(formData.get("businessTaxOffice") ?? "").trim(),
+    gemi: String(formData.get("businessGemi") ?? "").trim(),
+  };
+  if (business.email && !z.email().safeParse(business.email).success) {
+    return { error: "Το email της επιχείρησης δεν είναι έγκυρο." };
+  }
+
   const current = await getStoreSettings();
 
   await saveStoreSettings({
@@ -270,9 +281,11 @@ export async function saveStoreCommerceSettings(
     standardShippingFee,
     codFee,
     pickup,
+    business,
   });
 
   revalidatePath("/admin/settings");
+  revalidatePath("/contact");
   revalidatePath("/");
   revalidatePath("/cart");
   revalidatePath("/checkout");

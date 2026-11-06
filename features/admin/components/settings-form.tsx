@@ -102,7 +102,8 @@ export function StoreSettingsForm({ settings }: { settings: StoreSettings }) {
           </h3>
           <p className="mt-1 text-sm text-ink-muted">
             Διεύθυνση που βλέπει ο πελάτης όταν διαλέγει παραλαβή από το
-            κατάστημα.
+            κατάστημα. Η διεύθυνση και το τηλέφωνο εμφανίζονται και στη σελίδα
+            Επικοινωνία.
           </p>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -173,6 +174,72 @@ export function StoreSettingsForm({ settings }: { settings: StoreSettings }) {
               name="pickupCountry"
               required
               defaultValue={settings.pickup.country}
+              className={fieldClass}
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-4 border-t border-oak/25 pt-6">
+        <div>
+          <h3 className="text-sm font-semibold tracking-tight text-ink">
+            Στοιχεία επιχείρησης
+          </h3>
+          <p className="mt-1 text-sm text-ink-muted">
+            Εμφανίζονται στη σελίδα Επικοινωνία. Όσα αφήσεις κενά δεν
+            εμφανίζονται.
+          </p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <Label htmlFor="businessEmail">Email επικοινωνίας</Label>
+            <Input
+              id="businessEmail"
+              name="businessEmail"
+              type="email"
+              defaultValue={settings.business.email}
+              placeholder="π.χ. info@soyoung.gr"
+              className={fieldClass}
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <Label htmlFor="businessLegalName">Επωνυμία</Label>
+            <Input
+              id="businessLegalName"
+              name="businessLegalName"
+              defaultValue={settings.business.legalName}
+              placeholder="π.χ. Παπαδοπούλου Μαρία"
+              className={fieldClass}
+            />
+          </div>
+          <div>
+            <Label htmlFor="businessVatNumber">ΑΦΜ</Label>
+            <Input
+              id="businessVatNumber"
+              name="businessVatNumber"
+              inputMode="numeric"
+              defaultValue={settings.business.vatNumber}
+              className={fieldClass}
+            />
+          </div>
+          <div>
+            <Label htmlFor="businessTaxOffice">ΔΟΥ</Label>
+            <Input
+              id="businessTaxOffice"
+              name="businessTaxOffice"
+              defaultValue={settings.business.taxOffice}
+              placeholder="π.χ. Κοζάνης"
+              className={fieldClass}
+            />
+          </div>
+          <div>
+            <Label htmlFor="businessGemi">Αρ. ΓΕΜΗ</Label>
+            <Input
+              id="businessGemi"
+              name="businessGemi"
+              inputMode="numeric"
+              defaultValue={settings.business.gemi}
+              placeholder="Προαιρετικό"
               className={fieldClass}
             />
           </div>

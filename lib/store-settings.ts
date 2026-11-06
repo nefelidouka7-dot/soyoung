@@ -17,6 +17,19 @@ export type StorePickupSettings = {
   phone: string;
 };
 
+/** Business details shown on the contact page (address/phone come from pickup). */
+export type StoreBusinessSettings = {
+  email: string;
+  /** Επωνυμία */
+  legalName: string;
+  /** ΑΦΜ */
+  vatNumber: string;
+  /** ΔΟΥ */
+  taxOffice: string;
+  /** Αριθμός ΓΕΜΗ */
+  gemi: string;
+};
+
 export type StoreSettings = {
   name: string;
   currency: string;
@@ -24,6 +37,7 @@ export type StoreSettings = {
   standardShippingFee: number;
   codFee: number;
   pickup: StorePickupSettings;
+  business: StoreBusinessSettings;
 };
 
 export const DEFAULT_STORE_SETTINGS: StoreSettings = {
@@ -40,6 +54,13 @@ export const DEFAULT_STORE_SETTINGS: StoreSettings = {
     postalCode: STORE_PICKUP.postalCode,
     country: STORE_PICKUP.country,
     phone: STORE_PICKUP.phone,
+  },
+  business: {
+    email: "",
+    legalName: "",
+    vatNumber: "",
+    taxOffice: "",
+    gemi: "",
   },
 };
 
@@ -61,6 +82,10 @@ export function parseStoreSettings(value: unknown): StoreSettings {
   const pickupRaw =
     v.pickup && typeof v.pickup === "object" && !Array.isArray(v.pickup)
       ? (v.pickup as Record<string, unknown>)
+      : {};
+  const businessRaw =
+    v.business && typeof v.business === "object" && !Array.isArray(v.business)
+      ? (v.business as Record<string, unknown>)
       : {};
 
   return {
@@ -86,6 +111,13 @@ export function parseStoreSettings(value: unknown): StoreSettings {
       postalCode: str(pickupRaw.postalCode, base.pickup.postalCode),
       country: str(pickupRaw.country, base.pickup.country),
       phone: str(pickupRaw.phone, base.pickup.phone),
+    },
+    business: {
+      email: str(businessRaw.email, base.business.email),
+      legalName: str(businessRaw.legalName, base.business.legalName),
+      vatNumber: str(businessRaw.vatNumber, base.business.vatNumber),
+      taxOffice: str(businessRaw.taxOffice, base.business.taxOffice),
+      gemi: str(businessRaw.gemi, base.business.gemi),
     },
   };
 }
