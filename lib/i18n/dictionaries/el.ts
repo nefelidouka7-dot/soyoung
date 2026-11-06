@@ -417,7 +417,7 @@ export const el: Dictionary = {
     watchReelEyebrow: "Από το Instagram",
     watchReelSupport:
       "Πώς φαίνεται, πώς απλώνεται, πώς κάθεται στην επιδερμίδα — σε πραγματικό χρόνο, από τη δική μας ρουτίνα.",
-    followOnInstagram: "Ακολούθησε @soyoung",
+    followOnInstagram: "Ακολούθησε @soyoung.gr",
     inStock: "Σε απόθεμα · αποστολή σε 1–2 εργάσιμες",
     lowStock: "Μόνο {count} τεμάχια διαθέσιμα",
     quantity: "Ποσότητα",

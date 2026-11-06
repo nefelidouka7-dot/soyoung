@@ -360,7 +360,7 @@ export const en: Dictionary = {
     watchReelEyebrow: "From Instagram",
     watchReelSupport:
       "How it looks, how it spreads, how it sits on skin — in real time, from our routine.",
-    followOnInstagram: "Follow @soyoung",
+    followOnInstagram: "Follow @soyoung.gr",
     inStock: "In stock · ships in 1–2 business days",
     lowStock: "Only {count} left",
     quantity: "Quantity",

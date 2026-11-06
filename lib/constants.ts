@@ -1,3 +1,7 @@
+/** Official Instagram account (used by the home page, product reels and contact page). */
+export const INSTAGRAM_URL = "https://www.instagram.com/soyoung.gr";
+export const INSTAGRAM_HANDLE = "@soyoung.gr";
+
 export const brand = {
   colors: {
     bg: "#FEEADF",
