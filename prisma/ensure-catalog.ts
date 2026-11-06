@@ -1,7 +1,9 @@
 /**
- * Ensures Neon has schema + demo catalog during Vercel builds.
- * - Always runs `prisma db push`
- * - Seeds only when the Product table is empty (safe on redeploy)
+ * Ensures the database schema is current during Vercel builds (`prisma db push`).
+ *
+ * It never seeds: the seed wipes every table and creates accounts with public
+ * passwords, so an empty catalog in production (e.g. after deleting the demo
+ * products) must not trigger it. Seed a local database with `npm run db:seed`.
  */
 import { spawnSync } from "node:child_process";
 import { PrismaClient } from "@prisma/client";
@@ -78,24 +80,6 @@ async function main() {
 
   console.log("[ensure-catalog] Pushing schema…");
   runPrisma(["db", "push", "--skip-generate"]);
-
-  const prisma = new PrismaClient({
-    datasources: { db: { url } },
-  });
-  try {
-    const count = await prisma.product.count();
-    if (count > 0) {
-      console.log(`[ensure-catalog] Catalog already has ${count} products — skip seed.`);
-      return;
-    }
-  } catch (error) {
-    console.warn("[ensure-catalog] Could not count products:", error);
-  } finally {
-    await prisma.$disconnect();
-  }
-
-  console.log("[ensure-catalog] Empty catalog — running seed…");
-  runPrisma(["db", "seed"]);
 }
 
 main().catch((error) => {
