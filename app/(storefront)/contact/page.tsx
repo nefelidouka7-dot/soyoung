@@ -2,7 +2,12 @@ import type { Metadata } from "next";
 import type { LucideIcon } from "lucide-react";
 import { AtSign, Building2, Clock, Mail, MapPin, Phone } from "lucide-react";
 import { STORE_PICKUP } from "@/lib/checkout-options";
-import { INSTAGRAM_HANDLE, INSTAGRAM_URL } from "@/lib/constants";
+import {
+  INSTAGRAM_HANDLE,
+  INSTAGRAM_URL,
+  TIKTOK_HANDLE,
+  TIKTOK_URL,
+} from "@/lib/constants";
 import { getLocale } from "@/lib/i18n/server";
 import { getStoreSettings } from "@/server/repositories/store-settings.repository";
 
@@ -19,7 +24,7 @@ const COPY = {
     map: "Άνοιγμα στον χάρτη",
     phone: "Τηλέφωνο",
     email: "Email",
-    instagram: "Instagram",
+    social: "Social media",
     hours: "Ωράριο καταστήματος",
     company: "Στοιχεία επιχείρησης",
     legalName: "Επωνυμία",
@@ -35,7 +40,7 @@ const COPY = {
     map: "Open in maps",
     phone: "Phone",
     email: "Email",
-    instagram: "Instagram",
+    social: "Social media",
     hours: "Store hours",
     company: "Company details",
     legalName: "Company name",
@@ -125,15 +130,23 @@ export default async function ContactPage() {
           </InfoCard>
         ) : null}
 
-        <InfoCard icon={AtSign} title={t.instagram}>
-          <a
-            href={INSTAGRAM_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-base font-medium text-ink underline-offset-4 hover:underline"
-          >
-            {INSTAGRAM_HANDLE}
-          </a>
+        <InfoCard icon={AtSign} title={t.social}>
+          {[
+            { name: "Instagram", href: INSTAGRAM_URL, handle: INSTAGRAM_HANDLE },
+            { name: "TikTok", href: TIKTOK_URL, handle: TIKTOK_HANDLE },
+          ].map((s) => (
+            <p key={s.name}>
+              {s.name}:{" "}
+              <a
+                href={s.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-ink underline-offset-4 hover:underline"
+              >
+                {s.handle}
+              </a>
+            </p>
+          ))}
         </InfoCard>
 
         {companyRows.length > 0 ? (
