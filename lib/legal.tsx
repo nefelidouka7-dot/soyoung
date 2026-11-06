@@ -1,4 +1,5 @@
 import { getLocale } from "@/lib/i18n/server";
+import { getStoreSettings } from "@/server/repositories/store-settings.repository";
 
 export type LegalSlug =
   | "privacy"
@@ -20,7 +21,7 @@ const el: Record<LegalSlug, LegalDoc> = {
     sections: [
       {
         heading: "1. Ποιοι είμαστε",
-        body: "Η SoYoung («εμείς») λειτουργεί το ηλεκτρονικό κατάστημα soyoung και είναι υπεύθυνη επεξεργασίας των προσωπικών δεδομένων σας σύμφωνα με τον Κανονισμό (ΕΕ) 2016/679 (GDPR) και την ελληνική νομοθεσία.",
+        body: "Η SoYoung («εμείς») λειτουργεί το ηλεκτρονικό κατάστημα soyoung και είναι υπεύθυνη επεξεργασίας των προσωπικών δεδομένων σας σύμφωνα με τον Κανονισμό (ΕΕ) 2016/679 (GDPR) και την ελληνική νομοθεσία.{company}",
       },
       {
         heading: "2. Τι δεδομένα συλλέγουμε",
@@ -48,7 +49,7 @@ const el: Record<LegalSlug, LegalDoc> = {
       },
       {
         heading: "8. Επικοινωνία",
-        body: "Για αιτήματα απορρήτου: privacy@soyoung.example.",
+        body: "Για αιτήματα απορρήτου: {contact}.",
       },
     ],
   },
@@ -58,7 +59,7 @@ const el: Record<LegalSlug, LegalDoc> = {
     sections: [
       {
         heading: "1. Γενικά",
-        body: "Με την πρόσβαση και χρήση του καταστήματος SoYoung αποδέχεστε τους παρόντες όρους. Αν δεν συμφωνείτε, μην χρησιμοποιείτε την υπηρεσία.",
+        body: "Με την πρόσβαση και χρήση του καταστήματος SoYoung αποδέχεστε τους παρόντες όρους. Αν δεν συμφωνείτε, μην χρησιμοποιείτε την υπηρεσία.{company}",
       },
       {
         heading: "2. Λογαριασμός",
@@ -144,7 +145,7 @@ const el: Record<LegalSlug, LegalDoc> = {
       },
       {
         heading: "3. Διαδικασία",
-        body: "Επικοινωνήστε στο returns@soyoung.example με αριθμό παραγγελίας. Μετά την έγκριση θα λάβετε οδηγίες αποστολής. Η επιστροφή χρημάτων γίνεται στη μέθοδο πληρωμής εντός εύλογου χρόνου μετά τον έλεγχο.",
+        body: "Επικοινωνήστε μαζί μας ({contact}) με τον αριθμό παραγγελίας. Μετά την έγκριση θα λάβετε οδηγίες αποστολής. Η επιστροφή χρημάτων γίνεται στη μέθοδο πληρωμής εντός εύλογου χρόνου μετά τον έλεγχο.",
       },
       {
         heading: "4. Ελαττωματικά",
@@ -161,7 +162,7 @@ const en: Record<LegalSlug, LegalDoc> = {
     sections: [
       {
         heading: "1. Who we are",
-        body: "SoYoung (“we”) operates this online store and is the controller of your personal data under the EU GDPR and applicable Greek law.",
+        body: "SoYoung (“we”) operates this online store and is the controller of your personal data under the EU GDPR and applicable Greek law.{company}",
       },
       {
         heading: "2. Data we collect",
@@ -189,7 +190,7 @@ const en: Record<LegalSlug, LegalDoc> = {
       },
       {
         heading: "8. Contact",
-        body: "Privacy requests: privacy@soyoung.example.",
+        body: "Privacy requests: {contact}.",
       },
     ],
   },
@@ -199,7 +200,7 @@ const en: Record<LegalSlug, LegalDoc> = {
     sections: [
       {
         heading: "1. General",
-        body: "By using the SoYoung store you agree to these terms. If you do not agree, do not use the service.",
+        body: "By using the SoYoung store you agree to these terms. If you do not agree, do not use the service.{company}",
       },
       {
         heading: "2. Account",
@@ -285,7 +286,7 @@ const en: Record<LegalSlug, LegalDoc> = {
       },
       {
         heading: "3. Process",
-        body: "Email returns@soyoung.example with your order number. After approval we send return instructions. Refunds go to the original payment method after inspection.",
+        body: "Contact us ({contact}) with your order number. After approval we send return instructions. Refunds go to the original payment method after inspection.",
       },
       {
         heading: "4. Defects",
@@ -295,9 +296,42 @@ const en: Record<LegalSlug, LegalDoc> = {
   },
 };
 
+/**
+ * Fill the texts' placeholders from Admin → Settings: {contact} (business
+ * email, else the store phone) and {company} (the business identity Greek law
+ * requires: legal name, VAT number, tax office, GEMI, address, phone).
+ */
 export async function getLegalDoc(slug: LegalSlug): Promise<LegalDoc> {
-  const locale = await getLocale();
-  return (locale === "el" ? el : en)[slug];
+  const [locale, settings] = await Promise.all([getLocale(), getStoreSettings()]);
+  const isEl = locale === "el";
+  const { business, pickup } = settings;
+
+  const phone = `${isEl ? "τηλ." : "tel."} ${pickup.phone}`;
+  const contact = business.email || phone;
+  const address = [pickup.line1, pickup.line2, `${pickup.postalCode} ${pickup.city}`]
+    .filter(Boolean)
+    .join(", ");
+  const identity = [
+    business.legalName,
+    business.vatNumber && `${isEl ? "ΑΦΜ" : "VAT"} ${business.vatNumber}`,
+    business.taxOffice && `${isEl ? "ΔΟΥ" : "Tax office"} ${business.taxOffice}`,
+    business.gemi && `${isEl ? "ΓΕΜΗ" : "G.E.MI."} ${business.gemi}`,
+    address,
+    phone,
+    business.email,
+  ].filter(Boolean);
+  const company = ` ${isEl ? "Στοιχεία επιχείρησης" : "Business details"}: ${identity.join(" · ")}.`;
+
+  const doc = (isEl ? el : en)[slug];
+  return {
+    ...doc,
+    sections: doc.sections.map((section) => ({
+      ...section,
+      body: section.body
+        .replaceAll("{contact}", contact)
+        .replaceAll("{company}", company),
+    })),
+  };
 }
 
 export async function LegalPage({ slug }: { slug: LegalSlug }) {
