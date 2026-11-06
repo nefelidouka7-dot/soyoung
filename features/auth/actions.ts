@@ -10,6 +10,7 @@ import { AuthError } from "next-auth";
 import { sendPasswordResetEmail } from "@/emails/send";
 import { clientIpFromHeaders, rateLimit } from "@/lib/rate-limit";
 import { safeCallbackUrl } from "@/lib/safe-callback-url";
+import { absoluteUrl } from "@/lib/utils";
 import {
   createPasswordResetToken,
   hashPasswordResetToken,
@@ -172,8 +173,8 @@ export async function requestPasswordResetAction(formData: FormData) {
     await prisma.passwordResetToken.create({
       data: { email, token: hash, expires },
     });
-    const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-    const resetUrl = `${base.replace(/\/$/, "")}/reset-password?token=${encodeURIComponent(raw)}`;
+    // absoluteUrl falls back to the Vercel URL when NEXT_PUBLIC_APP_URL is unset.
+    const resetUrl = absoluteUrl(`/reset-password?token=${encodeURIComponent(raw)}`);
     try {
       await sendPasswordResetEmail(email, resetUrl);
     } catch {

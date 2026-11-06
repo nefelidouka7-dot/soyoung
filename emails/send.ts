@@ -60,9 +60,19 @@ async function sendEmail(input: {
         html: input.html,
       }),
     });
+    if (!res.ok) {
+      // Resend explains the reason in the body (e.g. unverified "from" domain).
+      const reason = (await res.text().catch(() => "")).slice(0, 500);
+      console.error("[email] Resend rejected the email", {
+        status: res.status,
+        subject: input.subject,
+        from,
+        reason,
+      });
+    }
     return { queued: res.ok, logged: false };
-  } catch {
-    console.error("[email] failed to send", input.subject);
+  } catch (error) {
+    console.error("[email] failed to send", input.subject, error);
     return { queued: false, logged: false };
   }
 }
@@ -89,7 +99,7 @@ function buildUsageSection(items: OrderEmailItem[]) {
 
   return `
     <hr style="border:none;border-top:1px solid #e8d9c8;margin:28px 0;" />
-    <h2 style="margin:0 0 14px;font-size:18px;">How to use</h2>
+    <h2 style="margin:0 0 14px;font-size:18px;">Οδηγίες χρήσης</h2>
     ${blocks}
   `;
 }
@@ -110,12 +120,12 @@ export async function sendOrderConfirmationEmail(payload: OrderEmail) {
 
   return sendEmail({
     to: payload.to,
-    subject: `Order confirmed · ${payload.orderNumber}`,
+    subject: `Επιβεβαίωση παραγγελίας · ${payload.orderNumber}`,
     html: `
-      <p>Thank you for your order <strong>${escapeHtml(
+      <p>Σας ευχαριστούμε για την παραγγελία σας <strong>${escapeHtml(
         payload.orderNumber
       )}</strong>.</p>
-      <p>Total: €${payload.total.toFixed(2)}</p>
+      <p>Σύνολο: €${payload.total.toFixed(2)}</p>
       ${lineList}
       ${buildUsageSection(items)}
       <p style="margin-top:28px;color:#5c5650;font-size:13px;">SoYoung</p>
@@ -126,10 +136,10 @@ export async function sendOrderConfirmationEmail(payload: OrderEmail) {
 export async function sendPasswordResetEmail(to: string, resetUrl: string) {
   return sendEmail({
     to,
-    subject: "Reset your SoYoung password",
+    subject: "Επαναφορά κωδικού SoYoung",
     sensitive: true,
-    html: `<p>We received a request to reset your password.</p><p><a href="${escapeHtml(
+    html: `<p>Λάβαμε αίτημα για επαναφορά του κωδικού σας.</p><p><a href="${escapeHtml(
       resetUrl
-    )}">Reset password</a></p><p>This link expires in 1 hour. If you did not request this, you can ignore this email.</p>`,
+    )}">Ορισμός νέου κωδικού</a></p><p>Ο σύνδεσμος λήγει σε 1 ώρα. Αν δεν κάνατε εσείς το αίτημα, αγνοήστε αυτό το email.</p>`,
   });
 }
