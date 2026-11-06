@@ -39,6 +39,17 @@ Local development only — `npm run db:seed` wipes the database and refuses to r
 | Admin | admin@soyoung.com | Admin123! |
 | Customer | customer@soyoung.com | Customer123! |
 
+### Production admin
+
+The build never seeds. Create the real admin with your own email (the password is asked interactively), then remove the demo accounts:
+
+```bash
+npm run admin:setup -- --email you@example.gr
+npm run admin:setup -- --email you@example.gr --remove-demo
+```
+
+Point `DATABASE_URL` at the production database first (e.g. `vercel env pull`).
+
 ### Coupons
 
 - `WELCOME10` — 10% off (min €30)
@@ -64,5 +75,6 @@ docker compose up --build
 
 - `npm run dev` — development
 - `npm run build` — production build
-- `npm run db:seed` — seed catalogue
+- `npm run db:seed` — seed catalogue (local database only; wipes all data)
+- `npm run admin:setup -- --email …` — create/reset an admin account
 - `npm run db:studio` — Prisma Studio

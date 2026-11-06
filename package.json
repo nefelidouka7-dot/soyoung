@@ -11,6 +11,7 @@
     "db:generate": "prisma generate",
     "db:push": "tsx prisma/with-db-env.ts db push",
     "db:seed": "tsx prisma/seed.ts",
+    "admin:setup": "tsx prisma/admin-setup.ts",
     "db:studio": "tsx prisma/with-db-env.ts studio"
   },
   "dependencies": {
