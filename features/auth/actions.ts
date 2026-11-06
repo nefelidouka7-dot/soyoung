@@ -11,6 +11,7 @@ import { sendPasswordResetEmail } from "@/emails/send";
 import { clientIpFromHeaders, rateLimit } from "@/lib/rate-limit";
 import { safeCallbackUrl } from "@/lib/safe-callback-url";
 import { absoluteUrl } from "@/lib/utils";
+import { ADMIN_ROLES } from "@/lib/admin-access";
 import {
   createPasswordResetToken,
   hashPasswordResetToken,
@@ -147,6 +148,16 @@ export async function loginAction(
     // Wrong credentials throw AuthError when using the server signIn helper.
     if (e instanceof AuthError) return { error: "invalidCredentials" };
     throw e;
+  }
+
+  // Staff land in the admin panel (or the admin page they were sent from),
+  // not on the customer account page.
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: { role: true },
+  });
+  if (user && ADMIN_ROLES.includes(user.role)) {
+    redirect(callbackUrl.startsWith("/admin") ? callbackUrl : "/admin");
   }
 
   redirect(callbackUrl);
