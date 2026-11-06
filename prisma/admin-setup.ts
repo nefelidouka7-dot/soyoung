@@ -74,7 +74,18 @@ async function main() {
     console.error("Missing DATABASE_URL.");
     process.exit(1);
   }
-  console.log(`Database host: ${new URL(url).hostname}`);
+  let host: string;
+  try {
+    host = new URL(url).hostname;
+  } catch {
+    console.error(
+      "DATABASE_URL is not a valid postgres URL. `vercel env pull` writes " +
+        "[SENSITIVE] for protected values: copy the connection string from the " +
+        "Neon dashboard into the env file instead."
+    );
+    process.exit(1);
+  }
+  console.log(`Database host: ${host}`);
 
   const password = await askHidden("New admin password (min 12 chars): ");
   if (password.length < 12) {
