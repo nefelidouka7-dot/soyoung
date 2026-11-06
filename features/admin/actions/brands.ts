@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { invalidateNavigation } from "@/server/cache-tags";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
@@ -92,6 +93,7 @@ export async function createBrand(
     }
     throw e;
   }
+  invalidateNavigation();
   revalidatePath("/admin/brands");
   redirect("/admin/brands");
 }
@@ -118,6 +120,7 @@ export async function updateBrand(
     }
     throw e;
   }
+  invalidateNavigation();
   revalidatePath("/admin/brands");
   redirect("/admin/brands");
 }
@@ -129,5 +132,6 @@ export async function deleteBrand(id: string) {
     throw new Error("Δεν γίνεται διαγραφή brand που έχει προϊόντα.");
   }
   await prisma.brand.delete({ where: { id } });
+  invalidateNavigation();
   revalidatePath("/admin/brands");
 }

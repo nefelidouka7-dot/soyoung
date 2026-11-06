@@ -1,4 +1,6 @@
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
+import { NAVIGATION_CACHE_TAG } from "@/server/cache-tags";
 import { prisma } from "@/db/prisma";
 import { mergeProductTypes } from "@/lib/catalog-taxonomy";
 
@@ -45,8 +47,12 @@ const EMPTY_NAVIGATION: NavigationData = {
  * menu stays complete even before every slot has stock. Brands still come
  * from the live catalog.
  */
-export const getNavigationData = cache(async (): Promise<NavigationData> => {
-  try {
+/**
+ * Cached across requests (tag: navigation). It throws on failure so an error
+ * is never cached; getNavigationData falls back to an empty menu instead.
+ */
+const loadNavigation = unstable_cache(
+  async (): Promise<NavigationData> => {
     const [categories, brands, skinTypes, concerns, typeGroups, brandGroups] =
       await Promise.all([
         prisma.category.findMany({
@@ -151,6 +157,14 @@ export const getNavigationData = cache(async (): Promise<NavigationData> => {
       skinTypes,
       concerns,
     };
+  },
+  ["navigation-v1"],
+  { tags: [NAVIGATION_CACHE_TAG], revalidate: 3600 }
+);
+
+export const getNavigationData = cache(async (): Promise<NavigationData> => {
+  try {
+    return await loadNavigation();
   } catch (error) {
     console.error("[navigation] Failed to load catalog navigation:", error);
     return EMPTY_NAVIGATION;

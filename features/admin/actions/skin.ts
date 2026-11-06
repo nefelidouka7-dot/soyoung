@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { invalidateNavigation } from "@/server/cache-tags";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
@@ -47,6 +48,7 @@ function toData(data: z.infer<typeof schema>, existingSlug?: string) {
 }
 
 function refresh() {
+  invalidateNavigation();
   revalidatePath("/admin/skin");
   revalidatePath("/");
   revalidatePath("/skincare");

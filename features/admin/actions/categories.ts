@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { invalidateNavigation } from "@/server/cache-tags";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
@@ -74,6 +75,7 @@ async function wouldCreateCycle(id: string, parentId: string | null) {
 }
 
 function revalidateCategories() {
+  invalidateNavigation();
   revalidatePath("/admin/categories");
   revalidatePath("/");
 }

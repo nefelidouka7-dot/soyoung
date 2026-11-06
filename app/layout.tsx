@@ -8,7 +8,8 @@ import "./globals.css";
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
   subsets: ["latin", "latin-ext"],
-  weight: ["400", "500", "600", "700"],
+  // Variable font: one file covers every weight instead of one per weight.
+  weight: "variable",
   style: ["normal", "italic"],
   display: "swap",
   // The generated fallback face (local Times) has Greek glyphs and would
@@ -20,7 +21,7 @@ const cormorant = Cormorant_Garamond({
 const garamondGreek = EB_Garamond({
   variable: "--font-garamond-greek",
   subsets: ["greek", "greek-ext"],
-  weight: ["400", "500", "600", "700"],
+  weight: "variable",
   style: ["normal", "italic"],
   display: "swap",
 });
@@ -28,7 +29,7 @@ const garamondGreek = EB_Garamond({
 const manrope = Manrope({
   variable: "--font-manrope",
   subsets: ["latin", "latin-ext", "greek"],
-  weight: ["400", "500", "600", "700"],
+  weight: "variable",
   display: "swap",
 });
 

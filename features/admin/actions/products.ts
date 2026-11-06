@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { invalidateNavigation } from "@/server/cache-tags";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { Prisma, ProductStatus, VariantType } from "@prisma/client";
@@ -392,6 +393,7 @@ export async function createProduct(
     }
     throw e;
   }
+  invalidateNavigation();
   revalidatePath("/admin/products");
   redirect(`/admin/products/${productId}`);
 }
@@ -566,6 +568,7 @@ export async function updateProduct(
       return null;
     });
     if (result) return result;
+    invalidateNavigation();
     revalidatePath("/admin/products");
     revalidatePath(`/admin/products/${id}`);
     revalidatePath(`/product/${data.slug}`);
@@ -585,6 +588,7 @@ export async function updateProduct(
 export async function deleteProduct(id: string) {
   await requireAdmin();
   await prisma.product.delete({ where: { id } });
+  invalidateNavigation();
   revalidatePath("/admin/products");
   redirect("/admin/products");
 }
@@ -662,6 +666,7 @@ export async function duplicateProduct(
       },
     });
 
+    invalidateNavigation();
     revalidatePath("/admin/products");
     revalidatePath(`/admin/products/${created.id}`);
     return { id: created.id, name: created.name };

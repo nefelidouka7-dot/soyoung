@@ -30,6 +30,9 @@ const nextConfig: NextConfig = {
   },
   images: {
     remotePatterns: r2RemotePatterns(),
+    // Uploads get unique file names, so optimized copies can live longer than
+    // the 4h default. Kept at 7 days because cached images can't be purged.
+    minimumCacheTTL: 604800,
     dangerouslyAllowSVG: false,
     contentDispositionType: "inline",
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",

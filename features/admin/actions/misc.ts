@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { invalidateStoreSettings } from "@/server/cache-tags";
 import { z } from "zod";
 import { Prisma, ReviewStatus } from "@prisma/client";
 import { prisma } from "@/db/prisma";
@@ -284,6 +285,7 @@ export async function saveStoreCommerceSettings(
     business,
   });
 
+  invalidateStoreSettings();
   revalidatePath("/admin/settings");
   revalidatePath("/contact");
   revalidatePath("/");

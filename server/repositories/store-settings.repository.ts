@@ -1,4 +1,6 @@
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
+import { STORE_SETTINGS_CACHE_TAG } from "@/server/cache-tags";
 import { prisma } from "@/db/prisma";
 import {
   DEFAULT_STORE_SETTINGS,
@@ -18,13 +20,22 @@ export {
   parseStoreSettings,
 } from "@/lib/store-settings";
 
-/** Cached per request: the layout and pages (contact, legal) both read it. */
-export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
-  try {
+/** Cached across requests (tag: store-settings); errors are not cached. */
+const loadStoreSettings = unstable_cache(
+  async (): Promise<StoreSettings> => {
     const row = await prisma.siteSetting.findUnique({
       where: { key: STORE_SETTING_KEY },
     });
     return parseStoreSettings(row?.value);
+  },
+  ["store-settings-v1"],
+  { tags: [STORE_SETTINGS_CACHE_TAG], revalidate: 3600 }
+);
+
+/** Also deduped per request: the layout and pages (contact, legal) both read it. */
+export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
+  try {
+    return await loadStoreSettings();
   } catch (error) {
     console.error("[store-settings] Failed to load — using defaults:", error);
     return DEFAULT_STORE_SETTINGS;
