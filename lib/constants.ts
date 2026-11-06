@@ -3,6 +3,9 @@ export const INSTAGRAM_URL = "https://www.instagram.com/soyoung.gr";
 export const INSTAGRAM_HANDLE = "@soyoung.gr";
 export const TIKTOK_URL = "https://www.tiktok.com/@soyoung.gr";
 export const TIKTOK_HANDLE = "@soyoung.gr";
+export const FACEBOOK_URL = "https://www.facebook.com/profile.php?id=61585465629851";
+/** The page has no vanity username, so show the name instead of a /handle. */
+export const FACEBOOK_HANDLE = "SoYoung";
 
 export const brand = {
   colors: {

@@ -3,6 +3,8 @@ import type { LucideIcon } from "lucide-react";
 import { AtSign, Building2, Clock, Mail, MapPin, Phone } from "lucide-react";
 import { STORE_PICKUP } from "@/lib/checkout-options";
 import {
+  FACEBOOK_HANDLE,
+  FACEBOOK_URL,
   INSTAGRAM_HANDLE,
   INSTAGRAM_URL,
   TIKTOK_HANDLE,
@@ -134,6 +136,7 @@ export default async function ContactPage() {
           {[
             { name: "Instagram", href: INSTAGRAM_URL, handle: INSTAGRAM_HANDLE },
             { name: "TikTok", href: TIKTOK_URL, handle: TIKTOK_HANDLE },
+            { name: "Facebook", href: FACEBOOK_URL, handle: FACEBOOK_HANDLE },
           ].map((s) => (
             <p key={s.name}>
               {s.name}:{" "}
