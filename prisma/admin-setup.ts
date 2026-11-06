@@ -4,6 +4,10 @@
  *   npm run admin:setup -- --email you@example.gr
  *   npm run admin:setup -- --email you@example.gr --remove-demo
  *
+ * Against production, first download its env (never commit it):
+ *   vercel env pull .env.production.local --environment=production
+ *   npm run admin:setup -- --env-file .env.production.local --email you@example.gr
+ *
  * The password is asked for interactively (never pass it as an argument: it
  * would end up in shell history). Uses DATABASE_URL from the environment or
  * `.env`; for production, pull the Vercel env first and point DATABASE_URL at
@@ -19,8 +23,6 @@ import bcrypt from "bcryptjs";
 import { config } from "dotenv";
 import { PrismaClient } from "@prisma/client";
 import { resolveDatabaseUrl } from "../db/env";
-
-config({ path: ".env" });
 
 const DEMO_ADMIN = "admin@soyoung.com";
 const DEMO_CUSTOMER = "customer@soyoung.com";
@@ -51,6 +53,11 @@ function askHidden(question: string): Promise<string> {
 }
 
 async function main() {
+  // An explicit env file (e.g. production) wins over the local .env.
+  const envFile = arg("env-file");
+  if (envFile) config({ path: envFile, override: true });
+  config({ path: ".env" });
+
   const email = arg("email")?.trim().toLowerCase();
   const removeDemo = process.argv.includes("--remove-demo");
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
