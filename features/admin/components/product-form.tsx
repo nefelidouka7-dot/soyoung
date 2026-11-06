@@ -28,7 +28,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { decimalToNumber } from "@/lib/admin";
 import { CATALOG_PRODUCT_TYPES } from "@/lib/catalog-taxonomy";
 import { cn } from "@/lib/utils";
 
@@ -125,7 +124,7 @@ export function ProductForm({
           name: v.name,
           type: v.type,
           sku: v.sku,
-          price: v.price != null ? String(decimalToNumber(v.price)) : "",
+          price: v.price != null ? String(v.price) : "",
           stock: String(v.stock),
           image: v.image ?? "",
         }))
@@ -265,7 +264,7 @@ export function ProductForm({
               min="0"
               required
               defaultValue={
-                product?.price != null ? decimalToNumber(product.price) : ""
+                product?.price != null ? product.price : ""
               }
               placeholder="24.90"
               className={fieldClass}
@@ -280,7 +279,7 @@ export function ProductForm({
               min="0"
               defaultValue={
                 product?.compareAtPrice != null
-                  ? decimalToNumber(product.compareAtPrice)
+                  ? product.compareAtPrice
                   : ""
               }
               placeholder="Προαιρετικό"
@@ -778,7 +777,7 @@ export function ProductForm({
               step="0.01"
               min="0"
               defaultValue={
-                product?.cost != null ? decimalToNumber(product.cost) : ""
+                product?.cost != null ? product.cost : ""
               }
               className={fieldClass}
             />
